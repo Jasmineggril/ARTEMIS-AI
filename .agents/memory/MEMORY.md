@@ -1,0 +1,6 @@
+- [CERES AI Logo](ceres-logo.md) — new logo is @assets/LOGO_CERES_AI_1782244864205.png (clean circular mark, no text box)
+- [DB Migration Command](db-migration.md) — drizzle-kit push fails if DATABASE_URL points to supabase; must prefix with local PG vars; use psql $DATABASE_URL -c "CREATE TABLE..." for non-interactive migrations
+- [Color Palette](color-palette.md) — official CERES AI palette defined; primary=#0F5132, gold=#C9A227, geo-blue=#1976D2
+- [Platform Rewrite](ceres-platform-rewrite.md) — full CAR→fire-risk rewrite decisions: motor, scenarios, chat service, forbidden terms, test command
+- [Python ML Pipeline](python-ml-pipeline.md) — risk_classifier.joblib = RandomForestClassifier (4 classes); schemas use RiskFactor{name,contribution,description,weight,value} + RiskRecommendation{priority,action,rationale}; frontend calls /api/python-risk-analysis
+- [TRL4 Consolidation](trl4-consolidation.md) — routes, nav, import module, DB tables, docs completed; key decisions for veracidade and anonymous mode

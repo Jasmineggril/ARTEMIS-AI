@@ -1,0 +1,169 @@
+GARANTA A COERÊNCIA ENTRE O SISTEMA, O FORMULÁRIO DA PROPOSTA E O CRONOGRAMA DA PROVA DE VALOR.
+
+O formulário declara o uso de:
+
+- Machine Learning supervisionado;
+- Python;
+- Scikit-learn;
+- análise geoespacial;
+- classificação preditiva de risco;
+- PostgreSQL/PostGIS;
+- APIs ambientais;
+- infraestrutura em nuvem.
+
+O cronograma prevê:
+
+- desenvolvimento do modelo preditivo;
+- registro de métricas iniciais;
+- testes de classificação;
+- calibração do modelo;
+- validação em piloto controlado.
+
+Portanto, implemente os seguintes elementos reais:
+
+1. Serviço Python com FastAPI.
+
+2. Pipeline de Machine Learning supervisionado com Scikit-learn.
+
+3. Script de treinamento separado do serviço de inferência.
+
+4. Dataset inicial identificado claramente como:
+   - sintético;
+   - público;
+   - histórico;
+   - ou representativo para demonstração.
+
+5. Nunca apresentar dados sintéticos como validação operacional real.
+
+6. Criar divisão entre treino e teste.
+
+7. Registrar, no mínimo:
+   - accuracy;
+   - precision;
+   - recall;
+   - F1-score;
+   - matriz de confusão;
+   - data do treinamento;
+   - versão do modelo;
+   - tipo e origem do dataset;
+   - quantidade de registros;
+   - limitações.
+
+8. Como existem quatro classes de risco, utilizar métricas macro e weighted quando aplicável.
+
+9. Salvar o modelo treinado com joblib.
+
+10. Criar arquivos:
+
+python_service/
+  app.py
+  schemas.py
+  risk_model.py
+  feature_engineering.py
+  train_model.py
+  evaluate_model.py
+  requirements.txt
+  models/
+    risk_classifier.joblib
+  results/
+    metrics.json
+    confusion_matrix.png
+  data/
+    README.md
+  tests/
+    test_api.py
+    test_model.py
+    test_validation.py
+
+11. O endpoint POST /analyze-risk deve retornar:
+
+- score;
+- level;
+- confidence;
+- factors;
+- recommendations;
+- model_type;
+- model_version;
+- dataset_type;
+- is_simulated;
+- calculated_at.
+
+12. Se não houver modelo treinado disponível, o sistema poderá usar o motor transparente baseado em regras como fallback.
+
+Nesse caso, retornar claramente:
+
+"model_type": "transparent-rule-engine"
+
+13. Quando o modelo supervisionado estiver ativo, retornar:
+
+"model_type": "supervised-ml"
+
+14. A interface deve informar qual mecanismo produziu o resultado:
+
+- “Modelo supervisionado experimental”
+ou
+- “Motor demonstrativo baseado em regras”.
+
+15. Não usar a expressão “IA validada” ou “modelo operacional” enquanto os testes forem apenas controlados ou baseados em dados sintéticos.
+
+16. Integrar o serviço Python ao backend Express.
+
+Fluxo obrigatório:
+
+React
+→ Express
+→ FastAPI/Python
+→ Scikit-learn ou fallback transparente
+→ PostgreSQL
+→ retorno ao frontend.
+
+17. Armazenar em cada análise:
+
+- dados de entrada;
+- resultado;
+- versão do modelo;
+- tipo do modelo;
+- fatores;
+- recomendações;
+- indicação de simulação;
+- data e hora.
+
+18. Criar testes automatizados para:
+
+- baixo risco;
+- moderado;
+- alto;
+- crítico;
+- campos ausentes;
+- valores inválidos;
+- score fora da faixa;
+- indisponibilidade do modelo;
+- fallback;
+- resposta da API;
+- persistência da análise.
+
+19. Executar:
+
+pip install -r python_service/requirements.txt
+pytest python_service/tests -v
+python python_service/train_model.py
+python python_service/evaluate_model.py
+npm run check
+npm run test:risk
+npm run build
+
+20. Atualizar os documentos TRL 4 somente com resultados reais da execução.
+
+21. Gerar evidências contendo:
+
+- terminal com treinamento;
+- terminal com testes;
+- métricas;
+- matriz de confusão;
+- resposta do endpoint;
+- resultado na interface;
+- versão do modelo;
+- limitações;
+- indicação de dados sintéticos ou controlados.
+
+22. Não declarar que o modelo alcançou precisão operacional. Informar que as métricas iniciais demonstram apenas viabilidade técnica em ambiente controlado e serão validadas durante a Prova de Valor.

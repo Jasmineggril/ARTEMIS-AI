@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "module": "CommonJS",
+    "outDir": "../dist/api",
+    "noEmit": false,
+    "paths": {
+      "@shared/*": ["../shared/*"],
+      "@/*": ["../client/src/*"]
+    }
+  },
+  "include": ["./**/*", "../server/**/*", "../shared/**/*"]
+}

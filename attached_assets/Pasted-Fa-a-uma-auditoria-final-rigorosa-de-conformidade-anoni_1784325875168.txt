@@ -1,0 +1,102 @@
+Faça uma auditoria final rigorosa de conformidade, anonimização e coerência técnica.
+
+1. Reestruture client/src/pages/Admin.tsx.
+Remova todas as referências a:
+- CAR
+- diagnósticos CAR
+- regularização ambiental
+- pendências cadastrais
+- conformidade do CAR
+
+Substitua por:
+- áreas monitoradas
+- análises de risco
+- alertas preventivos
+- fontes de dados
+- relatórios operacionais
+
+2. Aplique o controle centralizado de identidade em toda a interface.
+Procure textos fixos “CERES AI” em:
+- Header.tsx
+- Home.tsx
+- Login.tsx
+- Signup.tsx
+- ResetPassword.tsx
+- Settings.tsx
+- componentes
+- mensagens do servidor
+
+Use PRODUCT_NAME, PRODUCT_SUBTITLE e demais constantes de shared/identity.ts sempre que tecnicamente possível.
+
+Quando VITE_SUBMISSION_MODE=true, nenhuma tela deve exibir:
+- CERES AI
+- nomes pessoais
+- cargos
+- e-mails
+- empresa
+- instituição
+- links identificadores
+
+3. Faça uma busca completa em client, server, shared, docs, README.md e client/index.html por:
+- haCARthon
+- Cadastro Ambiental Rural
+- SICAR
+- Reserva Legal
+- APP
+- Jasmine
+- Pedro
+- Matheus
+- LinkedIn
+- e-mails pessoais
+
+Remova, substitua ou justifique cada ocorrência.
+
+4. Limpe attached_assets.
+Mova prompts, documentos, vídeos, imagens e materiais antigos para:
+archive/legacy-assets
+
+Eles não devem fazer parte do pacote final de submissão nem ser servidos pelo frontend.
+
+5. Atualize o README para refletir a segurança real:
+“Senhas protegidas com bcrypt; hashes SHA-256 legados são aceitos temporariamente e atualizados automaticamente após autenticação válida.”
+
+Remova a afirmação de que SHA-256 é o mecanismo atual.
+
+6. Revise docs/trl4.
+Não declare 34 testes aprovados antes de executar os testes.
+Se ainda não houver evidência executada, use:
+“34 testes automatizados implementados; execução final pendente de registro.”
+
+7. Execute:
+npm install
+npm run check
+npm run test:risk
+npm run test:auth
+npm run build
+
+8. Mostre o resultado completo de cada comando.
+
+9. Caso algum teste falhe:
+- corrija o código;
+- execute novamente;
+- não altere o relatório para esconder falhas.
+
+10. Atualize:
+docs/trl4/RELATORIO_TESTES_TRL4.md
+docs/trl4/EVIDENCIAS_TRL4.md
+docs/trl4/MATRIZ_FUNCIONALIDADES.md
+README.md
+
+com os resultados reais obtidos.
+
+11. Ao final, informe:
+- arquivos alterados;
+- ocorrências antigas restantes;
+- quantidade real de testes executados;
+- quantidade aprovada e falhada;
+- resultado do TypeScript;
+- resultado do build;
+- limitações restantes;
+- capturas necessárias para os PDFs de TRL 4.
+
+Não considere a tarefa concluída enquanto Admin.tsx ainda mencionar CAR, o modo anônimo expuser CERES AI ou os documentos declararem testes sem evidência executada.

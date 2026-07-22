@@ -1,0 +1,448 @@
+ATUE SOMENTE NA GERAÇÃO E ATUALIZAÇÃO DAS EVIDÊNCIAS REAIS DE TRL 4.
+
+OBJETIVO
+
+Executar os testes e validações do projeto CERES AI e registrar apenas resultados reais, comprovados por execução, nos seguintes arquivos:
+
+- docs/trl4/final/02_RELATORIO_TESTES_TRL4.md
+- docs/trl4/final/05_METRICAS_MODELO_TRL4.md
+- docs/trl4/final/06_MATRIZ_RASTREABILIDADE_TRL4.md
+- docs/trl4/final/08_CHECKLIST_FINAL_SUBMISSAO.md
+
+Esses documentos serão utilizados para gerar os arquivos enviados no campo:
+
+“Apresente evidências que comprovem o nível de TRL informado.”
+
+O sistema aceita até 5 arquivos, com tamanho máximo de 10 MB por arquivo.
+
+REGRAS OBRIGATÓRIAS
+
+1. Não inventar resultados.
+2. Não registrar testes como aprovados sem execução.
+3. Não copiar números antigos sem conferência.
+4. Não ocultar falhas, warnings ou limitações.
+5. Não apresentar métricas de dados sintéticos como desempenho operacional real.
+6. Não chamar motor baseado em regras de Machine Learning.
+7. Informar claramente quando os dados forem sintéticos, simulados, históricos ou demonstrativos.
+8. Utilizar linguagem técnica, objetiva e adequada a uma banca avaliadora.
+9. Manter todos os documentos anonimizados:
+   - sem nomes pessoais;
+   - sem e-mails;
+   - sem empresa;
+   - sem instituição;
+   - sem CNPJ;
+   - sem links identificadores.
+10. Utilizar o nome neutro:
+   “Plataforma Preditiva de Inteligência Ambiental”.
+
+==================================================
+1. EXECUÇÕES OBRIGATÓRIAS
+==================================================
+
+Execute os comandos realmente disponíveis no projeto.
+
+Node/TypeScript:
+
+npm install
+npm run check
+npm run test
+npm run test:risk
+npm run test:auth
+npm run build
+
+Python:
+
+pip install -r python_service/requirements.txt
+pytest python_service/tests -v
+
+Caso exista modelo supervisionado:
+
+python python_service/train_model.py
+python python_service/evaluate_model.py
+
+Testar também:
+
+- GET /health
+- POST /analyze-risk
+- POST /api/risk-analysis
+
+Registrar:
+
+- data e hora;
+- comando;
+- resultado;
+- quantidade de testes;
+- aprovados;
+- falhados;
+- ignorados;
+- warnings;
+- erros;
+- versão das principais dependências.
+
+Se algum comando não existir, registrar:
+
+“Comando não disponível no projeto atual.”
+
+Não inventar resultado substituto.
+
+==================================================
+2. CENÁRIOS FUNCIONAIS
+==================================================
+
+Executar e registrar quatro cenários controlados:
+
+CENÁRIO BAIXO
+
+- temperatura: 22;
+- umidade: 78;
+- vento: 7;
+- chuva recente: 32;
+- vegetação: úmida;
+- foco próximo: não;
+- histórico: baixo.
+
+CENÁRIO MODERADO
+
+- temperatura: 30;
+- umidade: 48;
+- vento: 16;
+- chuva recente: 8;
+- vegetação: regular;
+- foco próximo: não;
+- histórico: moderado.
+
+CENÁRIO ALTO
+
+- temperatura: 35;
+- umidade: 28;
+- vento: 26;
+- chuva recente: 0;
+- vegetação: seca;
+- foco próximo: não;
+- histórico: alto.
+
+CENÁRIO CRÍTICO
+
+- temperatura: 40;
+- umidade: 15;
+- vento: 42;
+- chuva recente: 0;
+- vegetação: muito seca;
+- foco próximo: sim;
+- distância do foco: 1,5 km;
+- histórico: alto.
+
+Para cada cenário, registrar:
+
+- resultado esperado;
+- score real obtido;
+- classificação real obtida;
+- confiança;
+- fatores explicativos;
+- recomendações;
+- tipo do motor;
+- versão;
+- indicação de simulação;
+- status final;
+- evidência necessária.
+
+Não marcar “Aprovado” quando o resultado não corresponder ao esperado.
+
+==================================================
+3. CENÁRIO DE IMPORTAÇÃO HISTÓRICA
+==================================================
+
+Executar o fluxo:
+
+arquivo CSV/XLS/XLSX
+→ upload
+→ pré-visualização
+→ mapeamento de colunas
+→ validação
+→ tratamento
+→ salvamento do lote
+→ exibição no mapa
+→ uso na análise de risco.
+
+Registrar:
+
+- formato efetivamente suportado;
+- nome neutro do arquivo;
+- total de linhas;
+- válidas;
+- válidas com ressalvas;
+- inválidas;
+- duplicadas;
+- registros com coordenadas;
+- registros sem coordenadas;
+- lote salvo;
+- ocorrências exibidas no mapa;
+- impacto do histórico no score;
+- falhas encontradas;
+- status final.
+
+Não declarar suporte a XLS ou XLSX sem testar um arquivo real desses formatos.
+
+==================================================
+4. ATUALIZAÇÃO DO RELATÓRIO DE TESTES
+==================================================
+
+Atualizar:
+
+docs/trl4/final/02_RELATORIO_TESTES_TRL4.md
+
+Estrutura obrigatória:
+
+1. Identificação do documento
+2. Objetivo
+3. Escopo dos testes
+4. Ambiente utilizado
+5. Versões das tecnologias
+6. Dados utilizados
+7. Cenários de risco
+8. Resultados esperados e obtidos
+9. Testes automatizados
+10. Testes manuais
+11. Testes da importação histórica
+12. Testes de API
+13. Testes de autenticação
+14. Falhas encontradas
+15. Correções realizadas
+16. Pendências
+17. Limitações
+18. Conclusão
+
+Criar tabela:
+
+| ID | Teste | Resultado esperado | Resultado obtido | Status | Evidência |
+
+Criar tabela para os cenários:
+
+| Cenário | Score obtido | Classificação obtida | Tipo do motor | Status |
+
+Criar tabela de falhas:
+
+| Código | Falha | Impacto | Correção | Situação |
+
+Inserir somente resultados reais.
+
+==================================================
+5. ATUALIZAÇÃO DAS MÉTRICAS DO MODELO
+==================================================
+
+Atualizar:
+
+docs/trl4/final/05_METRICAS_MODELO_TRL4.md
+
+Somente preencher métricas de Machine Learning se existir um modelo Scikit-learn realmente treinado e avaliado.
+
+Incluir:
+
+1. tipo do modelo;
+2. algoritmo;
+3. versão;
+4. versão do Python;
+5. versão do Scikit-learn;
+6. origem do dataset;
+7. tipo do dataset;
+8. quantidade de registros;
+9. distribuição das classes;
+10. divisão entre treino e teste;
+11. parâmetros;
+12. accuracy;
+13. precision macro;
+14. precision weighted;
+15. recall macro;
+16. recall weighted;
+17. F1 macro;
+18. F1 weighted;
+19. matriz de confusão;
+20. quantidade de amostras por classe no teste;
+21. warnings;
+22. limitações;
+23. conclusão.
+
+Se o dataset for sintético, inserir em destaque:
+
+“Os resultados foram obtidos com dados sintéticos em ambiente controlado e não representam desempenho operacional definitivo.”
+
+Se não houver modelo supervisionado funcional, substituir o conteúdo por:
+
+“Modelo supervisionado ainda não comprovado por execução. A versão atual utiliza motor transparente baseado em regras.”
+
+Não inventar métricas.
+
+==================================================
+6. ATUALIZAÇÃO DA MATRIZ DE RASTREABILIDADE
+==================================================
+
+Atualizar:
+
+docs/trl4/final/06_MATRIZ_RASTREABILIDADE_TRL4.md
+
+Criar tabela:
+
+| Requisito TRL 4 | Funcionalidade | Arquivo ou módulo | Teste executado | Resultado | Evidência visual | Status |
+
+Incluir, no mínimo:
+
+- arquitetura definida;
+- frontend funcional;
+- backend funcional;
+- serviço Python;
+- banco de dados;
+- entrada de dados;
+- validação;
+- classificação;
+- fatores explicativos;
+- recomendações;
+- alertas;
+- mapa;
+- persistência;
+- relatórios;
+- importação histórica;
+- tratamento dos registros;
+- rastreabilidade dos lotes;
+- uso do histórico no risco;
+- autenticação;
+- modo anônimo;
+- tutorial;
+- testes automatizados;
+- build.
+
+Cada linha deve apontar para um arquivo, módulo, rota, teste ou captura concreta.
+
+Não usar expressões vagas como “funciona corretamente” sem prova associada.
+
+==================================================
+7. ATUALIZAÇÃO DO CHECKLIST FINAL
+==================================================
+
+Atualizar:
+
+docs/trl4/final/08_CHECKLIST_FINAL_SUBMISSAO.md
+
+Utilizar três status:
+
+- CONCLUÍDO
+- PENDENTE
+- NÃO SE APLICA
+
+Criar checklist para:
+
+- sistema inicia;
+- login funciona;
+- cadastro funciona;
+- recuperação de senha funciona;
+- dashboard carrega;
+- áreas monitoradas funcionam;
+- análise de risco funciona;
+- quatro níveis foram testados;
+- fatores são exibidos;
+- recomendações são exibidas;
+- alerta é gerado;
+- mapa carrega;
+- dados são persistidos;
+- relatório é gerado;
+- serviço Python responde;
+- modelo supervisionado foi executado;
+- métricas foram registradas;
+- importação CSV funciona;
+- importação XLS funciona;
+- importação XLSX funciona;
+- mapeamento de colunas funciona;
+- validação funciona;
+- duplicidades são identificadas;
+- lote é salvo;
+- ocorrências aparecem no mapa;
+- histórico influencia a análise;
+- autenticação protege rotas;
+- modo anônimo não expõe identidade;
+- tutorial funciona;
+- TypeScript check passou;
+- testes Node passaram;
+- testes Python passaram;
+- build passou;
+- warnings foram avaliados;
+- dados simulados estão identificados;
+- documentos estão anonimizados;
+- arquivos finais possuem menos de 10 MB.
+
+Para cada item, incluir:
+
+| Item | Status | Evidência | Observação |
+
+Não marcar como concluído sem prova.
+
+==================================================
+8. PREPARAÇÃO DOS ARQUIVOS PARA O CAMPO 18
+==================================================
+
+Depois de atualizar os quatro documentos Markdown, preparar a estrutura de até cinco arquivos para envio.
+
+Sugestão:
+
+1. 01_Evidencias_de_Maturidade_Tecnologica_TRL4.pdf
+2. 02_Relatorio_de_Testes_TRL4.pdf
+3. 03_Arquitetura_Tecnica_TRL4.pdf
+4. 04_Evidencias_Visuais_do_Prototipo.pdf
+5. 05_Metricas_do_Modelo_TRL4.pdf
+
+O quinto arquivo deverá ser gerado apenas se houver modelo supervisionado realmente executado.
+
+Os arquivos devem:
+
+- possuir menos de 10 MB;
+- estar anonimizados;
+- ter capa;
+- ter sumário;
+- ter páginas numeradas;
+- ter tabelas legíveis;
+- ter figuras com legenda;
+- não conter credenciais;
+- não conter nomes pessoais;
+- não conter alegações não comprovadas.
+
+O relatório de testes deverá ser baseado em:
+
+docs/trl4/final/02_RELATORIO_TESTES_TRL4.md
+
+O documento de métricas deverá ser baseado em:
+
+docs/trl4/final/05_METRICAS_MODELO_TRL4.md
+
+A matriz de rastreabilidade deverá ser incorporada ao documento principal ou à arquitetura, com base em:
+
+docs/trl4/final/06_MATRIZ_RASTREABILIDADE_TRL4.md
+
+O checklist deverá ser usado como validação interna antes do upload, com base em:
+
+docs/trl4/final/08_CHECKLIST_FINAL_SUBMISSAO.md
+
+==================================================
+9. RELATÓRIO FINAL
+==================================================
+
+Ao concluir, informar:
+
+1. comandos executados;
+2. resultados reais;
+3. testes aprovados;
+4. testes falhados;
+5. warnings;
+6. métricas reais;
+7. versão do modelo;
+8. tipo do dataset;
+9. suporte real a CSV/XLS/XLSX;
+10. falhas encontradas;
+11. correções realizadas;
+12. pendências;
+13. arquivos Markdown atualizados;
+14. quais PDFs podem ser gerados;
+15. quais evidências ainda precisam de captura;
+16. se o pacote está:
+   - pronto;
+   - pronto com ajustes;
+   - não pronto.
+
+Não alterar o código principal além do estritamente necessário para executar os testes, corrigir resultados incorretos ou produzir evidências verdadeiras.

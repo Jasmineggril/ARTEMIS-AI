@@ -1,0 +1,159 @@
+Realize a correção técnica final do CERES AI antes da produção das evidências de TRL 4.
+
+1. Corrija todos os erros de TypeScript.
+
+Execute:
+
+npm install
+npm run check
+
+Foram identificados problemas relacionados a:
+
+- módulo react-markdown ausente;
+- propriedades children e href sem tipagem no Chatbot.tsx;
+- módulo bcrypt não resolvido.
+
+Instale ou corrija as dependências necessárias e adicione tipagem explícita aos componentes Markdown.
+
+Não desative strict mode e não use any apenas para esconder os erros.
+
+2. Após corrigir, execute:
+
+npm run check
+npm run test
+npm run build
+
+Mostre os resultados completos.
+
+3. Corrija a incompatibilidade do Scikit-learn.
+
+O modelo risk_classifier.joblib foi gerado com Scikit-learn 1.9.0, mas o ambiente atual utiliza 1.8.0.
+
+Defina uma única versão compatível em:
+
+python_service/requirements.txt
+
+Depois:
+
+- remova o modelo antigo;
+- treine novamente;
+- salve novamente o joblib;
+- execute todos os testes;
+- confirme que não existem InconsistentVersionWarning.
+
+Executar:
+
+pip install -r python_service/requirements.txt
+python python_service/train_model.py
+python python_service/evaluate_model.py
+pytest python_service/tests -v
+
+4. Reequilibre o dataset sintético.
+
+O dataset atual possui pouquíssimos exemplos críticos.
+
+Garanta quantidade representativa para as quatro classes:
+
+- baixo;
+- moderado;
+- alto;
+- crítico.
+
+Utilize amostragem estratificada e registre a distribuição de treino e teste.
+
+Não manipule artificialmente as métricas apenas para aumentá-las.
+
+Atualize metrics.json e a matriz de confusão.
+
+5. Verifique o suporte real a CSV, XLS e XLSX.
+
+A página DataImport.tsx atualmente possui parser manual de CSV.
+
+Implemente leitura real de Excel usando biblioteca adequada e mantida, como xlsx/SheetJS, ou restrinja a interface para CSV enquanto não existir suporte real.
+
+Não aceite XLS/XLSX visualmente sem processá-los corretamente.
+
+Criar testes para:
+
+- CSV;
+- XLS;
+- XLSX;
+- arquivo vazio;
+- planilha sem cabeçalho;
+- planilha com múltiplas abas;
+- caracteres acentuados;
+- datas do Excel.
+
+6. Proteja as rotas de importação.
+
+Exigir autenticação para:
+
+- POST /api/import-batches;
+- GET /api/import-batches;
+- GET /api/fire-occurrences;
+- demais rotas que exponham dados operacionais.
+
+Retornar 401 quando não autenticado.
+
+7. Corrija textos legados no código ativo.
+
+Buscar e corrigir:
+
+- “FlorestaÍ - Monitoramento” em sidebar.tsx;
+- “Unidade Floresta Norte 1”;
+- referências centrais a CAR, haCARthon, SICAR, APP e Reserva Legal;
+- nomes pessoais e identificadores.
+
+A evolução do Florestaí poderá permanecer apenas:
+
+- no README;
+- na documentação TRL;
+- na seção institucional apropriada.
+
+Ela não deve aparecer como nome atual da plataforma.
+
+8. Limpe attached_assets.
+
+Mova prompts e materiais antigos restantes para archive/legacy-assets ou exclua-os do pacote final.
+
+Mantenha em attached_assets apenas arquivos realmente utilizados pela interface.
+
+9. Valide o fluxo completo:
+
+login
+→ importação CSV
+→ mapeamento
+→ validação
+→ salvamento do lote
+→ consulta das ocorrências
+→ exibição no mapa
+→ análise de risco
+→ contribuição histórica
+→ alerta
+→ relatório.
+
+10. Atualize os documentos TRL somente após executar tudo.
+
+Registrar os resultados reais em:
+
+docs/trl4/final/02_RELATORIO_TESTES_TRL4.md
+docs/trl4/final/05_METRICAS_MODELO_TRL4.md
+docs/trl4/final/06_MATRIZ_RASTREABILIDADE_TRL4.md
+docs/trl4/final/08_CHECKLIST_FINAL_SUBMISSAO.md
+
+11. Ao final, informar:
+
+- erros TypeScript corrigidos;
+- resultado do npm run check;
+- testes JavaScript/TypeScript aprovados e falhados;
+- resultado do build;
+- testes Python aprovados e falhados;
+- quantidade de warnings;
+- versão exata do Scikit-learn;
+- distribuição das quatro classes;
+- suporte comprovado a CSV/XLS/XLSX;
+- proteção das rotas;
+- ocorrências legadas restantes;
+- limitações ainda existentes.
+
+Não considerar a tarefa concluída enquanto houver erro de TypeScript, aviso de incompatibilidade do Scikit-learn, suporte fictício a Excel ou rota de importação sem autenticação.

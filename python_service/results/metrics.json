@@ -1,0 +1,89 @@
+{
+  "model_version": "1.0.0-sklearn-rf",
+  "trained_at": "2026-07-20T15:37:29.665174+00:00",
+  "dataset": {
+    "type": "synthetic",
+    "origin": "rule-engine-labels",
+    "n_samples": 2000,
+    "n_train": 1600,
+    "n_test": 400,
+    "class_distribution": {
+      "baixo": 500,
+      "moderado": 500,
+      "alto": 500,
+      "critico": 500
+    },
+    "features": [
+      "temperature",
+      "humidity",
+      "wind_speed",
+      "recent_rainfall",
+      "vegetation_num",
+      "nearby_hotspot",
+      "hotspot_distance",
+      "historical_occurrences",
+      "data_quality_num"
+    ],
+    "classes": [
+      "baixo",
+      "moderado",
+      "alto",
+      "critico"
+    ],
+    "warning": "Dataset sintético gerado a partir do motor de regras. Métricas demonstram apenas viabilidade técnica em ambiente controlado. Validação com dados reais prevista para a Prova de Valor."
+  },
+  "model": {
+    "algorithm": "RandomForestClassifier",
+    "n_estimators": 100,
+    "max_depth": 10,
+    "class_weight": "balanced"
+  },
+  "metrics": {
+    "accuracy": 1.0,
+    "precision_macro": 1.0,
+    "recall_macro": 1.0,
+    "f1_macro": 1.0,
+    "precision_weighted": 1.0,
+    "recall_weighted": 1.0,
+    "f1_weighted": 1.0,
+    "confusion_matrix": [
+      [
+        100,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        100,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        100,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        100
+      ]
+    ],
+    "class_names": [
+      "baixo",
+      "moderado",
+      "alto",
+      "critico"
+    ]
+  },
+  "limitations": [
+    "Treinado com dataset sintético — não representa condições operacionais reais",
+    "Rótulos derivados do motor de regras (possível viés circular)",
+    "Sem dados geoespaciais reais ou séries temporais",
+    "Calibração e validação com dados reais previstas para a Prova de Valor",
+    "Não declare este modelo como IA validada ou operacional"
+  ]
+}

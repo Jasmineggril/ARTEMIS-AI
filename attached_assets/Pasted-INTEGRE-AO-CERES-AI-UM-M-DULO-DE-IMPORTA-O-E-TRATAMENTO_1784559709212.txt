@@ -1,0 +1,284 @@
+INTEGRE AO CERES AI UM MÓDULO DE IMPORTAÇÃO E TRATAMENTO DE DADOS DO SISFOGO, SEM CRIAR UM SISTEMA SEPARADO.
+
+OBJETIVO
+
+Permitir que o CERES AI importe arquivos CSV, XLS e XLSX contendo registros de ocorrências, trate esses dados, salve-os no PostgreSQL, exiba-os no mapa e utilize o histórico como fator complementar da análise de risco.
+
+A integração atual deve ser apresentada como importação de arquivos, e não como API oficial.
+
+1. NAVEGAÇÃO
+
+Adicionar ao menu:
+
+“Importação de Ocorrências”
+
+Criar rota:
+
+/data-import
+
+Usar a identidade visual e os componentes existentes do CERES AI.
+
+2. PÁGINA DE IMPORTAÇÃO
+
+Criar uma página com:
+
+- upload de CSV, XLS e XLSX;
+- nome da fonte;
+- data de referência;
+- observações;
+- pré-visualização das primeiras linhas;
+- mapeamento das colunas;
+- validação;
+- confirmação da importação;
+- relatório final.
+
+Título:
+
+“Importação de Dados de Ocorrências”
+
+Descrição:
+
+“Importe, valide e organize registros provenientes do Sisfogo ou de outras fontes autorizadas.”
+
+Aviso:
+
+“A integração atual ocorre por importação de arquivos e não representa conexão direta ou oficial com o Sisfogo.”
+
+3. CAMPOS SUPORTADOS
+
+Permitir o mapeamento de:
+
+- data;
+- horário;
+- município;
+- estado;
+- latitude;
+- longitude;
+- tipo da ocorrência;
+- situação;
+- área afetada;
+- causa;
+- vegetação;
+- observação;
+- fonte;
+- referência externa.
+
+Não depender de nomes fixos das colunas.
+
+4. TRATAMENTO
+
+Implementar:
+
+- remoção de espaços;
+- padronização de datas;
+- padronização de horários;
+- conversão de números;
+- normalização de estados;
+- validação de latitude e longitude;
+- identificação de duplicados;
+- identificação de campos ausentes;
+- registro das inconsistências.
+
+Classificar cada linha como:
+
+- válida;
+- válida com ressalvas;
+- inválida;
+- duplicada.
+
+Não descartar registros silenciosamente.
+
+5. BANCO DE DADOS
+
+Criar ou adaptar tabelas:
+
+import_batches
+
+- id
+- filename
+- source_name
+- total_rows
+- valid_rows
+- invalid_rows
+- duplicate_rows
+- imported_at
+- imported_by
+- status
+- notes
+
+fire_occurrences
+
+- id
+- import_batch_id
+- occurrence_date
+- occurrence_time
+- municipality
+- state
+- latitude
+- longitude
+- occurrence_type
+- occurrence_status
+- affected_area
+- cause
+- vegetation_condition
+- notes
+- source
+- source_reference
+- validation_status
+- raw_data
+- created_at
+
+6. MAPA
+
+Exibir ocorrências válidas no Mapa de Risco.
+
+Adicionar filtros por:
+
+- período;
+- município;
+- estado;
+- tipo;
+- situação;
+- fonte;
+- lote de importação.
+
+Ao clicar em um registro, mostrar:
+
+- data;
+- horário;
+- local;
+- tipo;
+- causa;
+- área afetada;
+- fonte;
+- status de validação.
+
+7. ANÁLISE DE RISCO
+
+Usar o histórico importado como fator complementar.
+
+Calcular e exibir:
+
+- ocorrências dentro de um raio configurável;
+- frequência histórica;
+- ocorrência mais recente;
+- sazonalidade;
+- concentração espacial.
+
+Adicionar ao resultado:
+
+“Contribuição do histórico de ocorrências”
+
+O histórico deve aumentar ou reduzir o score de forma documentada e transparente.
+
+Não declarar que os dados do Sisfogo, isoladamente, determinam o nível de risco.
+
+8. DASHBOARD
+
+Adicionar indicadores:
+
+- total de ocorrências importadas;
+- registros válidos;
+- registros pendentes;
+- municípios com mais ocorrências;
+- ocorrências por mês;
+- ocorrências próximas às áreas monitoradas;
+- última importação.
+
+9. RELATÓRIO DE IMPORTAÇÃO
+
+Após cada upload, apresentar:
+
+- total de linhas;
+- válidas;
+- com ressalvas;
+- inválidas;
+- duplicadas;
+- com coordenadas;
+- sem coordenadas;
+- período identificado;
+- municípios e estados encontrados.
+
+Permitir exportar:
+
+- resumo do lote;
+- inconsistências;
+- registros rejeitados.
+
+10. RASTREABILIDADE
+
+Manter:
+
+- nome do arquivo;
+- origem;
+- lote;
+- linha original;
+- dado bruto;
+- alterações feitas;
+- data da importação;
+- usuário responsável;
+- status de validação.
+
+11. DADOS DEMONSTRATIVOS
+
+Caso não exista arquivo real, criar um exemplo sintético.
+
+O arquivo e a interface devem mostrar:
+
+“Dados simulados para demonstração em ambiente controlado.”
+
+12. DOCUMENTAÇÃO
+
+Atualizar README.md e docs/trl4 com:
+
+- origem da funcionalidade no Florestaí;
+- problema das planilhas estáticas;
+- fluxo de importação;
+- tratamento;
+- georreferenciamento;
+- rastreabilidade;
+- uso do histórico no risco;
+- limitações;
+- evidências necessárias.
+
+13. TESTES
+
+Criar testes para:
+
+- CSV válido;
+- XLSX válido;
+- arquivo vazio;
+- coluna ausente;
+- data inválida;
+- coordenada inválida;
+- duplicidade;
+- salvamento do lote;
+- exibição no mapa;
+- contribuição histórica no risco.
+
+14. VALIDAÇÃO FINAL
+
+Executar:
+
+npm run check
+npm run test
+npm run build
+
+Testar o fluxo completo:
+
+upload
+→ mapeamento
+→ validação
+→ importação
+→ mapa
+→ análise de risco
+→ relatório.
+
+Ao final, informar:
+
+- arquivos alterados;
+- tabelas criadas;
+- formatos suportados;
+- regras de validação;
+- testes executados;
+- limitações restantes.

@@ -1,0 +1,1980 @@
+ATUE COMO ENGENHEIRO DE SOFTWARE SÊNIOR, ARQUITETO DE SOLUÇÕES, ESPECIALISTA EM MACHINE LEARNING, DADOS GEOESPACIAIS, QUALIDADE DE SOFTWARE, UX DE SISTEMAS INDUSTRIAIS, DOCUMENTAÇÃO TÉCNICA E COMPROVAÇÃO DE MATURIDADE TECNOLÓGICA TRL.
+
+Antes de alterar qualquer arquivo, analise integralmente o projeto existente.
+
+NÃO reconstrua o sistema do zero.
+
+NÃO substitua a stack atual.
+
+NÃO remova funcionalidades sem verificar se podem ser adaptadas.
+
+NÃO declare funcionalidades, integrações, métricas, testes ou resultados que não estejam comprovados no código ou na execução real do sistema.
+
+==================================================
+1. CONTEXTO DO PROJETO
+==================================================
+
+O projeto é o CERES AI, uma plataforma preditiva de inteligência ambiental para prevenção de incêndios em áreas produtivas e ativos territoriais.
+
+A solução deve atender contextos como:
+
+- agroindústrias;
+- empresas florestais;
+- unidades de energia;
+- mineração;
+- operações logísticas;
+- instalações industriais;
+- propriedades e unidades produtivas com ativos territoriais;
+- áreas expostas a incêndios, queimadas e riscos ambientais.
+
+O CERES AI deve integrar dados:
+
+- ambientais;
+- climáticos;
+- geográficos;
+- geoespaciais;
+- históricos de ocorrências;
+- provenientes de sensores;
+- provenientes de APIs autorizadas;
+- provenientes de arquivos CSV, XLS ou XLSX.
+
+A plataforma também deverá incorporar a evolução da proposta original do Florestaí, que buscava transformar registros disponibilizados em planilhas estáticas em informações organizadas, filtráveis, georreferenciadas e úteis para tomada de decisão.
+
+No CERES AI, essa evolução deverá ocorrer por meio de um módulo de importação, tratamento, validação e visualização de registros provenientes de arquivos do Sisfogo ou de outras fontes autorizadas.
+
+IMPORTANTE:
+
+A integração atual deve ser apresentada como:
+
+“Importação e tratamento de dados provenientes de arquivos do Sisfogo ou de outras fontes autorizadas.”
+
+Não utilizar a expressão:
+
+“Integração oficial com o Sisfogo”
+
+a menos que exista API oficial, credencial válida, documentação técnica e funcionamento comprovado no código.
+
+==================================================
+2. OBJETIVO GERAL
+==================================================
+
+Auditar, corrigir e consolidar o CERES AI como uma plataforma funcional de inteligência ambiental, com fluxo tecnológico demonstrável em ambiente controlado e documentação suficiente para comprovar TRL 4.
+
+O sistema deverá demonstrar o seguinte fluxo:
+
+entrada de dados
+→ validação
+→ tratamento
+→ processamento
+→ classificação de risco
+→ explicação dos fatores críticos
+→ recomendações preventivas
+→ geração de alerta
+→ visualização em mapa
+→ persistência
+→ geração de relatório
+→ registro das evidências.
+
+O pacote de comprovação deverá demonstrar:
+
+- arquitetura tecnológica definida;
+- protótipo funcional;
+- componentes integrados;
+- entrada e processamento de dados;
+- classificação de risco;
+- fatores explicativos;
+- recomendações preventivas;
+- alertas;
+- mapas;
+- relatórios;
+- persistência dos resultados;
+- serviço Python;
+- testes em ambiente controlado;
+- importação de dados históricos;
+- tratamento de planilhas;
+- rastreabilidade;
+- documentação das limitações.
+
+==================================================
+3. STACK ATUAL
+==================================================
+
+Preservar a stack existente, sempre que estiver funcional:
+
+Frontend:
+
+- React;
+- TypeScript;
+- Vite;
+- Wouter;
+- Tailwind CSS;
+- shadcn/ui;
+- TanStack Query;
+- Recharts;
+- Leaflet ou React Leaflet.
+
+Backend:
+
+- Node.js;
+- Express;
+- PostgreSQL;
+- Drizzle ORM.
+
+Camada analítica:
+
+- Python;
+- FastAPI;
+- Scikit-learn;
+- Pandas;
+- NumPy;
+- Pydantic;
+- Pytest;
+- Joblib.
+
+Não substituir Express pelo FastAPI.
+
+A arquitetura deverá ser híbrida:
+
+Frontend React/TypeScript
+→ Backend Express
+→ Serviço Python/FastAPI
+→ Motor de risco ou modelo Scikit-learn
+→ PostgreSQL
+→ Dashboard, mapa, alertas e relatórios.
+
+==================================================
+4. REGRAS DE VERACIDADE
+==================================================
+
+1. Não declarar como implementada nenhuma funcionalidade que não exista no código.
+
+2. Não afirmar que existe Machine Learning supervisionado operacional caso exista apenas um motor baseado em regras.
+
+3. Quando forem utilizados dados:
+
+- sintéticos;
+- simulados;
+- públicos;
+- históricos;
+- representativos;
+
+essa condição deverá ser informada claramente.
+
+4. Não apresentar métricas obtidas com dados sintéticos como desempenho operacional real.
+
+5. Não declarar testes aprovados sem executar os comandos e registrar os resultados.
+
+6. Não declarar integração ativa com APIs externas sem comprovação técnica.
+
+7. Toda funcionalidade deverá ser classificada como:
+
+- implementada;
+- demonstrativa;
+- experimental;
+- em desenvolvimento;
+- prevista para a Prova de Valor.
+
+8. Não apresentar metas da Prova de Valor como resultados já alcançados.
+
+9. Utilizar expressões como:
+
+- meta prevista;
+- resultado esperado;
+- a ser validado durante a PoV;
+- protótipo em ambiente controlado;
+- modelo experimental;
+- dados demonstrativos.
+
+10. Não declarar “integração oficial com o Sisfogo” quando o sistema apenas importa arquivos.
+
+11. Dados históricos do Sisfogo não deverão ser apresentados como único fator responsável pelo risco.
+
+12. O sistema deverá informar que apoia decisões, mas não substitui:
+
+- laudos;
+- inspeções;
+- fiscalização;
+- avaliação técnica presencial;
+- procedimentos oficiais;
+- protocolos internos de segurança.
+
+13. Nenhum registro poderá ser descartado silenciosamente durante importações.
+
+14. Não ocultar erros, falhas ou limitações nos relatórios.
+
+==================================================
+5. MODO DE SUBMISSÃO ANÔNIMA
+==================================================
+
+Criar ou manter suporte à variável:
+
+VITE_SUBMISSION_MODE=true
+
+Quando estiver ativa:
+
+- ocultar nomes pessoais;
+- ocultar cargos;
+- ocultar e-mails;
+- ocultar telefone;
+- ocultar empresa;
+- ocultar universidade;
+- ocultar instituição;
+- ocultar CNPJ;
+- ocultar LinkedIn;
+- ocultar GitHub pessoal;
+- ocultar links identificadores;
+- ocultar qualquer elemento que identifique os proponentes.
+
+Usar como nome neutro:
+
+“Plataforma Preditiva de Inteligência Ambiental”
+
+Usar como subtítulo:
+
+“Prevenção de incêndios em áreas produtivas e ativos territoriais.”
+
+Quando:
+
+VITE_SUBMISSION_MODE=false
+
+a identidade CERES AI poderá ser exibida.
+
+Criar controle centralizado de identidade.
+
+Exemplo:
+
+const PRODUCT_NAME =
+  import.meta.env.VITE_SUBMISSION_MODE === "true"
+    ? "Plataforma Preditiva de Inteligência Ambiental"
+    : "CERES AI";
+
+Não deixar textos fixos “CERES AI” espalhados pela aplicação.
+
+Aplicar o controle em:
+
+- Header;
+- Sidebar;
+- Home;
+- Login;
+- Cadastro;
+- Recuperação de senha;
+- Dashboard;
+- Configurações;
+- Relatórios;
+- documentos;
+- mensagens do servidor;
+- metadados do site.
+
+==================================================
+6. AUDITORIA INICIAL
+==================================================
+
+Antes de implementar alterações:
+
+1. Ler:
+
+- package.json;
+- README.md;
+- replit.md;
+- .replit;
+- .env.example;
+- client/src;
+- server;
+- shared;
+- python_service;
+- tests;
+- docs;
+- configuração do banco;
+- arquivos de migração;
+- variáveis de ambiente;
+- arquivos de autenticação;
+- attached_assets;
+- archive.
+
+2. Identificar:
+
+- rotas existentes;
+- telas funcionais;
+- componentes utilizados;
+- componentes não utilizados;
+- funcionalidades incompletas;
+- dados simulados;
+- APIs reais;
+- modelo de risco atual;
+- scripts de testes;
+- erros de TypeScript;
+- erros de Python;
+- erros de build;
+- problemas de autenticação;
+- riscos de segurança;
+- referências antigas;
+- referências ao CAR;
+- referências ao haCARthon;
+- referências ao SICAR;
+- arquivos identificadores;
+- documentos antigos;
+- dados pessoais;
+- informações incompatíveis com anonimização.
+
+3. Produzir um resumo inicial no console:
+
+A. Preservar  
+B. Adaptar  
+C. Criar  
+D. Corrigir  
+E. Remover ou arquivar  
+F. Evidências disponíveis  
+G. Evidências ausentes
+
+Depois da auditoria, executar as correções sem pedir nova confirmação.
+
+==================================================
+7. POSICIONAMENTO DO PRODUTO
+==================================================
+
+Apresentar o CERES AI como:
+
+“Plataforma preditiva de inteligência ambiental para prevenção de incêndios em áreas produtivas e ativos territoriais.”
+
+Mensagem principal:
+
+“Preveja o risco. Proteja a operação.”
+
+Descrição:
+
+“O CERES AI integra dados ambientais, climáticos, geoespaciais e históricos para classificar riscos de incêndio, identificar áreas críticas, explicar fatores de risco e gerar alertas e recomendações preventivas.”
+
+Diferencial:
+
+“A solução não apenas apresenta ocorrências já registradas: calcula o risco por área produtiva, explica os fatores críticos e recomenda ações preventivas antes da ocorrência.”
+
+Remover das áreas centrais:
+
+- preenchimento de CAR;
+- regularização cadastral;
+- APP;
+- Reserva Legal;
+- diagnóstico SICAR;
+- conformidade cadastral;
+- gamificação infantil;
+- haCARthon;
+- estatísticas não comprovadas;
+- resultados falsos;
+- integrações não implementadas.
+
+O CAR poderá permanecer apenas como possível fonte territorial futura, caso tecnicamente justificado.
+
+==================================================
+8. NAVEGAÇÃO
+==================================================
+
+Organizar o menu principal com:
+
+- Visão Geral;
+- Áreas Monitoradas;
+- Análise de Risco;
+- Mapa de Risco;
+- Alertas Preventivos;
+- Importação de Ocorrências;
+- Fontes de Dados;
+- Inteligência Operacional;
+- Protocolos de Prevenção;
+- Relatórios;
+- Ajuda;
+- Configurações.
+
+Rotas sugeridas:
+
+/                       → Home
+/dashboard              → Visão Geral
+/areas                  → Áreas Monitoradas
+/risk-analysis          → Análise de Risco
+/maps                   → Mapa de Risco
+/alerts                 → Alertas Preventivos
+/data-import             → Importação de Ocorrências
+/data-sources            → Fontes de Dados
+/insights               → Inteligência Operacional
+/prevention             → Protocolos de Prevenção
+/reports                → Relatórios
+/help                   → Central de Ajuda
+/settings               → Configurações
+/login                  → Login
+/signup                 → Cadastro
+/reset-password         → Recuperação de senha.
+
+==================================================
+9. LANDING PAGE
+==================================================
+
+Reescrever a página inicial.
+
+Hero:
+
+Título:
+
+“Preveja o risco. Proteja a operação.”
+
+Texto:
+
+“Transforme dados ambientais, climáticos, geoespaciais e históricos em mapas de risco, alertas preventivos e recomendações para áreas produtivas e ativos territoriais.”
+
+Botão principal:
+
+“Simular análise de risco”
+
+Destino:
+
+/risk-analysis
+
+Botão secundário:
+
+“Conhecer a plataforma”
+
+Adicionar selo:
+
+“Protótipo em validação controlada — TRL 4”
+
+Aviso:
+
+“Os resultados apresentados utilizam dados públicos, históricos, sintéticos ou simulados e não substituem avaliação técnica oficial.”
+
+Criar seções:
+
+1. Problema;
+2. Como funciona;
+3. Diferencial;
+4. Setores atendidos;
+5. Funcionalidades;
+6. Evolução do Florestaí;
+7. Metas da Prova de Valor;
+8. Explicação do TRL 4.
+
+Texto sobre o Florestaí:
+
+“O CERES AI evolui a proposta original do Florestaí ao incorporar tratamento estruturado de registros históricos, análise de risco, mapas, alertas, recomendações e rastreabilidade.”
+
+Não afirmar integração direta com o Sisfogo.
+
+==================================================
+10. DASHBOARD
+==================================================
+
+Criar cards:
+
+- Áreas monitoradas;
+- Área total analisada;
+- Índice médio de risco;
+- Alertas ativos;
+- Áreas em risco alto ou crítico;
+- Tempo médio de análise;
+- Ocorrências históricas importadas;
+- Fontes de dados disponíveis;
+- Última atualização;
+- Último lote importado.
+
+Criar seção:
+
+“Índice de Risco de Incêndio”
+
+Exibir:
+
+- score de 0 a 100;
+- classificação;
+- área;
+- data;
+- origem dos dados;
+- tipo do modelo;
+- versão;
+- indicação de simulação;
+- qualidade dos dados.
+
+Classificação:
+
+0 a 24 = Baixo  
+25 a 49 = Moderado  
+50 a 74 = Alto  
+75 a 100 = Crítico.
+
+Criar:
+
+- fatores que influenciaram o risco;
+- áreas prioritárias;
+- recomendações preventivas;
+- ocorrências históricas próximas;
+- gráficos de evolução.
+
+==================================================
+11. ÁREAS MONITORADAS
+==================================================
+
+Criar ou aprimorar a página:
+
+/areas
+
+Campos:
+
+- nome;
+- tipo de operação;
+- município;
+- estado;
+- latitude;
+- longitude;
+- área em hectares;
+- responsável;
+- status;
+- observações;
+- data de cadastro.
+
+Permitir:
+
+- cadastrar;
+- editar;
+- visualizar;
+- arquivar;
+- executar análise;
+- visualizar no mapa;
+- consultar alertas;
+- consultar histórico;
+- gerar relatório.
+
+==================================================
+12. MOTOR DE CLASSIFICAÇÃO DE RISCO
+==================================================
+
+Manter ou criar um motor transparente de classificação.
+
+Tipos:
+
+RiskInput  
+RiskFactor  
+RiskResult  
+RiskLevel  
+RiskRecommendation.
+
+Entrada:
+
+- temperature;
+- humidity;
+- windSpeed;
+- recentRainfall;
+- vegetationCondition;
+- nearbyHotspot;
+- hotspotDistance;
+- historicalOccurrences;
+- recentOccurrences;
+- occurrenceDensity;
+- dataQuality.
+
+Saída:
+
+- score;
+- level;
+- confidence;
+- factors;
+- recommendations;
+- calculationVersion;
+- modelType;
+- modelVersion;
+- datasetType;
+- isSimulated;
+- calculatedAt.
+
+O motor deverá:
+
+1. validar entradas;
+2. normalizar variáveis;
+3. calcular score;
+4. limitar score entre 0 e 100;
+5. explicar a contribuição dos fatores;
+6. gerar recomendações;
+7. registrar versão;
+8. ser determinístico;
+9. possuir testes.
+
+Caso seja motor baseado em regras, retornar:
+
+"modelType": "transparent-rule-engine"
+
+Comentário obrigatório:
+
+“Este motor transparente baseado em regras é utilizado para demonstração e validação do fluxo tecnológico em ambiente controlado. A Prova de Valor prevê treinamento, calibração e validação de modelo supervisionado com dados representativos.”
+
+Não chamar esse motor de Machine Learning.
+
+==================================================
+13. SERVIÇO PYTHON
+==================================================
+
+Criar ou validar:
+
+python_service/
+
+Estrutura:
+
+python_service/
+  app.py
+  schemas.py
+  risk_model.py
+  feature_engineering.py
+  train_model.py
+  evaluate_model.py
+  requirements.txt
+  models/
+  results/
+  data/
+    README.md
+  tests/
+    test_api.py
+    test_model.py
+    test_validation.py
+  README.md
+
+Utilizar FastAPI.
+
+Dependências mínimas:
+
+- fastapi;
+- uvicorn;
+- pydantic;
+- numpy;
+- pandas;
+- scikit-learn;
+- pytest;
+- joblib.
+
+Endpoints:
+
+GET /health
+
+Retorno:
+
+{
+  "status": "ok",
+  "service": "risk-analysis-python"
+}
+
+POST /analyze-risk
+
+Entrada:
+
+- temperature;
+- humidity;
+- wind_speed;
+- recent_rainfall;
+- vegetation_condition;
+- nearby_hotspot;
+- hotspot_distance;
+- historical_occurrences;
+- recent_occurrences;
+- occurrence_density;
+- data_quality.
+
+Saída:
+
+- score;
+- level;
+- confidence;
+- factors;
+- recommendations;
+- model_type;
+- model_version;
+- dataset_type;
+- is_simulated;
+- calculated_at.
+
+==================================================
+14. MODELO SUPERVISIONADO
+==================================================
+
+Criar estrutura preparada para Scikit-learn.
+
+Funções:
+
+- validate_input;
+- normalize_features;
+- calculate_rule_score;
+- classify_risk;
+- explain_factors;
+- generate_recommendations;
+- load_ml_model;
+- predict_with_ml_model.
+
+Verificar se existe:
+
+python_service/models/risk_classifier.joblib
+
+Se não existir, utilizar fallback transparente.
+
+Caso exista modelo supervisionado, retornar:
+
+"model_type": "supervised-ml"
+
+O modelo deverá registrar:
+
+- algoritmo;
+- versão;
+- dataset;
+- tipo de dataset;
+- quantidade de registros;
+- data de treinamento;
+- divisão treino e teste;
+- accuracy;
+- precision;
+- recall;
+- F1 macro;
+- F1 weighted;
+- matriz de confusão;
+- limitações.
+
+Se o dataset for sintético, incluir:
+
+“Metrics obtained with synthetic demonstration data and not representative of operational performance.”
+
+Não apresentar o modelo como validado em ambiente real.
+
+==================================================
+15. INTEGRAÇÃO EXPRESS E PYTHON
+==================================================
+
+Criar fluxo:
+
+POST /api/risk-analysis
+→ validar entrada
+→ enviar ao FastAPI
+→ receber resultado
+→ salvar no PostgreSQL
+→ retornar ao frontend.
+
+Criar variável:
+
+PYTHON_SERVICE_URL=http://127.0.0.1:8000
+
+Caso o Python esteja indisponível:
+
+- retornar erro controlado;
+- não travar a aplicação;
+- registrar a falha;
+- não expor dados sensíveis;
+- utilizar fallback TypeScript apenas em modo demonstrativo;
+- informar ao usuário qual mecanismo foi utilizado.
+
+==================================================
+16. ANÁLISE DE RISCO
+==================================================
+
+Criar página:
+
+/risk-analysis
+
+Título:
+
+“Análise Preditiva de Risco”
+
+Campos:
+
+- área;
+- tipo de operação;
+- município;
+- estado;
+- latitude;
+- longitude;
+- temperatura;
+- umidade;
+- velocidade do vento;
+- precipitação recente;
+- condição da vegetação;
+- histórico de ocorrências;
+- foco próximo;
+- distância do foco;
+- qualidade dos dados;
+- cenário demonstrativo.
+
+Criar botões:
+
+- Baixo;
+- Moderado;
+- Alto;
+- Crítico.
+
+Ao analisar:
+
+- chamar Express;
+- Express chamar Python;
+- gerar score;
+- classificar;
+- exibir fatores;
+- exibir contribuição de cada fator;
+- exibir tipo do modelo;
+- exibir versão;
+- gerar recomendações;
+- salvar;
+- permitir gerar alerta;
+- permitir gerar relatório;
+- indicar dados simulados.
+
+Aviso:
+
+“Esta análise é um instrumento de apoio à decisão e não substitui inspeção, laudo ou protocolo oficial de segurança.”
+
+==================================================
+17. IMPORTAÇÃO DE DADOS HISTÓRICOS
+==================================================
+
+Criar módulo integrado ao CERES AI.
+
+Rota:
+
+/data-import
+
+Nome:
+
+“Importação de Ocorrências”
+
+Título:
+
+“Importação de Dados de Ocorrências”
+
+Descrição:
+
+“Importe, valide e organize registros provenientes do Sisfogo ou de outras fontes autorizadas.”
+
+Aviso:
+
+“A integração atual ocorre por importação de arquivos e não representa conexão direta ou oficial com o Sisfogo.”
+
+Permitir arquivos:
+
+- CSV;
+- XLS;
+- XLSX.
+
+Fluxo:
+
+1. selecionar arquivo;
+2. informar fonte;
+3. pré-visualizar linhas;
+4. identificar cabeçalho;
+5. mapear colunas;
+6. validar;
+7. tratar;
+8. georreferenciar;
+9. confirmar;
+10. salvar lote;
+11. gerar relatório;
+12. exibir no mapa.
+
+Campos aceitos:
+
+- data;
+- horário;
+- município;
+- estado;
+- latitude;
+- longitude;
+- tipo da ocorrência;
+- situação;
+- área afetada;
+- causa;
+- condição da vegetação;
+- observação;
+- fonte;
+- referência externa.
+
+Não depender de nomes fixos.
+
+Criar interface:
+
+Coluna do arquivo
+→
+Campo do CERES AI.
+
+Exemplo:
+
+“Município da ocorrência”
+→
+municipality.
+
+==================================================
+18. TRATAMENTO DOS DADOS
+==================================================
+
+O serviço deverá:
+
+- remover espaços;
+- padronizar textos;
+- padronizar datas;
+- padronizar horários;
+- converter números;
+- normalizar municípios;
+- normalizar estados;
+- validar latitude;
+- validar longitude;
+- identificar duplicidades;
+- detectar campos ausentes;
+- registrar inconsistências;
+- preservar os dados brutos;
+- registrar transformações.
+
+Status por registro:
+
+- válido;
+- válido com ressalvas;
+- inválido;
+- duplicado.
+
+Nenhum registro deverá ser apagado silenciosamente.
+
+==================================================
+19. BANCO DE DADOS PARA IMPORTAÇÕES
+==================================================
+
+Criar ou adaptar:
+
+import_batches
+
+Campos:
+
+- id;
+- filename;
+- source_name;
+- source_type;
+- total_rows;
+- valid_rows;
+- warning_rows;
+- invalid_rows;
+- duplicate_rows;
+- imported_at;
+- imported_by;
+- status;
+- notes.
+
+fire_occurrences
+
+Campos:
+
+- id;
+- import_batch_id;
+- occurrence_date;
+- occurrence_time;
+- municipality;
+- state;
+- latitude;
+- longitude;
+- occurrence_type;
+- occurrence_status;
+- affected_area;
+- cause;
+- vegetation_condition;
+- notes;
+- source;
+- source_reference;
+- validation_status;
+- raw_data;
+- created_at.
+
+Manter rastreabilidade completa.
+
+==================================================
+20. RELATÓRIO DE IMPORTAÇÃO
+==================================================
+
+Após o upload, mostrar:
+
+- total de linhas;
+- válidas;
+- válidas com ressalvas;
+- inválidas;
+- duplicadas;
+- com coordenadas;
+- sem coordenadas;
+- período encontrado;
+- municípios;
+- estados;
+- tipos de ocorrência.
+
+Permitir exportar:
+
+- resumo do lote;
+- inconsistências;
+- registros rejeitados;
+- registros importados.
+
+==================================================
+21. USO DO HISTÓRICO NO RISCO
+==================================================
+
+Utilizar os dados históricos como fator complementar.
+
+Calcular:
+
+- ocorrências dentro de raio configurável;
+- frequência histórica;
+- ocorrência mais recente;
+- concentração espacial;
+- recorrência;
+- sazonalidade;
+- densidade de ocorrências.
+
+Exibir no resultado:
+
+“Contribuição do histórico de ocorrências”
+
+Informar:
+
+- quantidade próxima;
+- período analisado;
+- origem;
+- impacto no score;
+- qualidade dos dados.
+
+Não permitir que o histórico seja tratado como único fator da classificação.
+
+==================================================
+22. MAPA DE RISCO
+==================================================
+
+Criar ou aprimorar:
+
+/maps
+
+Exibir:
+
+- áreas monitoradas;
+- ocorrências importadas;
+- alertas;
+- classificação;
+- focos;
+- detalhes;
+- legenda;
+- filtros;
+- agrupamento de pontos.
+
+Filtros:
+
+- período;
+- risco;
+- município;
+- estado;
+- tipo;
+- status;
+- fonte;
+- lote;
+- tipo de operação.
+
+Ao clicar em uma área:
+
+- nome;
+- score;
+- classificação;
+- fatores;
+- ocorrências próximas;
+- recomendações;
+- nova análise;
+- alertas;
+- relatório.
+
+Ao clicar em uma ocorrência:
+
+- data;
+- horário;
+- município;
+- estado;
+- tipo;
+- causa;
+- área afetada;
+- fonte;
+- lote;
+- status de validação.
+
+==================================================
+23. ALERTAS
+==================================================
+
+Cada alerta deverá conter:
+
+- área;
+- score;
+- nível;
+- título;
+- descrição;
+- fatores;
+- ocorrências relacionadas;
+- recomendação;
+- origem;
+- data;
+- status;
+- responsável;
+- evidência;
+- isSimulated.
+
+Status:
+
+- Novo;
+- Visualizado;
+- Em acompanhamento;
+- Encerrado.
+
+Ações:
+
+- ver no mapa;
+- iniciar acompanhamento;
+- encerrar;
+- gerar relatório;
+- ver análise de origem.
+
+==================================================
+24. FONTES DE DADOS
+==================================================
+
+Utilizar nome:
+
+“Fontes de Dados”
+
+Categorias:
+
+- Estação climática;
+- Sensor IoT;
+- API ambiental;
+- Base histórica;
+- Arquivo importado;
+- Base geográfica;
+- Entrada manual;
+- Simulação.
+
+Status:
+
+- Ativo;
+- Simulado;
+- Em integração;
+- Indisponível.
+
+Exibir:
+
+- nome;
+- tipo;
+- origem;
+- última atualização;
+- qualidade;
+- completude;
+- coordenadas;
+- status;
+- lote relacionado;
+- dados disponíveis.
+
+==================================================
+25. INTELIGÊNCIA OPERACIONAL
+==================================================
+
+Criar gráficos:
+
+- análises por período;
+- risco por nível;
+- evolução do risco;
+- fatores críticos;
+- alertas emitidos;
+- alertas validados;
+- tempo médio;
+- cobertura da área piloto;
+- ocorrências por mês;
+- ocorrências por município;
+- ocorrências por estado;
+- ocorrências por tipo;
+- registros válidos e inválidos;
+- densidade espacial;
+- fontes por status.
+
+Dados demonstrativos deverão ser rotulados.
+
+==================================================
+26. RELATÓRIOS
+==================================================
+
+Criar relatório de análise:
+
+- identificação neutra;
+- área;
+- operação;
+- localização;
+- data;
+- fontes;
+- dados de entrada;
+- score;
+- classificação;
+- fatores;
+- histórico de ocorrências;
+- recomendações;
+- alertas;
+- limitações;
+- indicação de simulação;
+- versão do motor;
+- validação.
+
+Criar relatório comparativo:
+
+- cenário inicial;
+- cenário após uso;
+- variação;
+- tempo;
+- alertas;
+- cobertura;
+- avaliações.
+
+Criar relatório de importação:
+
+- lote;
+- fonte;
+- arquivo;
+- linhas;
+- válidas;
+- inválidas;
+- duplicadas;
+- transformações;
+- inconsistências;
+- período;
+- localização;
+- status.
+
+==================================================
+27. PROTOCOLOS DE PREVENÇÃO
+==================================================
+
+Criar página:
+
+/prevention
+
+Conteúdo por nível:
+
+Baixo:
+
+- monitoramento periódico;
+- inspeção programada;
+- manutenção preventiva.
+
+Moderado:
+
+- reforçar acompanhamento;
+- revisar aceiros;
+- revisar equipamentos;
+- verificar fontes de ignição.
+
+Alto:
+
+- inspeção prioritária;
+- limitar atividades de risco;
+- preparar equipes;
+- verificar comunicação.
+
+Crítico:
+
+- acionar protocolo preventivo;
+- priorizar inspeção imediata;
+- suspender atividades de risco;
+- comunicar responsáveis;
+- acompanhar continuamente.
+
+Adicionar aviso:
+
+“As recomendações devem ser adaptadas aos protocolos internos e às normas aplicáveis a cada organização.”
+
+==================================================
+28. TUTORIAL GUIADO
+==================================================
+
+Criar tutorial profissional de navegação.
+
+Na primeira entrada autenticada, exibir:
+
+Título:
+
+“Bem-vindo ao CERES AI”
+
+No modo anônimo:
+
+“Bem-vindo à Plataforma Preditiva de Inteligência Ambiental”
+
+Texto:
+
+“Conheça as principais funcionalidades e aprenda a executar uma análise de risco, importar dados históricos, interpretar resultados, acompanhar alertas e gerar relatórios.”
+
+Botões:
+
+- Iniciar tutorial;
+- Explorar sozinho;
+- Não mostrar novamente.
+
+Etapas:
+
+1. Menu principal;
+2. Visão Geral;
+3. Áreas Monitoradas;
+4. Análise de Risco;
+5. Dados ambientais;
+6. Resultado;
+7. Fatores críticos;
+8. Importação de Ocorrências;
+9. Mapa de Risco;
+10. Alertas;
+11. Relatórios;
+12. Ajuda.
+
+Criar:
+
+- indicador de progresso;
+- Anterior;
+- Próximo;
+- Pular;
+- Concluir;
+- reiniciar tutorial;
+- ajuda contextual;
+- atalhos acessíveis.
+
+Persistir em:
+
+platform_onboarding_status
+
+Criar rota:
+
+/help
+
+Adicionar botão:
+
+“Reiniciar tutorial”
+
+em Configurações.
+
+==================================================
+29. AUTENTICAÇÃO E SEGURANÇA
+==================================================
+
+Auditar autenticação.
+
+Utilizar:
+
+- bcrypt ou scrypt;
+- salt;
+- cookies httpOnly;
+- secure conforme ambiente;
+- sameSite;
+- sessões validadas;
+- proteção de rotas;
+- validação de entrada;
+- variáveis de ambiente;
+- logs sem dados sensíveis.
+
+Caso existam hashes SHA-256 antigos:
+
+- aceitar temporariamente;
+- validar;
+- migrar para bcrypt após login válido;
+- não guardar senha em texto.
+
+Não expor credenciais em README.
+
+==================================================
+30. TESTES DOS CENÁRIOS
+==================================================
+
+Executar quatro cenários.
+
+CENÁRIO BAIXO
+
+- temperatura: 22;
+- umidade: 78;
+- vento: 7;
+- chuva: 32;
+- vegetação: úmida;
+- foco próximo: não;
+- histórico: baixo.
+
+CENÁRIO MODERADO
+
+- temperatura: 30;
+- umidade: 48;
+- vento: 16;
+- chuva: 8;
+- vegetação: regular;
+- foco próximo: não;
+- histórico: moderado.
+
+CENÁRIO ALTO
+
+- temperatura: 35;
+- umidade: 28;
+- vento: 26;
+- chuva: 0;
+- vegetação: seca;
+- foco próximo: não;
+- histórico: alto.
+
+CENÁRIO CRÍTICO
+
+- temperatura: 40;
+- umidade: 15;
+- vento: 42;
+- chuva: 0;
+- vegetação: muito seca;
+- foco próximo: sim;
+- distância: 1,5 km;
+- histórico: alto.
+
+Para cada um, registrar:
+
+- entrada;
+- esperado;
+- score;
+- classificação;
+- confiança;
+- fatores;
+- recomendações;
+- tipo do modelo;
+- versão;
+- data;
+- simulação;
+- status.
+
+==================================================
+31. CENÁRIO DE IMPORTAÇÃO HISTÓRICA
+==================================================
+
+Executar:
+
+1. importar arquivo demonstrativo;
+2. pré-visualizar;
+3. mapear colunas;
+4. validar;
+5. identificar erros;
+6. salvar lote;
+7. exibir ocorrências no mapa;
+8. selecionar área próxima;
+9. executar análise;
+10. mostrar contribuição histórica;
+11. gerar alerta;
+12. gerar relatório.
+
+Registrar:
+
+- arquivo;
+- origem;
+- tipo dos dados;
+- linhas;
+- válidas;
+- inválidas;
+- duplicadas;
+- ocorrências próximas;
+- impacto no score;
+- evidência;
+- resultado.
+
+Caso não haja arquivo real, criar exemplo sintético claramente identificado.
+
+==================================================
+32. TESTES DE ERRO
+==================================================
+
+Testar:
+
+- temperatura inválida;
+- umidade inferior a 0;
+- umidade superior a 100;
+- chuva negativa;
+- vento negativo;
+- campo ausente;
+- baixa qualidade;
+- resultado repetido;
+- score fora de faixa;
+- serviço Python indisponível;
+- fallback;
+- banco indisponível;
+- falha no alerta;
+- acesso não autenticado;
+- celular;
+- CSV vazio;
+- XLSX inválido;
+- cabeçalho ausente;
+- coluna obrigatória não mapeada;
+- data inválida;
+- horário inválido;
+- coordenada inválida;
+- duplicidade;
+- município ausente;
+- lote não salvo;
+- registro sem coordenada;
+- falha no mapa;
+- formato não suportado;
+- arquivo acima do limite.
+
+==================================================
+33. TESTES AUTOMATIZADOS
+==================================================
+
+Executar:
+
+npm install
+npm run check
+npm run test
+npm run test:risk
+npm run test:auth
+npm run build
+
+Python:
+
+pip install -r python_service/requirements.txt
+pytest python_service/tests -v
+
+Caso exista modelo:
+
+python python_service/train_model.py
+python python_service/evaluate_model.py
+
+Testar endpoints:
+
+GET /health
+POST /analyze-risk
+POST /api/risk-analysis
+
+Não declarar sucesso sem execução.
+
+Se falhar:
+
+1. registrar;
+2. corrigir;
+3. executar novamente;
+4. manter histórico da correção.
+
+==================================================
+34. DOCUMENTAÇÃO TRL 4
+==================================================
+
+Criar:
+
+docs/trl4/final
+
+Arquivos:
+
+01_EVIDENCIAS_MATURIDADE_TRL4.md
+02_RELATORIO_TESTES_TRL4.md
+03_ARQUITETURA_TECNICA_TRL4.md
+04_EVIDENCIAS_VISUAIS_TRL4.md
+05_METRICAS_MODELO_TRL4.md
+06_MATRIZ_RASTREABILIDADE_TRL4.md
+07_FICHA_SISTEMA_IA.md
+08_CHECKLIST_FINAL_SUBMISSAO.md
+09_RELATORIO_IMPORTACAO_DADOS_HISTORICOS.md
+
+Todos deverão ser anonimizados quando o modo de submissão estiver ativo.
+
+==================================================
+35. DOCUMENTO 1 — EVIDÊNCIAS
+==================================================
+
+Incluir:
+
+1. capa;
+2. objetivo;
+3. problema;
+4. solução;
+5. evolução do Florestaí;
+6. estágio atual;
+7. arquitetura;
+8. fluxo;
+9. componentes;
+10. evidências;
+11. testes;
+12. importação histórica;
+13. limitações;
+14. riscos;
+15. justificativa TRL 4;
+16. conclusão.
+
+Tabela:
+
+| Componente | Status | Evidência técnica | Arquivo ou tela | Observação |
+
+==================================================
+36. DOCUMENTO 2 — TESTES
+==================================================
+
+Incluir:
+
+1. objetivo;
+2. ambiente;
+3. configuração;
+4. versão;
+5. dados;
+6. cenários;
+7. esperado;
+8. obtido;
+9. testes automáticos;
+10. testes manuais;
+11. falhas;
+12. correções;
+13. pendências;
+14. limitações;
+15. conclusão.
+
+Tabelas:
+
+| ID | Cenário | Esperado | Obtido | Score | Status | Evidência |
+
+| Código | Falha | Impacto | Correção | Situação |
+
+==================================================
+37. DOCUMENTO 3 — ARQUITETURA
+==================================================
+
+Incluir:
+
+- diagrama Mermaid;
+- frontend;
+- Express;
+- Python;
+- FastAPI;
+- Scikit-learn;
+- motor transparente;
+- PostgreSQL;
+- dados históricos;
+- importação;
+- mapas;
+- alertas;
+- relatórios;
+- autenticação;
+- segurança;
+- APIs;
+- variáveis;
+- falhas;
+- limitações;
+- evolução.
+
+Representar:
+
+CSV/XLS/XLSX
+→ importação
+→ mapeamento
+→ validação
+→ tratamento
+→ lote
+→ ocorrências
+→ mapa
+→ análise
+→ alertas
+→ relatórios.
+
+==================================================
+38. DOCUMENTO 4 — EVIDÊNCIAS VISUAIS
+==================================================
+
+Criar roteiro de capturas:
+
+- Home;
+- Dashboard;
+- Áreas;
+- Análise;
+- Baixo;
+- Moderado;
+- Alto;
+- Crítico;
+- fatores;
+- recomendações;
+- alertas;
+- mapa;
+- importação;
+- upload;
+- prévia;
+- mapeamento;
+- inconsistências;
+- lote;
+- ocorrências no mapa;
+- contribuição histórica;
+- relatórios;
+- terminal TypeScript;
+- terminal Python;
+- API;
+- métricas;
+- matriz de confusão.
+
+Para cada imagem:
+
+- número;
+- título;
+- descrição;
+- funcionalidade;
+- status;
+- origem;
+- indicação de simulação.
+
+==================================================
+39. DOCUMENTO 5 — MÉTRICAS
+==================================================
+
+Somente preencher como concluído se houver modelo real treinado.
+
+Incluir:
+
+- dataset;
+- origem;
+- quantidade;
+- variáveis;
+- classes;
+- treino e teste;
+- algoritmo;
+- parâmetros;
+- accuracy;
+- precision;
+- recall;
+- F1 macro;
+- F1 weighted;
+- matriz de confusão;
+- limitações.
+
+Caso sintético:
+
+“As métricas foram obtidas com dados sintéticos em ambiente controlado e não representam desempenho operacional definitivo.”
+
+==================================================
+40. DOCUMENTO 6 — RASTREABILIDADE
+==================================================
+
+Criar matriz:
+
+| Requisito | Funcionalidade | Código | Teste | Evidência | Status |
+
+Incluir:
+
+- risco;
+- mapa;
+- alerta;
+- relatório;
+- Python;
+- importação;
+- tratamento;
+- histórico;
+- autenticação;
+- anonimização;
+- tutorial;
+- segurança.
+
+==================================================
+41. DOCUMENTO 7 — FICHA DO SISTEMA DE IA
+==================================================
+
+Incluir:
+
+- finalidade;
+- usuários;
+- entradas;
+- saídas;
+- modelo;
+- dados;
+- limitações;
+- risco de erro;
+- supervisão humana;
+- explicabilidade;
+- segurança;
+- privacidade;
+- versão;
+- responsável técnico neutro;
+- uso pretendido;
+- usos não recomendados.
+
+==================================================
+42. DOCUMENTO 8 — CHECKLIST
+==================================================
+
+Criar checklist:
+
+- sistema abre;
+- login funciona;
+- análise funciona;
+- Python responde;
+- banco salva;
+- mapa carrega;
+- alerta é gerado;
+- relatório funciona;
+- importação funciona;
+- dados são validados;
+- lote é salvo;
+- histórico aparece no mapa;
+- histórico influencia risco;
+- tutorial funciona;
+- modo anônimo funciona;
+- testes passaram;
+- build passou;
+- PDFs não identificam equipe;
+- arquivos possuem menos de 10 MB.
+
+==================================================
+43. DOCUMENTO 9 — IMPORTAÇÃO HISTÓRICA
+==================================================
+
+Incluir:
+
+1. objetivo;
+2. origem no Florestaí;
+3. fonte;
+4. formatos;
+5. upload;
+6. mapeamento;
+7. tratamento;
+8. validação;
+9. georreferenciamento;
+10. rastreabilidade;
+11. integração com mapa;
+12. uso no risco;
+13. testes;
+14. inconsistências;
+15. limitações;
+16. evidências;
+17. conclusão.
+
+Tabelas:
+
+| Lote | Fonte | Arquivo | Linhas | Válidas | Inválidas | Duplicadas | Status |
+
+| Campo original | Campo no sistema | Transformação | Resultado |
+
+==================================================
+44. README
+==================================================
+
+Reescrever README.
+
+Estrutura:
+
+1. Visão geral;
+2. Problema;
+3. Solução;
+4. Evolução do Florestaí;
+5. Setores;
+6. Funcionalidades;
+7. Estado de implementação;
+8. Arquitetura;
+9. Tecnologias reais;
+10. Python;
+11. Machine Learning;
+12. Importação histórica;
+13. Sisfogo;
+14. Banco;
+15. Como executar;
+16. Variáveis;
+17. Testes;
+18. Segurança;
+19. Dados simulados;
+20. Limitações;
+21. TRL 4;
+22. Prova de Valor;
+23. Licença.
+
+Texto obrigatório:
+
+“A integração atual com dados do Sisfogo ocorre por importação de arquivos autorizados e não representa conexão oficial ou direta por API.”
+
+Texto de TRL:
+
+“A solução encontra-se em TRL 4 porque possui arquitetura definida, protótipo funcional e componentes integrados e testados em ambiente controlado. A versão atual demonstra entrada e processamento de dados, classificação de risco, visualização georreferenciada, importação de ocorrências, geração de alertas e recomendações. A validação em ambiente operacional relevante será realizada durante a Prova de Valor.”
+
+==================================================
+45. LIMPEZA DO REPOSITÓRIO
+==================================================
+
+Buscar:
+
+- haCARthon;
+- Cadastro Ambiental Rural;
+- SICAR;
+- Reserva Legal;
+- APP;
+- nomes pessoais;
+- e-mails;
+- LinkedIn;
+- CNPJ;
+- instituição;
+- empresa;
+- credenciais;
+- prompts antigos;
+- documentos antigos.
+
+Mover materiais legados para:
+
+archive/legacy-assets
+archive/legacy-code
+
+Não expor arquivos antigos no frontend.
+
+Não apagar algo necessário sem registrar no relatório final.
+
+==================================================
+46. VALIDAÇÃO FINAL
+==================================================
+
+Ao concluir:
+
+1. executar todos os testes;
+2. executar TypeScript check;
+3. executar testes Python;
+4. executar build;
+5. iniciar os serviços;
+6. testar desktop;
+7. testar celular;
+8. testar login;
+9. testar áreas;
+10. testar quatro riscos;
+11. testar importação;
+12. testar mapa;
+13. testar alerta;
+14. testar relatório;
+15. testar tutorial;
+16. testar modo anônimo;
+17. testar fallback;
+18. testar persistência;
+19. verificar textos antigos;
+20. revisar README;
+21. revisar docs/trl4;
+22. conferir dados simulados;
+23. conferir ausência de identificação.
+
+==================================================
+47. RELATÓRIO FINAL DO AGENT
+==================================================
+
+Ao final, apresentar:
+
+1. arquivos analisados;
+2. arquivos alterados;
+3. arquivos criados;
+4. arquivos removidos ou arquivados;
+5. funcionalidades preservadas;
+6. funcionalidades implementadas;
+7. funcionalidades demonstrativas;
+8. funcionalidades experimentais;
+9. funcionalidades pendentes;
+10. integrações reais;
+11. formatos de importação;
+12. regras de validação;
+13. modelo utilizado;
+14. métricas reais;
+15. testes executados;
+16. quantidade aprovada;
+17. quantidade falhada;
+18. resultado do TypeScript;
+19. resultado do Python;
+20. resultado do build;
+21. resultado dos endpoints;
+22. limitações;
+23. riscos técnicos;
+24. capturas necessárias;
+25. instruções para gerar os PDFs;
+26. status final do TRL 4.
+
+NÃO considere a tarefa concluída enquanto:
+
+- houver erro de TypeScript;
+- houver erro de Python;
+- houver build quebrado;
+- houver rota quebrada;
+- o motor de risco não possuir testes;
+- a importação não possuir validação;
+- o README tiver informações falsas;
+- o modo anônimo expuser identidades;
+- dados simulados não estiverem rotulados;
+- documentos afirmarem resultados não executados;
+- o sistema afirmar integração oficial com o Sisfogo sem comprovação.

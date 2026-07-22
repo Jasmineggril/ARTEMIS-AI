@@ -1,0 +1,21 @@
+data_ocorrencia,horario,municipio,estado,latitude,longitude,tipo_ocorrencia,situacao,area_afetada_ha,causa,condicao_vegetacao,observacao,fonte,referencia_externa
+2024-07-15,10:30,Brasília,DF,-15.7801,-47.9292,Incêndio florestal,Controlado,12.5,Queima irregular,seca,Foco extinto após 3h,Corpo de Bombeiros DF,2024-DF-0712
+2024-07-20,14:15,Formosa,GO,-15.5370,-47.3334,Queimada,Controlado,8.3,Causa desconhecida,muito seca,Próximo a área de pastagem,Defesa Civil GO,2024-GO-0891
+2024-08-03,09:00,Planaltina,DF,-15.6167,-47.6503,Incêndio florestal,Controlado,25.0,Ação humana,seca,Área de cerrado nativo,IBAMA,2024-DF-0834
+2024-08-10,16:45,Cristalina,GO,-16.7667,-47.6167,Queimada,Extinto,4.2,Queima para limpeza,moderada,Área rural particular,SEMARH GO,2024-GO-0945
+2024-08-22,11:20,Luziânia,GO,-16.2522,-47.9503,Incêndio florestal,Controlado,18.7,Raio,seca,Ocorrência durante seca,Corpo de Bombeiros GO,2024-GO-1012
+2024-09-05,08:30,Padre Bernardo,GO,-15.1667,-48.2833,Queimada,Extinto,6.1,Queima irregular,seca,Notificação por satélite,INPE,2024-GO-1087
+2024-09-14,13:00,Goiânia,GO,-16.6869,-49.2648,Incêndio florestal,Controlado,3.5,Causa desconhecida,muito seca,Área urbana-rural,Corpo de Bombeiros GO,2024-GO-1134
+2024-09-28,15:30,Anápolis,GO,-16.3281,-48.9540,Queimada,Controlado,9.8,Ação humana,seca,Área de reflorestamento,SEMARH GO,2024-GO-1201
+2024-10-02,12:45,Corumbá de Goiás,GO,-15.9167,-48.8167,Incêndio florestal,Extinto,2.0,Queima para limpeza,moderada,Pequena propriedade rural,Defesa Civil GO,2024-GO-1267
+2024-10-10,17:00,Brazlândia,DF,-15.6750,-48.1956,Queimada,Controlado,14.3,Raio,seca,45 dias sem chuva na região,IBAMA,2024-DF-1089
+2024-10-18,10:15,Santo Antônio do Descoberto,GO,-15.9450,-48.2569,Incêndio florestal,Controlado,7.6,Ação humana,muito seca,Próximo a rodovia,Corpo de Bombeiros GO,2024-GO-1334
+2024-11-01,09:30,Alexânia,GO,-16.0833,-48.5167,Queimada,Extinto,3.1,Queima irregular,moderada,Registro via aplicativo,SEMARH GO,2024-GO-1401
+2024-11-12,14:00,Águas Lindas de Goiás,GO,-15.7500,-48.2833,Incêndio florestal,Controlado,11.2,Causa desconhecida,seca,Vigilância aérea,INPE,2024-GO-1478
+2024-11-20,08:45,Novo Gama,GO,-16.0600,-48.0442,Queimada,Extinto,5.4,Queima para limpeza,moderada,Próximo a APP,Defesa Civil GO,2024-GO-1545
+2024-12-03,11:30,Cidade Ocidental,GO,-16.0833,-47.9167,Incêndio florestal,Controlado,16.8,Ação humana,seca,Brigada local,Corpo de Bombeiros GO,2024-GO-1612
+2025-01-08,15:20,Valparaíso de Goiás,GO,-16.0700,-47.9733,Queimada,Extinto,2.7,Queima irregular,moderada,Baixo impacto,SEMARH GO,2025-GO-0034
+2025-01-25,10:00,Abadiânia,GO,-16.1972,-48.7061,Incêndio florestal,Controlado,22.4,Causa desconhecida,muito seca,Cerrado preservado,IBAMA,2025-GO-0098
+2025-02-14,13:45,Jaraguá,GO,-15.7556,-49.3347,Queimada,Extinto,4.9,Raio,moderada,Chuvas ajudaram no controle,Corpo de Bombeiros GO,2025-GO-0167
+2025-03-05,09:15,Inhumas,GO,-16.3583,-49.4981,Queimada,Controlado,8.1,Queima para limpeza,seca,Notificação de morador,Defesa Civil GO,2025-GO-0234
+2025-04-01,16:30,Itaberaí,GO,-16.0194,-49.8119,Incêndio florestal,Extinto,1.8,Ação humana,moderada,Foco controlado em 1h,Corpo de Bombeiros GO,2025-GO-0312

@@ -1,0 +1,1196 @@
+ATUE COMO ARQUITETO DE SOFTWARE SÊNIOR, ENGENHEIRO FULL STACK, ESPECIALISTA EM DADOS GEOESPACIAIS, UX DE SISTEMAS INDUSTRIAIS E REVISOR TÉCNICO DE PROVAS DE VALOR.
+
+Analise integralmente o repositório existente antes de modificar qualquer arquivo.
+
+O projeto já possui uma aplicação full stack construída com:
+
+- React 18
+- TypeScript
+- Vite
+- Wouter
+- Tailwind CSS
+- shadcn/ui
+- TanStack Query
+- Recharts
+- Leaflet / React Leaflet
+- Node.js
+- Express
+- PostgreSQL
+- Drizzle ORM
+
+O código atual contém autenticação, sensores, leituras, alertas, dados climáticos, mapas, relatórios, denúncias, gamificação, dashboard e configurações.
+
+NÃO reconstrua o sistema do zero.
+NÃO substitua a stack existente.
+NÃO apague recursos funcionais sem antes verificar se podem ser adaptados.
+NÃO declare integrações, IA, resultados ou funcionalidades que não existam realmente.
+
+OBJETIVO GERAL
+
+Transformar a aplicação atual, originalmente centrada no Cadastro Ambiental Rural e no haCARthon, em uma plataforma preditiva de inteligência ambiental para prevenção de incêndios em:
+
+- agroindústrias;
+- empresas florestais;
+- unidades de energia;
+- mineração;
+- unidades produtivas com ativos territoriais;
+- operações industriais expostas a incêndios e queimadas.
+
+A aplicação deve demonstrar, em ambiente controlado, um fluxo tecnológico compatível com TRL 4:
+
+entrada de dados
+→ processamento dos fatores ambientais
+→ cálculo do índice de risco
+→ classificação do risco
+→ explicação dos fatores críticos
+→ visualização no painel e no mapa
+→ geração de alerta
+→ recomendação preventiva
+→ registro da análise
+→ geração de evidências e relatório.
+
+==================================================
+1. REGRAS DE VERACIDADE E CONFORMIDADE
+==================================================
+
+1. Identifique claramente o que é:
+   - funcional;
+   - demonstrativo;
+   - simulado;
+   - em desenvolvimento;
+   - previsto para a Prova de Valor.
+
+2. Todo dado fictício deve apresentar o rótulo visível:
+
+   “Dados simulados para demonstração em ambiente controlado.”
+
+3. Não afirmar que existe Machine Learning supervisionado treinado caso não exista modelo, dataset, treinamento, avaliação e métricas reais.
+
+4. Caso o projeto ainda não tenha modelo treinado, implementar inicialmente um:
+
+   “Motor demonstrativo e transparente de classificação de risco.”
+
+5. Esse motor deve ser baseado em regras documentadas, separado da interface e preparado para futura substituição por modelo supervisionado.
+
+6. Não afirmar integração ativa com:
+   - SICAR;
+   - MapBiomas;
+   - INPE;
+   - IBGE;
+   - MMA;
+   - sensores físicos;
+   - APIs externas;
+
+   sem comprovação no código e sem resposta real da integração.
+
+7. APIs efetivamente usadas devem apresentar:
+   - nome;
+   - finalidade;
+   - status;
+   - data da última atualização;
+   - tratamento de indisponibilidade.
+
+8. Não apresentar metas da PoV como resultados já alcançados.
+
+9. As metas devem aparecer com expressões como:
+   - “meta prevista”;
+   - “resultado esperado”;
+   - “a ser validado durante a PoV”.
+
+10. A solução deve informar que apoia decisões, mas não substitui:
+    - laudos;
+    - fiscalização;
+    - avaliação técnica presencial;
+    - procedimentos oficiais de segurança.
+
+==================================================
+2. AUDITORIA INICIAL OBRIGATÓRIA
+==================================================
+
+Antes de alterar o código:
+
+1. Leia:
+   - package.json;
+   - README.md;
+   - replit.md;
+   - .replit;
+   - .env.example;
+   - client/src/App.tsx;
+   - client/src/pages/*;
+   - client/src/components/*;
+   - client/src/hooks/*;
+   - client/src/lib/*;
+   - server/index.ts;
+   - server/routes.ts;
+   - server/storage.ts;
+   - server/weather-service.ts;
+   - shared/schema.ts;
+   - shared/routes.ts.
+
+2. Identifique:
+   - rotas existentes;
+   - telas funcionais;
+   - dados simulados;
+   - APIs reais;
+   - serviços incompletos;
+   - componentes não utilizados;
+   - textos antigos sobre CAR;
+   - textos antigos sobre haCARthon;
+   - alegações técnicas não comprovadas;
+   - erros de TypeScript;
+   - problemas de build;
+   - problemas de autenticação;
+   - riscos de segurança;
+   - dependências não utilizadas.
+
+3. Gere no console um resumo curto com quatro blocos:
+
+   A. Preservar  
+   B. Adaptar  
+   C. Criar  
+   D. Remover ou arquivar
+
+4. Depois da auditoria, execute as alterações sem pedir nova confirmação.
+
+==================================================
+3. REPOSICIONAMENTO DO PRODUTO
+==================================================
+
+A solução deve ser apresentada como:
+
+“Plataforma preditiva de inteligência ambiental para prevenção de incêndios em áreas produtivas e ativos territoriais.”
+
+Mensagem principal:
+
+“Preveja o risco. Proteja a operação.”
+
+Descrição:
+
+“A plataforma integra dados ambientais, climáticos e geoespaciais para classificar riscos de incêndio, identificar áreas críticas, explicar fatores de risco e gerar alertas e recomendações preventivas.”
+
+Diferencial:
+
+“A solução não apenas apresenta focos já registrados: calcula o risco por área produtiva, explica fatores críticos e recomenda ações preventivas antes da ocorrência.”
+
+Remover das áreas centrais do produto:
+
+- simplificação do CAR;
+- regularização cadastral;
+- APP;
+- Reserva Legal;
+- área consolidada;
+- pendências do SICAR;
+- diagnóstico cadastral;
+- haCARthon;
+- desafios do haCARthon;
+- estatísticas de imóveis regularizados;
+- personas vinculadas ao CAR;
+- afirmações de integração pronta com SICAR.
+
+O CAR poderá ser citado apenas como possível fonte territorial futura, nunca como núcleo da solução.
+
+==================================================
+4. MODO DE SUBMISSÃO ANÔNIMA
+==================================================
+
+Criar suporte à variável:
+
+VITE_SUBMISSION_MODE=true
+
+Quando essa variável estiver ativa:
+
+- ocultar nomes de integrantes;
+- ocultar cargos;
+- ocultar e-mails;
+- ocultar LinkedIn;
+- ocultar nome de universidade;
+- ocultar nome de empresa;
+- ocultar CNPJ;
+- ocultar links pessoais;
+- ocultar elementos capazes de identificar os proponentes;
+- usar o nome neutro:
+
+  “Plataforma Preditiva de Inteligência Ambiental”
+
+- usar o subtítulo:
+
+  “Prevenção de incêndios em áreas produtivas e ativos territoriais.”
+
+Quando VITE_SUBMISSION_MODE=false, a identidade CERES AI poderá aparecer normalmente.
+
+Criar um componente centralizado para controlar essa identidade, evitando textos espalhados pelo código.
+
+Exemplo:
+
+const PRODUCT_NAME =
+  import.meta.env.VITE_SUBMISSION_MODE === "true"
+    ? "Plataforma Preditiva de Inteligência Ambiental"
+    : "CERES AI";
+
+Os documentos para comprovação de TRL também devem ser gerados em versão anônima.
+
+==================================================
+5. ROTAS E NAVEGAÇÃO
+==================================================
+
+Preservar a estrutura atual com Wouter.
+
+Adaptar as rotas:
+
+/                       → Página institucional
+/dashboard              → Visão Geral
+/sensors                → Fontes de Dados
+/sensors/:id            → Detalhe da fonte
+/alerts                 → Alertas Preventivos
+/reports                → Relatórios
+/maps                   → Mapa de Risco
+/insights               → Inteligência Operacional
+/simulacao              → Análise Preditiva
+/settings               → Configurações
+/login                   → Login
+/signup                  → Cadastro
+/reset-password          → Recuperação de senha
+
+A rota /aprende poderá ser transformada em:
+
+/prevention              → Protocolos de Prevenção
+
+A rota /comunidade e a gamificação não devem ocupar posição central no produto industrial.
+
+Se forem mantidas, colocá-las como recurso secundário ou retirar do menu principal.
+
+Criar item de menu:
+
+“Áreas Monitoradas”
+
+Caso não exista rota própria, criar:
+
+/areas
+
+==================================================
+6. NOVA LANDING PAGE
+==================================================
+
+Reescrever completamente client/src/pages/Home.tsx.
+
+Remover:
+
+- perguntas de chatbot sobre CAR;
+- APP;
+- Reserva Legal;
+- notificações cadastrais;
+- regularização;
+- haCARthon;
+- números e resultados não comprovados;
+- checklist público do desenvolvimento;
+- alegações de integrações prontas.
+
+Hero:
+
+Título:
+“Preveja o risco. Proteja a operação.”
+
+Texto:
+“Transforme dados ambientais, climáticos e geoespaciais em mapas de risco, alertas preventivos e recomendações para áreas produtivas e ativos territoriais.”
+
+Botão principal:
+“Simular análise de risco”
+
+Destino:
+/simulacao
+
+Botão secundário:
+“Conhecer a plataforma”
+
+Inserir selo:
+
+“Protótipo em validação controlada — TRL 4”
+
+Inserir aviso:
+
+“Os resultados apresentados neste protótipo utilizam dados públicos, históricos ou simulados e não substituem avaliação técnica oficial.”
+
+Criar as seções:
+
+A. Problema
+
+“Bases ambientais e geoespaciais são frequentemente consultadas separadamente, exigindo análise manual e dificultando a priorização rápida de áreas críticas.”
+
+B. Como funciona
+
+1. Integra dados
+2. Calcula o risco
+3. Identifica fatores críticos
+4. Exibe áreas prioritárias
+5. Emite alertas
+6. Recomenda ações
+7. Registra evidências
+
+C. Diferencial
+
+“A solução não apenas apresenta focos já registrados: calcula o risco por área produtiva, explica fatores críticos e recomenda ações preventivas antes da ocorrência.”
+
+D. Setores
+
+- Agroindústria
+- Empresas florestais
+- Energia
+- Mineração
+- Operações logísticas com ativos territoriais
+- Outras unidades produtivas expostas a incêndios
+
+E. Funcionalidades
+
+- análise preditiva;
+- mapa de risco;
+- alertas preventivos;
+- recomendações;
+- fontes de dados;
+- indicadores;
+- histórico;
+- relatórios;
+- evidências para auditoria.
+
+F. Metas da Prova de Valor
+
+Exibir claramente como metas, não resultados:
+
+- reduzir em pelo menos 30% o tempo de análise;
+- processar 100% da área piloto;
+- alcançar pelo menos 80% de validação dos alertas e recomendações.
+
+G. TRL 4
+
+Explicar:
+
+“A solução possui arquitetura definida, protótipo funcional e componentes integrados e testados em ambiente controlado. A validação em ambiente produtivo relevante será realizada durante a Prova de Valor.”
+
+==================================================
+7. DASHBOARD
+==================================================
+
+Reestruturar client/src/pages/Dashboard.tsx.
+
+Cards principais:
+
+- Áreas monitoradas
+- Área total analisada
+- Índice médio de risco
+- Alertas ativos
+- Áreas em risco alto ou crítico
+- Tempo médio de análise
+- Fontes de dados disponíveis
+- Última atualização
+
+Criar bloco central:
+
+“Índice de Risco de Incêndio”
+
+Exibir:
+
+- pontuação de 0 a 100;
+- classificação;
+- área analisada;
+- data e hora;
+- origem dos dados;
+- status da análise;
+- indicação de dado simulado.
+
+Classificação:
+
+0–24 = Baixo  
+25–49 = Moderado  
+50–74 = Alto  
+75–100 = Crítico
+
+Criar seção:
+
+“Fatores que influenciaram o risco”
+
+- temperatura;
+- umidade relativa;
+- velocidade do vento;
+- precipitação recente;
+- condição da vegetação;
+- histórico de focos;
+- proximidade de foco;
+- qualidade dos dados.
+
+Criar:
+
+“Áreas prioritárias”
+
+Tabela com:
+
+- área;
+- setor;
+- índice;
+- classificação;
+- fatores críticos;
+- última análise;
+- ação.
+
+Criar:
+
+“Recomendações preventivas”
+
+As recomendações devem mudar conforme o nível de risco.
+
+==================================================
+8. MOTOR DE CLASSIFICAÇÃO DE RISCO
+==================================================
+
+Verificar se existe modelo real.
+
+Caso não exista, criar:
+
+client/src/lib/risk-engine.ts
+
+ou, preferencialmente, um módulo compartilhado:
+
+shared/risk-engine.ts
+
+Criar tipos:
+
+RiskInput
+RiskFactor
+RiskResult
+RiskLevel
+RiskRecommendation
+
+RiskInput deve conter:
+
+- temperature;
+- humidity;
+- windSpeed;
+- recentRainfall;
+- vegetationCondition;
+- nearbyHotspot;
+- hotspotDistance;
+- historicalOccurrences;
+- dataQuality;
+
+RiskResult deve retornar:
+
+- score;
+- level;
+- confidence;
+- factors;
+- recommendations;
+- calculationVersion;
+- isSimulated;
+- calculatedAt;
+
+O motor deve:
+
+1. validar os dados;
+2. normalizar entradas;
+3. calcular pontuação de 0 a 100;
+4. limitar o resultado entre 0 e 100;
+5. explicar quanto cada fator contribuiu;
+6. gerar recomendações;
+7. retornar versão do cálculo;
+8. ser determinístico;
+9. possuir testes.
+
+Adicionar comentário obrigatório:
+
+“Este motor transparente baseado em regras é utilizado para demonstração e validação do fluxo tecnológico em ambiente controlado. A Prova de Valor prevê treinamento, calibração e validação de modelo supervisionado com dados representativos.”
+
+Não chamar esse motor de Machine Learning.
+
+==================================================
+9. TESTES DO MOTOR
+==================================================
+
+Adicionar script de testes ao package.json.
+
+Pode usar o test runner nativo do Node ou uma ferramenta leve compatível com a stack.
+
+Criar testes para quatro cenários:
+
+1. Baixo risco
+   - temperatura moderada;
+   - umidade alta;
+   - chuva recente;
+   - vento baixo;
+   - sem foco próximo.
+
+2. Moderado
+   - temperatura elevada;
+   - umidade intermediária;
+   - pouca chuva.
+
+3. Alto
+   - temperatura alta;
+   - baixa umidade;
+   - vegetação seca;
+   - histórico de ocorrências.
+
+4. Crítico
+   - temperatura extrema;
+   - umidade muito baixa;
+   - vento forte;
+   - foco próximo;
+   - vegetação muito seca.
+
+Testar também:
+
+- entradas inválidas;
+- valores fora de faixa;
+- ausência de campos;
+- estabilidade do resultado;
+- score mínimo;
+- score máximo.
+
+Adicionar scripts:
+
+"test": "...",
+"test:risk": "..."
+
+==================================================
+10. ANÁLISE PREDITIVA
+==================================================
+
+Renomear e reescrever client/src/pages/SimulacaoCar.tsx.
+
+O arquivo poderá ser renomeado para:
+
+RiskAnalysis.tsx
+
+Atualizar o import e a rota em App.tsx.
+
+Título:
+
+“Análise Preditiva de Risco”
+
+Campos:
+
+- nome da área;
+- tipo de operação;
+- município;
+- estado;
+- latitude;
+- longitude;
+- temperatura;
+- umidade;
+- velocidade do vento;
+- precipitação nas últimas 24/72 horas;
+- condição da vegetação;
+- ocorrência histórica;
+- foco próximo;
+- distância estimada;
+- qualidade da fonte;
+- opção “Usar cenário demonstrativo”.
+
+Criar quatro botões de cenários:
+
+- Baixo
+- Moderado
+- Alto
+- Crítico
+
+Ao analisar:
+
+- usar o risk-engine;
+- exibir score;
+- exibir classificação;
+- exibir fatores;
+- exibir contribuição de cada fator;
+- gerar recomendações;
+- mostrar data e versão;
+- permitir salvar;
+- permitir gerar alerta;
+- permitir imprimir ou exportar resumo;
+- identificar resultados simulados.
+
+Adicionar aviso:
+
+“Esta análise é um instrumento de apoio à decisão e não substitui inspeção, laudo ou protocolo oficial de segurança.”
+
+==================================================
+11. BANCO DE DADOS
+==================================================
+
+Ampliar shared/schema.ts com tabelas coerentes com o novo fluxo.
+
+Criar, se necessário:
+
+monitoredAreas
+
+Campos:
+
+- id;
+- name;
+- operationType;
+- municipality;
+- state;
+- latitude;
+- longitude;
+- areaHectares;
+- status;
+- createdAt;
+- updatedAt.
+
+riskAnalyses
+
+Campos:
+
+- id;
+- areaId;
+- score;
+- level;
+- confidence;
+- inputData JSON;
+- factors JSON;
+- recommendations JSON;
+- isSimulated;
+- calculationVersion;
+- createdAt;
+- createdBy.
+
+dataSources
+
+Campos:
+
+- id;
+- name;
+- type;
+- status;
+- isSimulated;
+- lastUpdate;
+- quality;
+- description.
+
+Se o uso de JSON exigir alteração de importação do Drizzle, fazer corretamente.
+
+Criar schemas Zod, tipos, rotas e métodos de storage.
+
+Não quebrar as tabelas existentes.
+
+Utilizar migração compatível com Drizzle.
+
+==================================================
+12. MAPA DE RISCO
+==================================================
+
+Reestruturar client/src/pages/CeresMaps.tsx.
+
+Título:
+
+“Mapa de Risco”
+
+Exibir:
+
+- áreas monitoradas;
+- marcadores por classificação;
+- focos;
+- alertas;
+- detalhes da área;
+- índice;
+- fatores;
+- data;
+- origem;
+- legenda;
+- filtros.
+
+Filtros:
+
+- nível de risco;
+- tipo de operação;
+- status;
+- período;
+- origem dos dados.
+
+Ao clicar em uma área, abrir painel lateral com:
+
+- identificação;
+- índice;
+- classificação;
+- fatores críticos;
+- recomendações;
+- botão “Executar nova análise”;
+- botão “Ver alertas”;
+- botão “Gerar relatório”.
+
+Não mostrar APP, Reserva Legal ou camadas de CAR como foco.
+
+==================================================
+13. ALERTAS
+==================================================
+
+Atualizar client/src/pages/Alerts.tsx e o schema de alertas, se necessário.
+
+Cada alerta deve possuir:
+
+- área;
+- score;
+- nível;
+- título;
+- descrição;
+- fatores;
+- recomendação;
+- origem;
+- data;
+- status;
+- responsável pelo acompanhamento;
+- evidência;
+- isSimulated.
+
+Status:
+
+- Novo
+- Visualizado
+- Em acompanhamento
+- Encerrado
+
+Ações:
+
+- visualizar no mapa;
+- iniciar acompanhamento;
+- encerrar;
+- gerar relatório;
+- ver análise de origem.
+
+Criar alertas demonstrativos dos quatro níveis.
+
+==================================================
+14. SENSORES E FONTES DE DADOS
+==================================================
+
+Rebatizar a experiência principal de “Sensores” para:
+
+“Fontes de Dados”
+
+Preservar a estrutura atual de sensores.
+
+Categorias:
+
+- Estação climática
+- Sensor IoT
+- API ambiental
+- Base histórica
+- Base geográfica
+- Entrada manual
+- Simulação
+
+Status:
+
+- Ativo
+- Simulado
+- Em integração
+- Indisponível
+
+Exibir:
+
+- última atualização;
+- qualidade;
+- completude;
+- origem;
+- coordenadas;
+- dados disponíveis;
+- histórico.
+
+Nunca apresentar um sensor como conectado caso esteja simulado.
+
+==================================================
+15. INSIGHTS
+==================================================
+
+Reestruturar client/src/pages/CeresInsights.tsx.
+
+Remover métricas de:
+
+- CAR;
+- regularização;
+- pendências cadastrais;
+- imóveis regularizados;
+- APP;
+- Reserva Legal.
+
+Criar gráficos para:
+
+- análises por período;
+- distribuição por nível de risco;
+- evolução do risco;
+- fatores críticos mais frequentes;
+- alertas emitidos;
+- alertas validados;
+- tempo médio de análise;
+- cobertura da área piloto;
+- fontes por status;
+- satisfação dos usuários convidados.
+
+Usar os componentes Recharts já instalados.
+
+Dados demonstrativos devem ser rotulados.
+
+==================================================
+16. RELATÓRIOS
+==================================================
+
+Atualizar client/src/pages/Reports.tsx.
+
+Criar relatório de análise contendo:
+
+- identificação neutra da solução;
+- área;
+- operação;
+- localização;
+- data;
+- fontes;
+- entradas;
+- índice;
+- classificação;
+- fatores;
+- recomendações;
+- alertas;
+- limitações;
+- informação de dados simulados;
+- versão do motor;
+- espaço para validação.
+
+Preservar exportação CSV/PDF apenas se funcionar.
+
+Caso a exportação seja simulada, informar isso.
+
+Criar relatório comparativo:
+
+- cenário inicial;
+- cenário após uso da solução;
+- variação;
+- tempo de análise;
+- alertas;
+- cobertura;
+- avaliações.
+
+==================================================
+17. PROTOCOLOS DE PREVENÇÃO
+==================================================
+
+Transformar Gamificacao.tsx em uma página mais adequada ao contexto industrial:
+
+“Protocolos de Prevenção”
+
+Conteúdo:
+
+- ações para risco baixo;
+- ações para risco moderado;
+- ações para risco alto;
+- ações para risco crítico;
+- checklist de inspeção;
+- registro de acompanhamento;
+- boas práticas;
+- aviso de necessidade de adaptação aos protocolos internos de cada indústria.
+
+Retirar pontos, ranking e elementos infantis do fluxo principal.
+
+==================================================
+18. AUTENTICAÇÃO E SEGURANÇA
+==================================================
+
+Auditar a autenticação atual.
+
+O código usa hash SHA-256 simples para senhas, o que não é adequado para produção.
+
+Sem quebrar usuários existentes:
+
+1. substituir gradualmente por scrypt do módulo crypto do Node ou biblioteca adequada;
+2. criar hash com salt;
+3. no login, aceitar temporariamente o hash antigo;
+4. após login válido com hash antigo, atualizar para o novo formato;
+5. nunca armazenar senha em texto;
+6. não registrar credenciais em logs;
+7. proteger rotas de criação e alteração quando aplicável;
+8. validar sessões;
+9. verificar configuração secure/sameSite/httpOnly de cookies conforme o ambiente.
+
+Não expor credenciais reais no README.
+
+Credenciais de demonstração só poderão existir se forem criadas de maneira segura e identificadas como conta de demonstração.
+
+==================================================
+19. IDENTIDADE VISUAL
+==================================================
+
+Manter o verde escuro como base, mas adaptar para climate tech / industrial intelligence.
+
+Diretrizes:
+
+- verde escuro;
+- tons minerais e terrosos;
+- fundos claros;
+- alta legibilidade;
+- cards limpos;
+- gráficos claros;
+- hierarquia forte;
+- acessibilidade;
+- responsividade;
+- interface profissional;
+- sem excesso de efeitos;
+- sem estética infantil;
+- sem promessas exageradas.
+
+Cores dos riscos:
+
+- Baixo: verde
+- Moderado: âmbar
+- Alto: laranja
+- Crítico: vermelho
+
+Criar componente reutilizável:
+
+RiskBadge
+
+E funções compartilhadas para:
+
+- cor;
+- label;
+- ícone;
+- descrição;
+- acessibilidade.
+
+==================================================
+20. README
+==================================================
+
+Reescrever completamente README.md.
+
+Remover:
+
+- haCARthon;
+- ENAP;
+- MGI;
+- FBDS;
+- Governo da Noruega;
+- simplificação do CAR;
+- estatísticas não comprovadas;
+- integrações não comprovadas;
+- links externos pessoais;
+- imagens hospedadas em contas pessoais;
+- e-mails pessoais;
+- nomes dos integrantes na versão de submissão;
+- credenciais expostas;
+- roadmap de regularização cadastral.
+
+Estrutura obrigatória:
+
+# Plataforma Preditiva de Inteligência Ambiental
+
+1. Visão geral
+2. Problema
+3. Solução
+4. Setores atendidos
+5. Fluxo funcional
+6. Funcionalidades
+7. Estado de implementação
+8. Arquitetura real
+9. Tecnologias reais
+10. Estrutura de diretórios
+11. Como executar
+12. Variáveis de ambiente
+13. Banco de dados
+14. Testes
+15. Segurança
+16. Dados simulados
+17. Limitações
+18. TRL 4
+19. Plano da Prova de Valor de 60 dias
+20. Licença
+
+Criar tabela:
+
+| Recurso | Status | Evidência |
+| Implementado | ... | ... |
+| Demonstrativo | ... | ... |
+| Em desenvolvimento | ... | ... |
+| Previsto para a PoV | ... | ... |
+
+Texto obrigatório de TRL:
+
+“A solução encontra-se em TRL 4 porque possui arquitetura definida, protótipo funcional e componentes integrados e testados em ambiente controlado. A versão atual demonstra entrada e processamento de dados, classificação de risco, visualização georreferenciada, geração de alertas e recomendações. A solução ainda não foi validada em ambiente operacional real.”
+
+==================================================
+21. DOCUMENTOS PARA EVIDÊNCIAS DE TRL 4
+==================================================
+
+Criar a pasta:
+
+docs/trl4
+
+Criar:
+
+docs/trl4/README.md
+docs/trl4/EVIDENCIAS_TRL4.md
+docs/trl4/RELATORIO_TESTES_TRL4.md
+docs/trl4/ARQUITETURA_TECNICA.md
+docs/trl4/CHECKLIST_CAPTURAS.md
+docs/trl4/MATRIZ_FUNCIONALIDADES.md
+
+Todos devem estar anonimizados.
+
+EVIDENCIAS_TRL4.md deve conter:
+
+- apresentação;
+- problema;
+- estágio;
+- evolução tecnológica;
+- arquitetura;
+- tecnologias;
+- componentes;
+- fluxo;
+- testes;
+- limitações;
+- justificativa de TRL 4;
+- conclusão.
+
+RELATORIO_TESTES_TRL4.md:
+
+- objetivo;
+- ambiente;
+- versão;
+- cenários;
+- entradas;
+- resultados esperados;
+- resultados obtidos;
+- status;
+- evidência;
+- falhas;
+- correções;
+- conclusão.
+
+ARQUITETURA_TECNICA.md:
+
+- diagrama Mermaid;
+- frontend;
+- backend;
+- dados;
+- serviços;
+- motor de risco;
+- segurança;
+- integrações;
+- limitações;
+- evolução futura.
+
+CHECKLIST_CAPTURAS.md:
+
+- Home;
+- dashboard;
+- mapa;
+- entrada;
+- resultado;
+- fatores;
+- alertas;
+- recomendações;
+- fontes;
+- insights;
+- relatório;
+- testes;
+- build;
+- código do motor.
+
+MATRIZ_FUNCIONALIDADES.md:
+
+| Funcionalidade | Implementada | Simulada | Em desenvolvimento | Evidência |
+
+==================================================
+22. LIMPEZA DO REPOSITÓRIO
+==================================================
+
+Auditar attached_assets.
+
+Remover do produto ou mover para pasta de arquivo não utilizada:
+
+- edital do haCARthon;
+- apresentações antigas;
+- prompts antigos;
+- documentos de CAR;
+- textos copiados;
+- mídias não utilizadas;
+- assets duplicados;
+- materiais que identifiquem participantes;
+- qualquer documento não necessário para execução.
+
+Não excluir arquivos relevantes sem antes registrar a decisão no relatório final.
+
+Garantir que nenhum documento antigo seja exposto pelo frontend.
+
+Atualizar client/index.html:
+
+- title;
+- description;
+- Open Graph;
+- favicon;
+- metadados;
+- remover referências ao CAR e haCARthon.
+
+==================================================
+23. QUALIDADE E VALIDAÇÃO FINAL
+==================================================
+
+Ao concluir:
+
+1. executar npm install;
+2. executar npm run check;
+3. executar npm run test;
+4. executar npm run build;
+5. executar a aplicação;
+6. testar todas as rotas;
+7. testar login;
+8. testar cadastro;
+9. testar criação da análise;
+10. testar os quatro níveis de risco;
+11. testar mapa;
+12. testar alertas;
+13. testar relatório;
+14. testar responsividade;
+15. procurar no repositório inteiro por:
+    - haCARthon;
+    - CAR;
+    - APP;
+    - Reserva Legal;
+    - SICAR;
+    - Jasmine;
+    - Pedro;
+    - Matheus;
+    - e-mails pessoais;
+    - LinkedIn;
+16. remover ou justificar cada ocorrência;
+17. verificar que VITE_SUBMISSION_MODE=true não expõe identidade;
+18. verificar que dados simulados estão rotulados;
+19. verificar que não existem erros de TypeScript;
+20. verificar que o build está concluído;
+21. verificar que README corresponde ao código real.
+
+==================================================
+24. RELATÓRIO FINAL DO AGENT
+==================================================
+
+Ao terminar, apresentar:
+
+1. arquivos alterados;
+2. arquivos criados;
+3. arquivos removidos ou arquivados;
+4. funcionalidades preservadas;
+5. funcionalidades implementadas;
+6. funcionalidades simuladas;
+7. funcionalidades pendentes;
+8. integrações realmente ativas;
+9. testes executados;
+10. resultado de npm run check;
+11. resultado de npm run test;
+12. resultado de npm run build;
+13. limitações;
+14. instruções para capturar as evidências de TRL 4;
+15. riscos técnicos ainda existentes.
+
+NÃO declare a tarefa concluída enquanto:
+
+- houver erro de TypeScript;
+- houver build quebrado;
+- houver rota quebrada;
+- o motor de risco não possuir testes;
+- o README apresentar informações falsas;
+- existirem textos centrais sobre CAR ou haCARthon;
+- houver identificação pessoal no modo de submissão;
+- dados simulados não estiverem devidamente rotulados.

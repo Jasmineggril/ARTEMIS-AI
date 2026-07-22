@@ -1,0 +1,325 @@
+ATUE COMO ENGENHEIRO DE SOFTWARE SÊNIOR, ESPECIALISTA EM QUALIDADE, MACHINE LEARNING, DOCUMENTAÇÃO TÉCNICA E COMPROVAÇÃO DE MATURIDADE TECNOLÓGICA TRL.
+
+OBJETIVO
+
+Auditar o projeto atual e preparar um pacote real, verificável e anonimizado de evidências para comprovar TRL 4.
+
+A solução é uma plataforma preditiva de inteligência ambiental para prevenção de incêndios em áreas produtivas e ativos territoriais.
+
+O pacote deverá comprovar que existem:
+
+- arquitetura tecnológica definida;
+- protótipo funcional;
+- componentes integrados;
+- entrada e processamento de dados;
+- classificação de risco;
+- fatores explicativos;
+- recomendações preventivas;
+- alertas;
+- mapa;
+- persistência dos resultados;
+- testes em ambiente controlado;
+- documentação das limitações.
+
+REGRAS DE VERACIDADE
+
+1. Não declarar como implementada nenhuma funcionalidade que não exista no código.
+
+2. Não afirmar que existe Machine Learning supervisionado operacional se houver apenas motor baseado em regras.
+
+3. Quando forem utilizados dados sintéticos, simulados ou históricos, identificar claramente essa condição.
+
+4. Não apresentar métricas sintéticas como desempenho operacional real.
+
+5. Não declarar testes aprovados sem executar os comandos e registrar o resultado.
+
+6. Não declarar integração ativa com APIs ou bases externas sem comprovação técnica.
+
+7. Toda funcionalidade deverá ser classificada como:
+
+- implementada;
+- demonstrativa;
+- experimental;
+- em desenvolvimento;
+- prevista para a Prova de Valor.
+
+8. Quando o modo de submissão anônima estiver ativo, remover nomes pessoais, empresa, instituição, e-mails, links e demais identificadores.
+
+==================================================
+1. AUDITORIA DO PROJETO
+==================================================
+
+Antes de gerar qualquer documento:
+
+1. Leia todo o projeto relevante:
+   - package.json;
+   - README.md;
+   - client/src;
+   - server;
+   - shared;
+   - python_service;
+   - tests;
+   - docs;
+   - configurações do banco;
+   - variáveis de ambiente.
+
+2. Identifique:
+   - funcionalidades reais;
+   - funcionalidades incompletas;
+   - dados simulados;
+   - APIs realmente integradas;
+   - modelo de risco em uso;
+   - testes existentes;
+   - erros de TypeScript;
+   - erros de Python;
+   - riscos de segurança;
+   - referências antigas;
+   - dados pessoais;
+   - informações que possam invalidar a anonimização.
+
+3. Gere um relatório inicial com:
+   - preservar;
+   - corrigir;
+   - concluir;
+   - remover ou arquivar;
+   - evidências disponíveis;
+   - evidências ausentes.
+
+==================================================
+2. EXECUÇÃO OBRIGATÓRIA DOS TESTES
+==================================================
+
+Execute, conforme os scripts existentes:
+
+npm install
+npm run check
+npm run test
+npm run test:risk
+npm run test:auth
+npm run build
+
+Para Python:
+
+pip install -r python_service/requirements.txt
+pytest python_service/tests -v
+
+Caso exista modelo supervisionado:
+
+python python_service/train_model.py
+python python_service/evaluate_model.py
+
+Também teste:
+
+- GET /health;
+- POST /analyze-risk;
+- POST /api/risk-analysis;
+- persistência da análise;
+- geração de alerta;
+- carregamento do mapa;
+- geração de relatório;
+- modo anônimo.
+
+Não ocultar falhas.
+
+Se um comando falhar:
+
+1. registrar a falha;
+2. corrigir o código;
+3. executar novamente;
+4. guardar o resultado final e o histórico da correção.
+
+==================================================
+3. CENÁRIOS DE VALIDAÇÃO
+==================================================
+
+Executar quatro cenários controlados:
+
+CENÁRIO BAIXO
+
+- temperatura: 22;
+- umidade: 78;
+- vento: 7;
+- chuva recente: 32;
+- vegetação: úmida;
+- foco próximo: não;
+- histórico: baixo.
+
+CENÁRIO MODERADO
+
+- temperatura: 30;
+- umidade: 48;
+- vento: 16;
+- chuva recente: 8;
+- vegetação: regular;
+- foco próximo: não;
+- histórico: moderado.
+
+CENÁRIO ALTO
+
+- temperatura: 35;
+- umidade: 28;
+- vento: 26;
+- chuva recente: 0;
+- vegetação: seca;
+- foco próximo: não;
+- histórico: alto.
+
+CENÁRIO CRÍTICO
+
+- temperatura: 40;
+- umidade: 15;
+- vento: 42;
+- chuva recente: 0;
+- vegetação: muito seca;
+- foco próximo: sim;
+- distância: 1,5 km;
+- histórico: alto.
+
+Para cada cenário, registrar:
+
+- dados de entrada;
+- resultado esperado;
+- score obtido;
+- classificação obtida;
+- confiança;
+- fatores explicativos;
+- recomendações;
+- tipo do motor;
+- versão do modelo;
+- data e hora;
+- indicação de simulação;
+- status do teste.
+
+==================================================
+4. TESTES DE VALIDAÇÃO E ERRO
+==================================================
+
+Testar também:
+
+- temperatura fora da faixa;
+- umidade inferior a 0;
+- umidade superior a 100;
+- chuva negativa;
+- vento negativo;
+- campo obrigatório ausente;
+- dados com baixa qualidade;
+- repetição do mesmo cenário;
+- score sempre entre 0 e 100;
+- indisponibilidade do serviço Python;
+- fallback do motor;
+- falha no banco;
+- falha na geração do alerta;
+- acesso sem autenticação;
+- funcionamento em celular.
+
+==================================================
+5. PACOTE DE DOCUMENTAÇÃO
+==================================================
+
+Criar a pasta:
+
+docs/trl4/final
+
+Criar os seguintes arquivos em Markdown:
+
+01_EVIDENCIAS_MATURIDADE_TRL4.md
+02_RELATORIO_TESTES_TRL4.md
+03_ARQUITETURA_TECNICA_TRL4.md
+04_EVIDENCIAS_VISUAIS_TRL4.md
+05_METRICAS_MODELO_TRL4.md
+06_MATRIZ_RASTREABILIDADE_TRL4.md
+07_FICHA_SISTEMA_IA.md
+08_CHECKLIST_FINAL_SUBMISSAO.md
+
+==================================================
+6. DOCUMENTO 1 — EVIDÊNCIAS DE MATURIDADE
+==================================================
+
+O arquivo 01_EVIDENCIAS_MATURIDADE_TRL4.md deve conter:
+
+1. capa;
+2. objetivo;
+3. problema;
+4. descrição da solução;
+5. estágio atual;
+6. arquitetura resumida;
+7. fluxo funcional;
+8. matriz dos componentes;
+9. evidências por funcionalidade;
+10. testes realizados;
+11. limitações;
+12. riscos;
+13. justificativa do TRL 4;
+14. conclusão.
+
+Criar tabela:
+
+| Componente | Status | Evidência técnica | Arquivo ou tela | Observação |
+
+Não usar alegações genéricas.
+
+Cada item deverá apontar para uma prova concreta.
+
+==================================================
+7. DOCUMENTO 2 — RELATÓRIO DE TESTES
+==================================================
+
+O arquivo 02_RELATORIO_TESTES_TRL4.md deve conter:
+
+1. objetivo;
+2. ambiente;
+3. configuração técnica;
+4. versão testada;
+5. dados utilizados;
+6. cenários;
+7. resultados esperados;
+8. resultados obtidos;
+9. testes automatizados;
+10. testes manuais;
+11. falhas encontradas;
+12. correções realizadas;
+13. pendências;
+14. limitações;
+15. conclusão.
+
+Criar tabela:
+
+| ID | Cenário | Esperado | Obtido | Score | Status | Evidência |
+
+Criar também:
+
+| Código | Falha | Impacto | Correção | Situação |
+
+==================================================
+8. DOCUMENTO 3 — ARQUITETURA TÉCNICA
+==================================================
+
+O arquivo 03_ARQUITETURA_TECNICA_TRL4.md deve conter:
+
+- diagrama Mermaid;
+- frontend;
+- backend;
+- serviço Python;
+- modelo de risco;
+- banco;
+- mapas;
+- alertas;
+- relatórios;
+- autenticação;
+- segurança;
+- integrações;
+- variáveis de ambiente;
+- fluxo dos dados;
+- tratamento de falhas;
+- limitações;
+- evolução prevista.
+
+O diagrama deve representar o código real.
+
+==================================================
+9. DOCUMENTO 4 — EVIDÊNCIAS VISUAIS
+==================================================
+
+O arquivo 04_EVIDENCIAS_VISUAIS_TRL4.md deve criar um roteiro de capturas.
+
+Para

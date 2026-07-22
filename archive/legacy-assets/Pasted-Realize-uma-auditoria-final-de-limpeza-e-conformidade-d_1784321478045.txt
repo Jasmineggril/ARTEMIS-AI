@@ -1,0 +1,55 @@
+Realize uma auditoria final de limpeza e conformidade do projeto antes da geração das evidências TRL 4.
+
+1. Remova ou mova para archive/legacy-code o arquivo client/src/pages/SimulacaoCar.tsx, após confirmar que ele não é importado nem usado por nenhuma rota.
+
+2. Revise client/src/lib/biomes.ts e remova textos sobre Cadastro Ambiental Rural, APP, Reserva Legal e preenchimento de CAR. Caso o arquivo não seja utilizado, mova-o para archive/legacy-code.
+
+3. Revise client/src/pages/Gamificacao.tsx. O arquivo não deve conter APP, CAR, pontuação infantil ou conteúdo antigo. Se já foi substituído por Prevention.tsx e não é usado, arquive ou remova.
+
+4. Faça uma busca em client, server, shared, README.md, docs e client/index.html por:
+   - haCARthon
+   - Cadastro Ambiental Rural
+   - SICAR
+   - Reserva Legal
+   - APP
+   - Jasmine
+   - Pedro
+   - Matheus
+   - e-mails pessoais
+   - LinkedIn
+
+5. Para cada ocorrência:
+   - remover;
+   - substituir por conteúdo neutro;
+   - ou justificar tecnicamente por que deve permanecer.
+
+6. Não considere ocorrências dentro de node_modules, .git ou arquivos internos do Replit.
+
+7. No README, substitua “Integração SICAR / INPE / MapBiomas” por:
+   “Integração com bases ambientais, climáticas e geoespaciais adicionais — prevista para a Prova de Valor.”
+
+8. Mova documentos, prompts, editais, imagens e mídias antigas de attached_assets para archive/legacy-assets, mantendo no produto apenas os arquivos realmente utilizados pela aplicação.
+
+9. Verifique se VITE_SUBMISSION_MODE=true oculta:
+   - CERES AI;
+   - nomes;
+   - cargos;
+   - instituição;
+   - empresa;
+   - links pessoais;
+   - e-mails.
+
+10. Execute e mostre os resultados completos de:
+    npm run check
+    npm run test:risk
+    npm run build
+
+11. Não edite o relatório para declarar testes aprovados sem executar os comandos.
+
+12. Ao final, entregue:
+    - lista de arquivos removidos ou arquivados;
+    - ocorrências antigas restantes;
+    - resultado exato dos testes;
+    - resultado do TypeScript;
+    - resultado do build;
+    - limitações ainda existentes.

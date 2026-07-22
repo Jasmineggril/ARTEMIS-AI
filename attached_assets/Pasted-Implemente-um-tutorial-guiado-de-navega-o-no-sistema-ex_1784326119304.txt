@@ -1,0 +1,349 @@
+Implemente um tutorial guiado de navegação no sistema existente, sem reconstruir a aplicação e sem quebrar rotas ou funcionalidades atuais.
+
+OBJETIVO
+
+Criar uma experiência de onboarding profissional que ensine novos usuários a navegar pela plataforma, realizar uma análise de risco, interpretar os resultados, visualizar o mapa, acompanhar alertas e gerar relatórios.
+
+O tutorial deve ser simples, acessível, responsivo e adequado a uma plataforma industrial de inteligência ambiental.
+
+1. TUTORIAL INICIAL
+
+Na primeira entrada autenticada do usuário, exibir um modal de boas-vindas.
+
+Título:
+
+“Bem-vindo à Plataforma Preditiva de Inteligência Ambiental”
+
+Texto:
+
+“Este tutorial apresenta as principais funcionalidades da plataforma e mostra como realizar uma análise de risco de incêndio, interpretar resultados e acompanhar áreas monitoradas.”
+
+Botões:
+
+- “Iniciar tutorial”
+- “Explorar sozinho”
+- “Não mostrar novamente”
+
+Não abrir o tutorial em páginas públicas de login ou cadastro.
+
+Quando VITE_SUBMISSION_MODE=false, o título poderá usar o nome CERES AI.
+
+2. TOUR GUIADO
+
+Criar um tour em etapas, destacando visualmente os elementos da interface.
+
+Cada etapa deve conter:
+
+- título;
+- explicação curta;
+- elemento destacado;
+- indicador de progresso;
+- botão “Anterior”;
+- botão “Próximo”;
+- botão “Pular tutorial”;
+- botão “Concluir” na última etapa.
+
+Exibir:
+
+“Etapa 1 de 10”, “Etapa 2 de 10” etc.
+
+O restante da tela deve ficar levemente escurecido enquanto o elemento atual permanece destacado.
+
+3. ETAPAS DO TUTORIAL
+
+ETAPA 1 — Menu principal
+
+Título:
+“Menu de navegação”
+
+Texto:
+“Utilize este menu para acessar a visão geral, áreas monitoradas, análise de risco, mapa, alertas, fontes de dados e relatórios.”
+
+Destacar o menu lateral ou cabeçalho de navegação.
+
+ETAPA 2 — Visão Geral
+
+Título:
+“Visão geral da operação”
+
+Texto:
+“Aqui você acompanha áreas monitoradas, índice médio de risco, alertas ativos, áreas prioritárias e a atualização mais recente dos dados.”
+
+Destacar o item ou card principal do Dashboard.
+
+ETAPA 3 — Áreas Monitoradas
+
+Título:
+“Cadastre e acompanhe áreas”
+
+Texto:
+“Nesta seção, você pode registrar uma área produtiva, informar sua localização e acompanhar o histórico de análises e alertas.”
+
+Destacar o item “Áreas Monitoradas”.
+
+ETAPA 4 — Análise Preditiva
+
+Título:
+“Realize uma análise de risco”
+
+Texto:
+“Informe os dados ambientais da área ou utilize um cenário demonstrativo para calcular o índice de risco de incêndio.”
+
+Destacar o botão ou menu “Análise Preditiva”.
+
+ETAPA 5 — Dados da análise
+
+Título:
+“Preencha os fatores ambientais”
+
+Texto:
+“A classificação considera fatores como temperatura, umidade, vento, precipitação, condição da vegetação, histórico de ocorrências e proximidade de focos.”
+
+Destacar o formulário de análise.
+
+ETAPA 6 — Resultado
+
+Título:
+“Interprete o resultado”
+
+Texto:
+“O sistema apresenta uma pontuação de 0 a 100 e classifica o risco como baixo, moderado, alto ou crítico.”
+
+Destacar o card do índice de risco.
+
+ETAPA 7 — Fatores críticos
+
+Título:
+“Entenda o que influenciou o risco”
+
+Texto:
+“Esta seção explica quais fatores aumentaram ou reduziram a pontuação, tornando o resultado mais transparente.”
+
+Destacar a lista ou gráfico de fatores.
+
+ETAPA 8 — Mapa de Risco
+
+Título:
+“Visualize áreas prioritárias”
+
+Texto:
+“O mapa mostra áreas monitoradas, níveis de risco, alertas e detalhes georreferenciados para apoiar a priorização das ações.”
+
+Destacar o item “Mapa de Risco”.
+
+ETAPA 9 — Alertas
+
+Título:
+“Acompanhe alertas preventivos”
+
+Texto:
+“Os alertas mostram o nível de risco, os fatores críticos, a recomendação preventiva e o status do acompanhamento.”
+
+Destacar o item “Alertas”.
+
+ETAPA 10 — Relatórios
+
+Título:
+“Registre e compartilhe evidências”
+
+Texto:
+“Em Relatórios, você pode consultar análises, indicadores, recomendações e evidências utilizadas na validação da solução.”
+
+Destacar o item “Relatórios”.
+
+Mensagem final:
+
+Título:
+“Tutorial concluído”
+
+Texto:
+“Agora você já conhece o fluxo principal da plataforma. Comece cadastrando uma área ou executando uma análise demonstrativa.”
+
+Botões:
+
+- “Executar análise demonstrativa”
+- “Ir para Visão Geral”
+
+4. TUTORIAL PRÁTICO DA ANÁLISE
+
+Na página de Análise Preditiva, adicionar um botão:
+
+“Como realizar uma análise?”
+
+Ao clicar, abrir um tutorial curto explicando:
+
+1. Identifique a área.
+2. Informe localização e tipo de operação.
+3. Preencha os dados ambientais.
+4. Selecione a condição da vegetação.
+5. Informe a existência de foco próximo.
+6. Clique em “Calcular risco”.
+7. Consulte a classificação.
+8. Analise os fatores críticos.
+9. Leia as recomendações.
+10. Salve, gere um alerta ou emita um relatório.
+
+5. AJUDA CONTEXTUAL
+
+Adicionar ícones discretos de ajuda ao lado de campos e indicadores importantes.
+
+Exemplos:
+
+Índice de risco:
+“Pontuação calculada a partir dos fatores ambientais informados.”
+
+Confiança:
+“Indica a completude e a qualidade dos dados utilizados na análise.”
+
+Área piloto:
+“Área selecionada para teste e validação da solução.”
+
+Dados simulados:
+“Informações utilizadas somente para demonstração em ambiente controlado.”
+
+Níveis de risco:
+
+Baixo:
+“Condições favoráveis. Manter acompanhamento periódico.”
+
+Moderado:
+“Exige atenção e reforço das medidas preventivas.”
+
+Alto:
+“Requer inspeção prioritária e redução de atividades com potencial de ignição.”
+
+Crítico:
+“Condição severa. Recomenda-se acionar imediatamente os protocolos de prevenção.”
+
+6. CENTRAL DE AJUDA
+
+Adicionar no menu ou cabeçalho um botão:
+
+“Ajuda”
+
+Criar uma página ou painel com:
+
+- Como começar;
+- Como cadastrar uma área;
+- Como executar uma análise;
+- Como interpretar o índice de risco;
+- Como usar o mapa;
+- Como acompanhar alertas;
+- Como gerar relatórios;
+- Diferença entre dados reais e simulados;
+- Limitações da solução;
+- Perguntas frequentes.
+
+Rota sugerida:
+
+/help
+
+7. BOTÃO PARA REINICIAR O TUTORIAL
+
+Adicionar em Configurações:
+
+“Reiniciar tutorial de navegação”
+
+Ao clicar:
+
+- limpar o status de conclusão;
+- abrir novamente o tutorial;
+- não apagar dados do usuário.
+
+8. PERSISTÊNCIA
+
+Registrar no localStorage ou no perfil do usuário:
+
+- tutorial iniciado;
+- tutorial concluído;
+- etapa atual;
+- opção “não mostrar novamente”.
+
+Chave sugerida:
+
+platform_onboarding_status
+
+Não armazenar dados pessoais desnecessários.
+
+9. ACESSIBILIDADE
+
+Garantir:
+
+- navegação pelo teclado;
+- tecla Esc para fechar;
+- foco preso no modal durante o tutorial;
+- aria-labels;
+- contraste adequado;
+- textos legíveis;
+- funcionamento em celular e desktop;
+- possibilidade de pular qualquer etapa;
+- nenhum bloqueio permanente da interface.
+
+10. IMPLEMENTAÇÃO TÉCNICA
+
+Antes de adicionar dependências, verificar se já existe alguma biblioteca de tour ou modal compatível.
+
+Preferir:
+
+- componentes existentes do shadcn/ui;
+- implementação própria leve;
+- ou biblioteca pequena e mantida, caso seja realmente necessária.
+
+Não adicionar dependência pesada sem justificativa.
+
+Criar componentes reutilizáveis, como:
+
+- OnboardingTour
+- TourStep
+- HelpTooltip
+- WelcomeModal
+- HelpCenter
+- TutorialProgress
+
+Usar seletores estáveis, como:
+
+data-tour="main-navigation"
+data-tour="dashboard-summary"
+data-tour="monitored-areas"
+data-tour="risk-analysis"
+data-tour="risk-form"
+data-tour="risk-result"
+data-tour="risk-factors"
+data-tour="risk-map"
+data-tour="alerts"
+data-tour="reports"
+
+Não utilizar seletores baseados apenas em classes visuais frágeis.
+
+11. MODO ANÔNIMO
+
+Quando VITE_SUBMISSION_MODE=true:
+
+- não mostrar nomes da equipe;
+- não mostrar empresa ou instituição;
+- usar o nome neutro da solução;
+- manter o tutorial totalmente funcional.
+
+12. VALIDAÇÃO FINAL
+
+Após implementar:
+
+1. executar npm run check;
+2. executar npm run test;
+3. executar npm run build;
+4. testar o tutorial no desktop;
+5. testar no celular;
+6. testar “Pular tutorial”;
+7. testar “Não mostrar novamente”;
+8. testar “Reiniciar tutorial”;
+9. verificar todas as etapas;
+10. confirmar que nenhuma etapa aponta para elemento inexistente.
+
+Ao final, informar:
+
+- arquivos criados;
+- arquivos alterados;
+- biblioteca utilizada, caso exista;
+- como reiniciar o tutorial;
+- onde alterar os textos;
+- limitações encontradas.

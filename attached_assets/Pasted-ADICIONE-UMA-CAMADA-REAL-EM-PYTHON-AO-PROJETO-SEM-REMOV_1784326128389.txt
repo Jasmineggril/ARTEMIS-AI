@@ -1,0 +1,298 @@
+ADICIONE UMA CAMADA REAL EM PYTHON AO PROJETO, SEM REMOVER A STACK ATUAL.
+
+OBJETIVO
+
+Manter o frontend React/TypeScript e o backend Express existentes, mas adicionar um serviço Python responsável pelo processamento dos dados, classificação de risco e futura evolução para Machine Learning supervisionado com Scikit-learn.
+
+A arquitetura final deve ficar assim:
+
+Frontend React/TypeScript
+→ Backend Express
+→ Serviço Python de análise de risco
+→ Resultado retornado ao frontend
+→ Banco PostgreSQL
+
+Não substituir o Express. O Python deve funcionar como serviço especializado de análise.
+
+1. ESTRUTURA PYTHON
+
+Criar uma pasta:
+
+python_service/
+
+Com a seguinte estrutura:
+
+python_service/
+  app.py
+  risk_model.py
+  schemas.py
+  requirements.txt
+  tests/
+    test_risk_model.py
+  data/
+  README.md
+
+2. FRAMEWORK
+
+Usar FastAPI, caso seja compatível com o ambiente do Replit.
+
+Dependências mínimas:
+
+fastapi
+uvicorn
+pydantic
+numpy
+pandas
+scikit-learn
+pytest
+joblib
+
+Não adicionar bibliotecas desnecessárias.
+
+3. ENDPOINTS
+
+Criar:
+
+GET /health
+
+Resposta:
+
+{
+  "status": "ok",
+  "service": "risk-analysis-python"
+}
+
+POST /analyze-risk
+
+Entrada:
+
+- temperature
+- humidity
+- wind_speed
+- recent_rainfall
+- vegetation_condition
+- nearby_hotspot
+- hotspot_distance
+- historical_occurrences
+- data_quality
+
+Saída:
+
+- score
+- level
+- confidence
+- factors
+- recommendations
+- model_type
+- model_version
+- is_simulated
+- calculated_at
+
+4. MOTOR INICIAL
+
+Nesta primeira versão, implementar em Python o mesmo motor transparente baseado em regras já existente em TypeScript.
+
+Não chamar esse motor de Machine Learning treinado.
+
+Retornar:
+
+"model_type": "transparent-rule-engine"
+
+Adicionar comentário no código:
+
+“Este motor baseado em regras é utilizado para demonstração do fluxo tecnológico em ambiente controlado. A Prova de Valor prevê treinamento, calibração e validação de modelo supervisionado com dados representativos.”
+
+5. PREPARAÇÃO PARA SCIKIT-LEARN
+
+Criar em risk_model.py uma arquitetura que permita futura troca do motor por um modelo Scikit-learn.
+
+Criar classes ou funções separadas:
+
+- validate_input
+- normalize_features
+- calculate_rule_score
+- classify_risk
+- explain_factors
+- generate_recommendations
+- load_ml_model
+- predict_with_ml_model
+
+A função load_ml_model deve verificar se existe um arquivo treinado.
+
+Exemplo:
+
+python_service/models/risk_model.joblib
+
+Se o modelo não existir, usar o motor baseado em regras.
+
+Não fingir que existe modelo treinado.
+
+6. MODELO DEMONSTRATIVO SCIKIT-LEARN
+
+Criar, opcionalmente, um script:
+
+python_service/train_demo_model.py
+
+Esse script deve:
+
+- gerar ou carregar um dataset demonstrativo identificado como sintético;
+- treinar um modelo simples de classificação;
+- salvar métricas;
+- salvar o modelo com joblib;
+- indicar claramente que o dataset é sintético;
+- nunca apresentar essas métricas como validação real.
+
+Criar:
+
+python_service/models/
+python_service/results/
+
+Salvar:
+
+risk_model.joblib
+metrics.json
+
+No metrics.json, incluir:
+
+- dataset_type: "synthetic_demo"
+- model_name
+- accuracy
+- precision
+- recall
+- f1_score
+- trained_at
+- warning
+
+Warning obrigatório:
+
+“Metrics obtained with synthetic demonstration data and not representative of operational performance.”
+
+7. TESTES PYTHON
+
+Criar testes com pytest para:
+
+- baixo risco;
+- moderado;
+- alto;
+- crítico;
+- entradas inválidas;
+- umidade acima de 100;
+- valores negativos;
+- determinismo;
+- score entre 0 e 100;
+- geração de recomendações;
+- fallback quando modelo não existir.
+
+Adicionar comando:
+
+pytest python_service/tests
+
+8. INTEGRAÇÃO COM EXPRESS
+
+Criar no backend Node uma camada para chamar o serviço Python.
+
+Fluxo:
+
+POST /api/risk-analysis
+→ valida entrada
+→ envia para FastAPI
+→ recebe resultado
+→ salva no PostgreSQL
+→ retorna ao frontend
+
+Criar variável de ambiente:
+
+PYTHON_SERVICE_URL
+
+Valor local sugerido:
+
+http://127.0.0.1:8000
+
+Se o serviço Python estiver indisponível:
+
+- retornar erro controlado;
+- não travar a aplicação;
+- registrar falha sem expor dados sensíveis;
+- opcionalmente usar fallback TypeScript apenas em modo demonstrativo.
+
+9. EXECUÇÃO NO REPLIT
+
+Configurar o projeto para iniciar:
+
+- servidor Express;
+- serviço FastAPI;
+- frontend Vite.
+
+Criar scripts claros no package.json ou um script de inicialização.
+
+Exemplos:
+
+npm run dev
+npm run dev:python
+npm run dev:all
+
+Criar também:
+
+python_service/start.sh
+
+Com:
+
+uvicorn app:app --host 0.0.0.0 --port 8000
+
+10. DOCUMENTAÇÃO
+
+Atualizar o README para explicar:
+
+- por que Python foi adicionado;
+- arquitetura híbrida;
+- endpoint do serviço;
+- dependências;
+- como executar;
+- como testar;
+- diferença entre motor baseado em regras e modelo supervisionado;
+- status real do modelo;
+- limitações;
+- uso de dados sintéticos.
+
+11. DOCUMENTOS TRL 4
+
+Atualizar docs/trl4 para incluir:
+
+- serviço Python;
+- arquitetura FastAPI;
+- processamento com Python;
+- testes pytest;
+- integração Express → Python;
+- evidência do endpoint;
+- diferença entre regra e ML;
+- prints do terminal;
+- resposta JSON do endpoint;
+- limitações do modelo demonstrativo.
+
+12. VALIDAÇÃO FINAL
+
+Executar:
+
+pip install -r python_service/requirements.txt
+pytest python_service/tests
+npm run check
+npm run test:risk
+npm run build
+
+Testar:
+
+GET /health
+POST /analyze-risk
+POST /api/risk-analysis
+
+Ao final, mostrar:
+
+- estrutura criada;
+- dependências;
+- resultados dos testes Python;
+- resultado dos testes TypeScript;
+- resultado do build;
+- exemplo real de resposta JSON;
+- limitações restantes.
+
+Não declarar que existe Machine Learning operacional validado se o sistema estiver usando motor baseado em regras ou dataset sintético.
