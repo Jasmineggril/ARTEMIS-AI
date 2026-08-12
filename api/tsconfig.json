@@ -1,13 +1,16 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "moduleResolution": "node",
-    "module": "CommonJS",
+    "moduleResolution": "bundler",
+    "module": "ESNext",
     "outDir": "../dist/api",
     "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "skipLibCheck": true,
+    "baseUrl": "../",
     "paths": {
-      "@shared/*": ["../shared/*"],
-      "@/*": ["../client/src/*"]
+      "@shared/*": ["./shared/*"],
+      "@/*": ["./client/src/*"]
     }
   },
   "include": ["./**/*", "../server/**/*", "../shared/**/*"]
