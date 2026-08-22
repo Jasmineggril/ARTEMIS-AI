@@ -57,9 +57,9 @@ Entrada de dados
 
 ---
 
-## 4. Evolução do Florestaí
+## 4. Evolução do projeto base
 
-O CERES AI evolui a proposta original do Florestaí ao incorporar:
+O CERES AI evolui a proposta original base ao incorporar:
 
 - tratamento estruturado de registros históricos de incêndios;
 - análise preditiva de risco com fatores explicáveis;
