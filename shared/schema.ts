@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, json, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -45,6 +45,20 @@ export const alerts = pgTable("alerts", {
   severity: text("severity").notNull(),
   isResolved: boolean("is_resolved").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  // ARTEMIS AI (migration 0002)
+  organizationId: integer("organization_id"),
+  areaId: integer("area_id"),
+  riskAnalysisId: integer("risk_analysis_id"),
+  status: text("status").notNull().default("novo"), // novo | reconhecido | em_acompanhamento | resolvido | descartado
+  reason: text("reason"),
+  dataSource: text("data_source"),
+  dataReferenceAt: timestamp("data_reference_at"),
+  assignedTo: integer("assigned_to"),
+  recommendations: json("recommendations"),
+  dedupKey: text("dedup_key"),
+  occurrenceCount: integer("occurrence_count").notNull().default(1),
+  isDemo: boolean("is_demo").notNull().default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const weatherData = pgTable("weather_data", {
@@ -111,6 +125,11 @@ export const monitoredAreas = pgTable("monitored_areas", {
   createdBy: integer("created_by"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // ARTEMIS AI (migration 0002)
+  organizationId: integer("organization_id"),
+  vegetationCategory: text("vegetation_category"),
+  boundary: json("boundary"), // GeoJSON Polygon/MultiPolygon (validated server-side)
+  notes: text("notes"),
 });
 
 /** Análises de risco executadas */
@@ -127,6 +146,13 @@ export const riskAnalyses = pgTable("risk_analyses", {
   calculationVersion: text("calculation_version").default("1.0.0"),
   createdBy: integer("created_by"),
   createdAt: timestamp("created_at").defaultNow(),
+  // ARTEMIS AI (migration 0002)
+  organizationId: integer("organization_id"),
+  engineType: text("engine_type"),          // transparent-rule-engine | supervised-ml | ...-ts-fallback
+  isExperimental: boolean("is_experimental").notNull().default(false),
+  dataSources: json("data_sources"),        // [{ name, kind, referenceAt, url? }]
+  dataQuality: json("data_quality"),        // { level, missingFields[], notes[] }
+  limitations: json("limitations"),         // string[]
 });
 
 /** Fontes de dados disponíveis */
@@ -156,6 +182,8 @@ export const importBatches = pgTable("import_batches", {
   importedBy: integer("imported_by"),
   status: text("status").notNull().default("concluído"),
   notes: text("notes"),
+  organizationId: integer("organization_id"),
+  rejectionReasons: json("rejection_reasons"),
 });
 
 /** Ocorrências de incêndio importadas */
@@ -179,6 +207,64 @@ export const fireOccurrences = pgTable("fire_occurrences", {
   validationStatus: text("validation_status").notNull().default("válido"),
   rawData: json("raw_data"),
   createdAt: timestamp("created_at").defaultNow(),
+  organizationId: integer("organization_id"),
+});
+
+// ─── ARTEMIS AI: organizations, alert history, audit (migration 0002) ────────
+
+export const ORG_ROLES = ["owner", "admin", "manager", "analyst", "viewer"] as const;
+export type OrgRole = typeof ORG_ROLES[number];
+
+export const organizations = pgTable("organizations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  type: text("type").notNull().default("produtor"), // produtor | empresa | pesquisa | gestao_publica | outro
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const organizationMembers = pgTable("organization_members", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").notNull(),
+  userId: integer("user_id").notNull(),
+  role: text("role").notNull().default("viewer"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => ({
+  orgUserUnique: uniqueIndex("organization_members_org_user_uq").on(t.organizationId, t.userId),
+}));
+
+export const ALERT_STATUSES = ["novo", "reconhecido", "em_acompanhamento", "resolvido", "descartado"] as const;
+export type AlertStatus = typeof ALERT_STATUSES[number];
+
+export const alertEvents = pgTable("alert_events", {
+  id: serial("id").primaryKey(),
+  alertId: integer("alert_id").notNull(),
+  fromStatus: text("from_status"),
+  toStatus: text("to_status").notNull(),
+  note: text("note"),
+  userId: integer("user_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => ({ alertIdx: index("alert_events_alert_idx").on(t.alertId) }));
+
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id"),
+  userId: integer("user_id"),
+  action: text("action").notNull(),
+  entityType: text("entity_type"),
+  entityId: text("entity_id"),
+  metadata: json("metadata"),
+  ip: text("ip"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // ─── Insert schemas ───────────────────────────────────────────────────────────
@@ -199,6 +285,11 @@ export const insertImportBatchSchema = createInsertSchema(importBatches).omit({ 
 export const insertFireOccurrenceSchema = createInsertSchema(fireOccurrences).omit({ id: true, createdAt: true });
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export type Organization = typeof organizations.$inferSelect;
+export type OrganizationMember = typeof organizationMembers.$inferSelect;
+export type AlertEvent = typeof alertEvents.$inferSelect;
+export type AuditLog = typeof auditLogs.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;

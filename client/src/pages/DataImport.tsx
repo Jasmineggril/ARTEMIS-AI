@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { normalizeOccurrenceDate } from "@shared/dates";
 import * as XLSX from "xlsx";
 import { Layout } from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
@@ -133,9 +134,10 @@ function validateRows(rows: ParsedRow[], mapping: Record<string, string>): Valid
     const lat = parseFloat(get("latitude"));
     const lon = parseFloat(get("longitude"));
 
+    const isoDate = normalizeOccurrenceDate(dateStr);
     if (!dateStr) issues.push("Data ausente");
-    else if (!/^\d{4}-\d{2}-\d{2}$|^\d{2}\/\d{2}\/\d{4}$/.test(dateStr))
-      issues.push("Formato de data inválido (esperado AAAA-MM-DD ou DD/MM/AAAA)");
+    else if (!isoDate)
+      issues.push("Data inválida (esperado AAAA-MM-DD ou DD/MM/AAAA, data existente e não futura)");
 
     if (!mun) issues.push("Município ausente");
 
@@ -145,14 +147,14 @@ function validateRows(rows: ParsedRow[], mapping: Record<string, string>): Valid
     if (hasLon && (isNaN(lon) || lon < -180 || lon > 180)) issues.push("Longitude inválida");
 
     // deduplication key
-    const dedupKey = `${dateStr}|${mun}|${get("latitude")}|${get("longitude")}`;
+    const dedupKey = `${isoDate ?? dateStr}|${mun.toLowerCase()}|${get("latitude")}|${get("longitude")}`;
     const isDuplicate = seen.has(dedupKey);
     if (isDuplicate) issues.push("Registro duplicado");
     else seen.add(dedupKey);
 
     const status: ValidationRecord["status"] =
       isDuplicate ? "duplicado"
-      : issues.length > 0 && issues.some(i => !i.startsWith("Latitude") && !i.startsWith("Longitude") && !i.startsWith("Formato"))
+      : issues.length > 0 && issues.some(i => !i.startsWith("Latitude") && !i.startsWith("Longitude") && !i.startsWith("Data inválida"))
         ? "inválido"
       : issues.length > 0 ? "válido com ressalvas"
       : "válido";
@@ -163,7 +165,7 @@ function validateRows(rows: ParsedRow[], mapping: Record<string, string>): Valid
       row,
       issues,
       mapped: {
-        occurrenceDate: dateStr || undefined,
+        occurrenceDate: isoDate ?? undefined,
         occurrenceTime: get("occurrenceTime") || undefined,
         municipality: mun || undefined,
         state: get("state") || undefined,
@@ -301,14 +303,17 @@ export default function DataImport() {
       const payload = {
         filename,
         sourceName: sourceName || "Não especificada",
-        records: validationResult.map(r => ({ ...r.mapped, validationStatus: r.status, rawData: r.row })),
+        records: validationResult.map(r => ({ ...r.mapped, validationStatus: r.status, validationMessages: r.issues, rawData: r.row })),
       };
       const res = await fetch("/api/import-batches", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message ?? `Erro ${res.status}`);
+      }
       const data = await res.json();
 
       // Build local report

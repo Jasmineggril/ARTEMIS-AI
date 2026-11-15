@@ -1,246 +1,172 @@
+import { createPortal } from "react-dom";
 import { useState } from "react";
-import { Layout } from "@/components/Layout";
-import { useAlerts, useResolveAlert } from "@/hooks/use-alerts";
-import { Button } from "@/components/ui/button";
-import {
-  CheckCircle, AlertTriangle, Info, AlertOctagon,
-  Bell, Filter, Clock, MapPin, Wifi, WifiOff
-} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import type { Alert } from "@shared/schema";
+import { Bell, X, History, MapPin, Database, Repeat } from "lucide-react";
+import { Layout } from "@/components/Layout";
+import { Button } from "@/components/ui/button";
+import { RiskBadge } from "@/components/RiskBadge";
+import { useToast } from "@/hooks/use-toast";
+import { useAuthStatus, hasRole } from "@/hooks/use-auth";
+import { useAlerts, useAlert, useAlertTransition, STATUS_LABEL, type AlertRow } from "@/hooks/use-alerts";
+import { EMERGENCY_NOTICE } from "@shared/identity";
+import type { AlertStatus } from "@shared/schema";
+import type { RiskLevel } from "@shared/risk-engine";
 
-type FilterType = "todos" | "critical" | "medium" | "low" | "resolvidos";
+const FILTERS: { key: string; label: string }[] = [
+  { key: "abertos", label: "Abertos" },
+  { key: "novo", label: "Novos" },
+  { key: "em_acompanhamento", label: "Em acompanhamento" },
+  { key: "resolvido", label: "Resolvidos" },
+  { key: "descartado", label: "Descartados" },
+  { key: "", label: "Todos" },
+];
 
-const SEVERITY_CONFIG: Record<string, {
-  label: string;
-  icon: JSX.Element;
-  cardClass: string;
-  badgeClass: string;
-  dotClass: string;
-}> = {
-  critical: {
-    label: "Crítico",
-    icon: <AlertOctagon className="w-5 h-5" />,
-    cardClass: "border-l-4 border-l-rose-500 bg-rose-50/40",
-    badgeClass: "bg-rose-100 text-rose-700 border border-rose-200",
-    dotClass: "bg-rose-500",
-  },
-  medium: {
-    label: "Médio",
-    icon: <AlertTriangle className="w-5 h-5" />,
-    cardClass: "border-l-4 border-l-amber-500 bg-amber-50/40",
-    badgeClass: "bg-amber-100 text-amber-700 border border-amber-200",
-    dotClass: "bg-amber-500",
-  },
-  low: {
-    label: "Baixo",
-    icon: <Info className="w-5 h-5" />,
-    cardClass: "border-l-4 border-l-blue-400 bg-blue-50/40",
-    badgeClass: "bg-blue-100 text-blue-700 border border-blue-200",
-    dotClass: "bg-blue-400",
-  },
-};
+const RISK_LEVELS = ["baixo", "moderado", "alto", "crítico"];
+const fmt = (d: string | Date | null | undefined) => (d ? format(new Date(d), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—");
 
-function AlertCard({ alert, onResolve, isPending }: {
-  alert: Alert;
-  onResolve: (id: number) => void;
-  isPending: boolean;
-}) {
-  const cfg = SEVERITY_CONFIG[alert.severity] ?? SEVERITY_CONFIG.low;
+function SeverityBadge({ severity }: { severity: string }) {
+  if (RISK_LEVELS.includes(severity)) return <RiskBadge level={severity as RiskLevel} size="sm" showIcon />;
+  return <span className="text-xs border rounded-full px-2 py-0.5">{severity}</span>;
+}
 
-  return (
-    <div
-      data-testid={`card-alert-${alert.id}`}
-      className={cn(
-        "rounded-2xl border border-border/50 p-5 shadow-sm transition-all duration-300",
-        alert.isResolved
-          ? "opacity-55 bg-card grayscale-[30%]"
-          : cfg.cardClass
-      )}
-    >
-      <div className="flex flex-col md:flex-row md:items-start gap-4">
-        {/* Icon */}
-        <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5",
-          alert.severity === "critical" ? "bg-rose-100 text-rose-600" :
-          alert.severity === "medium"   ? "bg-amber-100 text-amber-600" :
-                                          "bg-blue-100 text-blue-600"
-        )}>
-          {cfg.icon}
+function StatusPill({ status }: { status: string }) {
+  const tone: Record<string, string> = {
+    novo: "bg-sky-50 text-sky-800 border-sky-200", reconhecido: "bg-indigo-50 text-indigo-800 border-indigo-200",
+    em_acompanhamento: "bg-amber-50 text-amber-900 border-amber-200", resolvido: "bg-green-50 text-green-800 border-green-200",
+    descartado: "bg-slate-100 text-slate-700 border-slate-300",
+  };
+  return <span className={`text-xs border rounded-full px-2 py-0.5 font-medium ${tone[status] ?? ""}`}>{STATUS_LABEL[status as AlertStatus] ?? status}</span>;
+}
+
+function AlertDrawer({ id, onClose, canAct }: { id: number; onClose: () => void; canAct: boolean }) {
+  const { data: a, isLoading } = useAlert(id);
+  const transition = useAlertTransition();
+  const { toast } = useToast();
+  const [note, setNote] = useState("");
+
+  async function go(status: AlertStatus) {
+    try {
+      await transition.mutateAsync({ id, status, note, assignToMe: status === "reconhecido" || status === "em_acompanhamento" });
+      setNote("");
+      toast({ title: `Alerta: ${STATUS_LABEL[status]}` });
+    } catch (e) {
+      toast({ title: "Não foi possível alterar", description: (e as Error).message, variant: "destructive" });
+    }
+  }
+
+  return createPortal(
+    <div role="dialog" aria-modal="true" aria-labelledby="alert-title" className="fixed inset-0 z-50 bg-black/40 flex justify-end">
+      <div className="bg-card w-full sm:max-w-lg h-full overflow-y-auto p-6 space-y-5 shadow-xl">
+        <div className="flex items-start justify-between gap-3">
+          <h2 id="alert-title" className="text-lg font-bold">{isLoading ? "Carregando..." : `Alerta #${a?.id} — ${a?.title}`}</h2>
+          <button onClick={onClose} aria-label="Fechar" className="p-2 rounded-lg hover:bg-secondary"><X className="w-5 h-5" /></button>
         </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <h3 className="font-bold text-foreground text-base leading-snug">{alert.title}</h3>
-            <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", cfg.badgeClass)}>
-              {cfg.label}
-            </span>
-            {alert.isResolved && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Resolvido
-              </span>
+        {a && (
+          <>
+            <div className="flex flex-wrap gap-2"><SeverityBadge severity={a.severity} /><StatusPill status={a.status} />
+              {a.isDemo && <span className="text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-full px-2 py-0.5">Demonstrativo</span>}</div>
+            <p className="text-sm">{a.reason ?? a.message}</p>
+            <dl className="text-xs grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+              <dt className="text-muted-foreground">Emitido em</dt><dd>{fmt(a.createdAt)}</dd>
+              <dt className="text-muted-foreground">Atualizado em</dt><dd>{fmt(a.updatedAt)}</dd>
+              <dt className="text-muted-foreground">Fonte dos dados</dt><dd>{a.dataSource ?? "—"}</dd>
+              <dt className="text-muted-foreground">Referência dos dados</dt><dd>{fmt(a.dataReferenceAt)}</dd>
+              <dt className="text-muted-foreground">Confirmações</dt><dd>{a.occurrenceCount} análise(s)</dd>
+              <dt className="text-muted-foreground">Análise de origem</dt><dd>{a.riskAnalysisId ? `#${a.riskAnalysisId}` : "—"}</dd>
+            </dl>
+            {Array.isArray(a.recommendations) && (a.recommendations as any[]).length > 0 && (
+              <section><h3 className="font-semibold text-sm mb-2">Recomendações associadas</h3>
+                <ul className="list-disc list-inside text-sm space-y-1">{(a.recommendations as any[]).map((r, i) => <li key={i}><span className="capitalize font-medium">{r.priority}</span>: {r.action}</li>)}</ul>
+              </section>
             )}
-          </div>
-
-          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-            {alert.message}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground/70">
-            <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              {alert.createdAt
-                ? format(new Date(alert.createdAt), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })
-                : "Data desconhecida"}
-            </span>
-            {alert.sensorId && (
-              <span className="flex items-center gap-1">
-                <Wifi className="w-3.5 h-3.5" />
-                Sensor #{alert.sensorId}
-              </span>
+            {canAct && a.allowedTransitions.length > 0 && (
+              <section className="space-y-2 border-t pt-4">
+                <label htmlFor="note" className="text-sm font-semibold block">Registrar ação</label>
+                <textarea id="note" className="w-full rounded-lg border border-input bg-background p-2 text-sm h-20" value={note} onChange={(e) => setNote(e.target.value)}
+                  placeholder="Observação (obrigatória para descartar)" maxLength={2000} />
+                <div className="flex flex-wrap gap-2">
+                  {a.allowedTransitions.map((s) => (
+                    <Button key={s} size="sm" variant={s === "descartado" ? "outline" : "default"} disabled={transition.isPending || (s === "descartado" && !note.trim())} onClick={() => go(s)}>
+                      {s === "resolvido" ? "Marcar como resolvido" : s === "descartado" ? "Descartar" : `Mover para "${STATUS_LABEL[s]}"`}
+                    </Button>
+                  ))}
+                </div>
+              </section>
             )}
-            {!alert.isResolved && (
-              <span className={cn("flex items-center gap-1 font-medium", cfg.dotClass.replace("bg-", "text-"))}>
-                <span className={cn("w-2 h-2 rounded-full animate-pulse", cfg.dotClass)} />
-                Ativo
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Action */}
-        {!alert.isResolved && (
-          <Button
-            onClick={() => onResolve(alert.id)}
-            disabled={isPending}
-            variant="outline"
-            size="sm"
-            data-testid={`button-resolve-${alert.id}`}
-            className="shrink-0 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border-emerald-200 self-start"
-          >
-            <CheckCircle className="w-4 h-4 mr-1.5" />
-            Resolver
-          </Button>
+            <section className="border-t pt-4">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2"><History className="w-4 h-4" aria-hidden />Histórico</h3>
+              <ol className="space-y-3">
+                {a.events.map((e) => (
+                  <li key={e.id} className="text-sm border-l-2 pl-3">
+                    <p className="font-medium">{e.fromStatus && e.fromStatus !== e.toStatus ? `${STATUS_LABEL[e.fromStatus as AlertStatus]} → ` : ""}{STATUS_LABEL[e.toStatus as AlertStatus] ?? e.toStatus}</p>
+                    <p className="text-xs text-muted-foreground">{fmt(e.createdAt)} · {e.userName ?? "sistema"}</p>
+                    {e.note && <p className="text-xs mt-0.5">{e.note}</p>}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
 export default function Alerts() {
-  const { data: alertsData, isLoading } = useAlerts();
-  const resolveAlert = useResolveAlert();
-  const [filter, setFilter] = useState<FilterType>("todos");
-
-  const total      = alertsData?.length ?? 0;
-  const critical   = alertsData?.filter(a => a.severity === "critical" && !a.isResolved).length ?? 0;
-  const pending    = alertsData?.filter(a => !a.isResolved).length ?? 0;
-  const resolved   = alertsData?.filter(a => a.isResolved).length ?? 0;
-
-  const filtered = alertsData?.filter(a => {
-    if (filter === "todos")      return true;
-    if (filter === "resolvidos") return a.isResolved;
-    return a.severity === filter && !a.isResolved;
-  }) ?? [];
-
-  const FILTER_TABS: { key: FilterType; label: string; count: number }[] = [
-    { key: "todos",      label: "Todos",     count: total },
-    { key: "critical",   label: "Críticos",  count: critical },
-    { key: "medium",     label: "Médios",    count: alertsData?.filter(a => a.severity === "medium" && !a.isResolved).length ?? 0 },
-    { key: "low",        label: "Baixos",    count: alertsData?.filter(a => a.severity === "low" && !a.isResolved).length ?? 0 },
-    { key: "resolvidos", label: "Resolvidos",count: resolved },
-  ];
+  const [filter, setFilter] = useState("abertos");
+  const [openId, setOpenId] = useState<number | null>(null);
+  const { data: user } = useAuthStatus();
+  const { data: alerts = [], isLoading, error } = useAlerts(filter || undefined);
+  const canAct = hasRole(user, "analyst");
 
   return (
     <Layout>
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-3">
-          <Bell className="w-8 h-8 text-primary" />
-          Central de Alertas
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Monitoramento em tempo real de ocorrências ambientais no Cerrado Brasileiro.
-        </p>
-      </div>
+      <header className="mb-6">
+        <h1 className="text-3xl font-bold font-display flex items-center gap-2"><Bell className="w-8 h-8 text-primary" aria-hidden />Alertas Preventivos</h1>
+        <p className="text-muted-foreground mt-1">Emitidos a partir das análises de risco da organização. Reanálises no mesmo nível não duplicam alertas abertos.</p>
+        <p className="text-xs mt-2 text-red-800 bg-red-50 border border-red-200 rounded-lg p-2 inline-block">{EMERGENCY_NOTICE}</p>
+      </header>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {[
-          { label: "Total de Alertas",  value: total,    color: "text-foreground",    bg: "bg-card" },
-          { label: "Críticos Ativos",   value: critical, color: "text-rose-600",      bg: "bg-rose-50" },
-          { label: "Pendentes",         value: pending,  color: "text-amber-600",     bg: "bg-amber-50" },
-          { label: "Resolvidos",        value: resolved, color: "text-emerald-600",   bg: "bg-emerald-50" },
-        ].map(stat => (
-          <div key={stat.label} className={cn("rounded-2xl border border-border/50 p-4 shadow-sm", stat.bg)}>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">{stat.label}</p>
-            <p className={cn("text-3xl font-bold font-display", stat.color)}>
-              {isLoading ? "—" : stat.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <Filter className="w-4 h-4 text-muted-foreground" />
-        {FILTER_TABS.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setFilter(tab.key)}
-            data-testid={`filter-${tab.key}`}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all border",
-              filter === tab.key
-                ? "bg-primary text-white border-primary shadow-sm"
-                : "bg-card text-muted-foreground border-border/50 hover:bg-secondary hover:text-foreground"
-            )}
-          >
-            {tab.label}
-            <span className={cn(
-              "text-xs px-1.5 py-0.5 rounded-full font-bold",
-              filter === tab.key ? "bg-white/20 text-white" : "bg-secondary text-muted-foreground"
-            )}>
-              {tab.count}
-            </span>
+      <div role="tablist" aria-label="Filtrar alertas por status" className="flex flex-wrap gap-2 mb-5">
+        {FILTERS.map((f) => (
+          <button key={f.key} role="tab" aria-selected={filter === f.key} onClick={() => setFilter(f.key)}
+            className={`px-3 py-1.5 rounded-full text-sm border ${filter === f.key ? "bg-primary text-primary-foreground border-primary" : "hover:bg-secondary"}`}>
+            {f.label}
           </button>
         ))}
       </div>
 
-      {/* Alerts List */}
-      <div className="space-y-4">
-        {isLoading ? (
-          [1, 2, 3, 4].map(i => (
-            <div key={i} className="h-28 bg-secondary/40 rounded-2xl animate-pulse" />
-          ))
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-16 bg-card rounded-2xl border border-dashed border-border">
-            <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-foreground">Nenhum alerta nesta categoria</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              {filter === "resolvidos" ? "Nenhum alerta foi resolvido ainda." : "Tudo aparenta estar normal por aqui."}
-            </p>
-          </div>
-        ) : (
-          filtered.map(alert => (
-            <AlertCard
-              key={alert.id}
-              alert={alert}
-              onResolve={(id) => resolveAlert.mutate(id)}
-              isPending={resolveAlert.isPending}
-            />
-          ))
-        )}
-      </div>
-
-      {filtered.length > 0 && (
-        <p className="text-center text-xs text-muted-foreground/60 mt-6">
-          Exibindo {filtered.length} de {total} alertas · Atualizado automaticamente
-        </p>
+      {isLoading && <p className="text-muted-foreground">Carregando alertas...</p>}
+      {error && <p role="alert" className="text-red-700">{(error as Error).message}</p>}
+      {!isLoading && alerts.length === 0 && (
+        <div className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
+          Nenhum alerta neste filtro. Alertas são gerados quando uma análise classifica uma área como <strong>alto</strong> ou <strong>crítico</strong>.
+        </div>
       )}
+
+      <ul className="space-y-3">
+        {alerts.map((a: AlertRow) => (
+          <li key={a.id}>
+            <button onClick={() => setOpenId(a.id)} className="w-full text-left rounded-2xl border bg-card p-4 shadow-sm hover:border-primary/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`card-alert-${a.id}`}>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="font-semibold">#{a.id} · {a.title}</span>
+                <SeverityBadge severity={a.severity} /><StatusPill status={a.status} />
+                {a.occurrenceCount > 1 && <span className="text-xs flex items-center gap-1 text-muted-foreground"><Repeat className="w-3 h-3" aria-hidden />{a.occurrenceCount}×</span>}
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2">{a.reason ?? a.message}</p>
+              <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                <span>Emitido {fmt(a.createdAt)}</span>
+                {a.areaId && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" aria-hidden />Área #{a.areaId}</span>}
+                {a.dataSource && <span className="flex items-center gap-1"><Database className="w-3 h-3" aria-hidden />{a.dataSource}</span>}
+              </p>
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {openId && <AlertDrawer id={openId} canAct={canAct} onClose={() => setOpenId(null)} />}
     </Layout>
   );
 }

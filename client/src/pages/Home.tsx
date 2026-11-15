@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/RiskBadge";
-import ceresLogo from "@assets/LOGO_CERES_AI_1782244864205.png";
+import { ArtemisMark } from "@/components/ArtemisMark";
 import {
   Flame, Map, Bell, BarChart3, FileText, Database,
   ShieldCheck, CheckCircle2, AlertTriangle, ChevronRight,
@@ -27,7 +27,7 @@ function PublicHeader() {
     <header className="sticky top-0 z-40 backdrop-blur-sm border-b border-border/40 bg-card/95">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src={ceresLogo} alt={PRODUCT_NAME} className="h-9 w-auto" />
+          <ArtemisMark className="w-9 h-9 shrink-0" />
           {!SUBMISSION_MODE && (
             <span className="font-bold text-base text-foreground hidden sm:block">{PRODUCT_NAME}</span>
           )}
@@ -337,7 +337,7 @@ export default function Home() {
               {[
                 { icon: <Wifi className="w-4 h-4" />,   t: "Modo offline",            d: "Acesso ao índice de risco sem conexão à internet" },
                 { icon: <Bot className="w-4 h-4" />,    t: "IA por voz",              d: "Consulte o assistente sobre fatores de risco por áudio" },
-                { icon: <MapPin className="w-4 h-4" />, t: "Alertas por localização", d: "Receba avisos sobre áreas monitoradas em tempo real" },
+                { icon: <MapPin className="w-4 h-4" />, t: "Alertas por localização", d: "Avisos sobre áreas monitoradas (previsto para a próxima fase)" },
                 { icon: <Clock className="w-4 h-4" />,  t: "Protocolos rápidos",      d: "Checklists de prevenção acessíveis durante operações" },
               ].map((f, i) => (
                 <div key={i} className="flex items-start gap-3">
@@ -534,7 +534,7 @@ export default function Home() {
       <footer className="border-t border-border/40 py-10">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-3">
-            <img src={ceresLogo} alt={PRODUCT_NAME} className="h-7 w-auto" />
+            <ArtemisMark className="w-7 h-7 shrink-0" />
             {!SUBMISSION_MODE && <span className="font-medium">{PRODUCT_NAME}</span>}
           </div>
           <p className="text-center">

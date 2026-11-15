@@ -113,8 +113,9 @@ const sections = [
     title: "Diferença entre dados reais e simulados",
     content: (
       <div className="text-sm text-muted-foreground space-y-2">
-        <p><strong className="text-foreground">Dados reais:</strong> Dados climáticos obtidos em tempo real via API Open-Meteo (temperatura, umidade, vento, precipitação).</p>
-        <p><strong className="text-foreground">Dados simulados:</strong> Áreas monitoradas, histórico de ocorrências e focos próximos são simulados exclusivamente para demonstração em ambiente controlado. Sempre identificados com o rótulo <em>"Dados simulados para demonstração em ambiente controlado."</em></p>
+        <p><strong className="text-foreground">Dados da organização:</strong> áreas, análises, alertas e ocorrências importadas são dados reais cadastrados pela sua organização e só ficam visíveis aos seus membros.</p>
+        <p><strong className="text-foreground">Dados meteorológicos:</strong> quando ativado na análise, o Open-Meteo fornece estimativas de modelo numérico consultadas no momento da análise (não são medições de estação local nem monitoramento contínuo).</p>
+        <p><strong className="text-foreground">Dados demonstrativos:</strong> cenários de teste e telas ainda não integradas exibem o rótulo <em>"Dados simulados para demonstração em ambiente controlado."</em></p>
       </div>
     ),
   },

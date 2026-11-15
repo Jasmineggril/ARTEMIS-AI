@@ -1,32 +1,21 @@
-import { useState, useEffect, useRef } from "react";
-import { Layout } from "@/components/Layout";
-import { RiskBadge, riskLevelColor, riskLevelDescription } from "@/components/RiskBadge";
-import { calculateRisk, DEMO_SCENARIOS } from "@shared/risk-engine";
-import { SIMULATED_DATA_LABEL, DECISION_SUPPORT_DISCLAIMER } from "@shared/identity";
-import { useAlerts } from "@/hooks/use-alerts";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { MapPin, Flame, Filter, X, Bell, FileText, Info } from "lucide-react";
+import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON, useMap } from "react-leaflet";
+import { format } from "date-fns";
+import { MapPin, Flame, Filter, Download, Info } from "lucide-react";
+import type L from "leaflet";
+import { Layout } from "@/components/Layout";
+import { RiskBadge, riskLevelColor } from "@/components/RiskBadge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { getClosestBiome, type BrazilianBiome } from "@/lib/biomes";
+import { api } from "@/lib/api";
+import { useAuthStatus, hasRole } from "@/hooks/use-auth";
+import { type BrazilianBiome } from "@/lib/biomes";
+import { BR_STATES } from "@shared/br-states";
+import { DECISION_SUPPORT_DISCLAIMER } from "@shared/identity";
 import type { RiskLevel } from "@shared/risk-engine";
-import {
-  MapContainer,
-  TileLayer,
-  CircleMarker,
-  Popup,
-  GeoJSON,
-  useMap,
-} from "react-leaflet";
-import L from "leaflet";
+import type { MonitoredArea, FireOccurrence } from "@shared/schema";
 
-// Fix Leaflet default icon paths broken by Vite bundler
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
 
 // ── Biome GeoJSON polygons (simplified approximations for Brazil) ────────────
 const BIOME_COLORS: Record<BrazilianBiome, string> = {
@@ -108,413 +97,171 @@ const BIOME_GEOJSON: GeoJSON.FeatureCollection = {
   ],
 };
 
-// ── Demo areas ───────────────────────────────────────────────────────────────
-const DEMO_AREAS = Object.entries(DEMO_SCENARIOS).map(([key, s], i) => {
-  const lat = [-14.12, -14.47, -16.68, -14.54][i] ?? -14;
-  const lng = [-47.51, -48.46, -49.25, -50.26][i] ?? -47;
-  return {
-    id: i + 1,
-    key,
-    name: `Área Demo ${i + 1}`,
-    operationType: ["Agroindústria", "Empresa florestal", "Energia", "Mineração"][i] ?? "Outro",
-    municipality: ["Alto Paraíso/GO", "Niquelândia/GO", "Goiânia/GO", "Crixás/GO"][i] ?? "—",
-    latitude: lat,
-    longitude: lng,
-    areaHectares: [1200, 850, 3500, 2100][i] ?? 1000,
-    biome: getClosestBiome(lat, lng),
-    risk: calculateRisk(s.input, true),
-    isSimulated: true,
-  };
-});
 
-type FilterLevel = "all" | RiskLevel;
-type FilterType  = "all" | string;
+type AreaRow = MonitoredArea & { latestAnalysis: { id: number; score: number; level: RiskLevel; createdAt: string } | null };
+const NO_ANALYSIS_COLOR = "#64748b";
+const OCC_COLOR = "#7c2d12";
 
-// Sub-component: fly to selected area
-function FlyToArea({ area }: { area: typeof DEMO_AREAS[0] | null }) {
+function FitTo({ points }: { points: [number, number][] }) {
   const map = useMap();
   useEffect(() => {
-    if (area) map.flyTo([area.latitude, area.longitude], 9, { duration: 1 });
-  }, [area, map]);
+    if (points.length === 1) map.setView(points[0], 10);
+    else if (points.length > 1) map.fitBounds(points as any, { padding: [30, 30], maxZoom: 11 });
+  }, [points.length]); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
+}
+
+function toCsv(rows: FireOccurrence[]) {
+  const head = ["data", "hora", "municipio", "uf", "latitude", "longitude", "tipo", "situacao", "fonte", "lote"];
+  const esc = (v: unknown) => {
+    let x = v == null ? "" : String(v);
+    if (/^[=+\-@]/.test(x)) x = `'${x}`;
+    return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x;
+  };
+  return [head.join(","), ...rows.map((r) => [r.occurrenceDate, r.occurrenceTime, r.municipality, r.state, r.latitude, r.longitude, r.occurrenceType, r.occurrenceStatus, r.source, r.importBatchId].map(esc).join(","))].join("\n");
 }
 
 export default function CeresMaps() {
   const [, setLocation] = useLocation();
-  const { data: alerts } = useAlerts();
-  const [selectedArea, setSelectedArea] = useState<typeof DEMO_AREAS[0] | null>(null);
-  const [filterLevel, setFilterLevel] = useState<FilterLevel>("all");
-  const [filterType, setFilterType]   = useState<FilterType>("all");
-  const [showBiomes, setShowBiomes]   = useState(true);
+  const { data: user } = useAuthStatus();
+  const [level, setLevel] = useState<"all" | RiskLevel | "none">("all");
+  const [showAreas, setShowAreas] = useState(true);
+  const [showOcc, setShowOcc] = useState(true);
+  const [showBiomes, setShowBiomes] = useState(false);
+  const [occFilter, setOccFilter] = useState({ from: "", to: "", state: "", municipality: "" });
+  const [applied, setApplied] = useState(occFilter);
 
-  const opTypes = Array.from(new Set(DEMO_AREAS.map(a => a.operationType)));
-
-  const filteredAreas = DEMO_AREAS.filter(a => {
-    const levelOk = filterLevel === "all" || a.risk.level === filterLevel;
-    const typeOk  = filterType  === "all" || a.operationType === filterType;
-    return levelOk && typeOk;
+  const { data: areas = [] } = useQuery<AreaRow[]>({ queryKey: ["/api/areas"], queryFn: () => api("GET", "/api/areas") });
+  const occQuery = new URLSearchParams(Object.entries(applied).filter(([, v]) => v)).toString();
+  const { data: occurrences = [], isFetching } = useQuery<FireOccurrence[]>({
+    queryKey: ["/api/fire-occurrences", occQuery],
+    queryFn: () => api("GET", `/api/fire-occurrences${occQuery ? `?${occQuery}` : ""}`),
   });
 
-  const activeAlerts = alerts?.filter(a => !a.isResolved).length ?? 0;
+  const visibleAreas = areas.filter((a) => level === "all" || (level === "none" ? !a.latestAnalysis : a.latestAnalysis?.level === level));
+  const mappedOcc = occurrences.filter((o) => o.latitude != null && o.longitude != null);
+  const points = useMemo<[number, number][]>(
+    () => [...areas.filter((a) => a.latitude != null).map((a) => [a.latitude!, a.longitude!] as [number, number]),
+      ...mappedOcc.slice(0, 500).map((o) => [o.latitude!, o.longitude!] as [number, number])],
+    [areas, mappedOcc],
+  );
 
-  const levelCounts = DEMO_AREAS.reduce((acc, a) => {
-    acc[a.risk.level] = (acc[a.risk.level] ?? 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  // GeoJSON style per feature
   const biomeStyle = (feature?: GeoJSON.Feature) => {
     const biome = feature?.properties?.biome as BrazilianBiome | undefined;
     const color = biome ? BIOME_COLORS[biome] : "#666";
-    return { color, weight: 1.5, fillColor: color, fillOpacity: 0.18, opacity: 0.5 };
+    return { color, weight: 1, fillColor: color, fillOpacity: 0.08, opacity: 0.4, dashArray: "4" };
   };
+  const areaColor = (a: AreaRow) => (a.latestAnalysis ? riskLevelColor(a.latestAnalysis.level) : NO_ANALYSIS_COLOR);
 
-  const onEachBiome = (feature: GeoJSON.Feature, layer: L.Layer) => {
-    const biome = feature.properties?.biome as string;
-    (layer as L.Path).bindTooltip(biome, { sticky: true, className: "biome-tooltip" });
-  };
+  function exportCsv() {
+    const blob = new Blob(["\uFEFF" + toCsv(occurrences)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const el = document.createElement("a");
+    el.href = url; el.download = `artemis-ocorrencias-${format(new Date(), "yyyyMMdd")}.csv`; el.click();
+    URL.revokeObjectURL(url);
+  }
 
+  const input = "rounded-lg border border-input bg-background px-2 py-1.5 text-sm w-full";
   return (
     <Layout>
-      <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
-            <MapPin className="w-8 h-8 text-primary" />
-            Mapa de Risco
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {DEMO_AREAS.length} áreas monitoradas · 6 biomas brasileiros ·{" "}
-            <span className="text-amber-600">{SIMULATED_DATA_LABEL}</span>
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {activeAlerts > 0 && (
-            <button
-              onClick={() => setLocation("/alerts")}
-              className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors"
-            >
-              <Bell className="w-4 h-4" />
-              {activeAlerts} alerta{activeAlerts !== 1 ? "s" : ""} ativo{activeAlerts !== 1 ? "s" : ""}
-            </button>
-          )}
-        </div>
+      <header className="mb-4">
+        <h1 className="text-3xl font-bold font-display flex items-center gap-2"><MapPin className="w-8 h-8 text-primary" aria-hidden />Mapa Ambiental</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          {areas.length} área(s) da organização · {mappedOcc.length} ocorrência(s) histórica(s) importada(s) com coordenadas.
+          Ocorrências importadas são registros históricos, não monitoramento em tempo real. Focos de calor por satélite (INPE) ainda não estão integrados.
+        </p>
       </header>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <Filter className="w-4 h-4" /> Filtrar:
-        </div>
-        {(["all", "baixo", "moderado", "alto", "crítico"] as const).map(level => (
-          <button
-            key={level}
-            onClick={() => setFilterLevel(level)}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-semibold border transition-all",
-              filterLevel === level
-                ? "bg-primary text-white border-primary"
-                : "bg-card border-border/50 text-muted-foreground hover:border-primary/50"
-            )}
-          >
-            {level === "all" ? "Todos os níveis" : level.charAt(0).toUpperCase() + level.slice(1)}
-            {level !== "all" && levelCounts[level] ? ` (${levelCounts[level]})` : ""}
-          </button>
-        ))}
-        <select
-          className="px-3 py-1.5 text-xs border border-border/50 rounded-full bg-card text-muted-foreground focus:outline-none"
-          value={filterType}
-          onChange={e => setFilterType(e.target.value)}
-        >
-          <option value="all">Todos os setores</option>
-          {opTypes.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <button
-          onClick={() => setShowBiomes(b => !b)}
-          className={cn(
-            "px-3 py-1.5 rounded-full text-xs font-semibold border transition-all",
-            showBiomes
-              ? "bg-emerald-700 text-white border-emerald-700"
-              : "bg-card border-border/50 text-muted-foreground hover:border-primary/50"
-          )}
-        >
-          🌿 Biomas
-        </button>
-      </div>
+      <div className="grid lg:grid-cols-[300px_1fr] gap-4">
+        <aside className="space-y-4" aria-label="Camadas e filtros">
+          <fieldset className="bg-card border rounded-2xl p-4 space-y-2">
+            <legend className="font-semibold text-sm px-1">Camadas</legend>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showAreas} onChange={(e) => setShowAreas(e.target.checked)} />Áreas monitoradas</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showOcc} onChange={(e) => setShowOcc(e.target.checked)} />Ocorrências importadas</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showBiomes} onChange={(e) => setShowBiomes(e.target.checked)} />Biomas (contorno ilustrativo, não oficial)</label>
+          </fieldset>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Map */}
-        <div className="md:col-span-2 flex flex-col gap-3">
-          {/* Biome legend */}
-          {showBiomes && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-              {(Object.entries(BIOME_COLORS) as [BrazilianBiome, string][]).map(([biome, color]) => (
-                <div key={biome} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-3 h-3 rounded-sm border border-white/50" style={{ backgroundColor: color, opacity: 0.7 }} />
-                  {biome}
-                </div>
-              ))}
+          <fieldset className="bg-card border rounded-2xl p-4 space-y-2">
+            <legend className="font-semibold text-sm px-1 flex items-center gap-1"><Filter className="w-4 h-4" aria-hidden />Áreas por risco</legend>
+            <label htmlFor="lvl" className="sr-only">Nível</label>
+            <select id="lvl" className={input} value={level} onChange={(e) => setLevel(e.target.value as any)}>
+              <option value="all">Todos os níveis</option><option value="crítico">Crítico</option><option value="alto">Alto</option>
+              <option value="moderado">Moderado</option><option value="baixo">Baixo</option><option value="none">Sem análise</option>
+            </select>
+          </fieldset>
+
+          <form className="bg-card border rounded-2xl p-4 space-y-2" onSubmit={(e) => { e.preventDefault(); setApplied(occFilter); }}>
+            <p className="font-semibold text-sm">Ocorrências</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label htmlFor="f-from" className="text-xs text-muted-foreground">De</label>
+                <input id="f-from" type="date" className={input} value={occFilter.from} onChange={(e) => setOccFilter({ ...occFilter, from: e.target.value })} /></div>
+              <div><label htmlFor="f-to" className="text-xs text-muted-foreground">Até</label>
+                <input id="f-to" type="date" className={input} value={occFilter.to} onChange={(e) => setOccFilter({ ...occFilter, to: e.target.value })} /></div>
             </div>
-          )}
+            <div><label htmlFor="f-uf" className="text-xs text-muted-foreground">UF</label>
+              <select id="f-uf" className={input} value={occFilter.state} onChange={(e) => setOccFilter({ ...occFilter, state: e.target.value })}>
+                <option value="">Todas</option>{BR_STATES.map((s) => <option key={s}>{s}</option>)}
+              </select></div>
+            <div><label htmlFor="f-mun" className="text-xs text-muted-foreground">Município</label>
+              <input id="f-mun" className={input} value={occFilter.municipality} onChange={(e) => setOccFilter({ ...occFilter, municipality: e.target.value })} /></div>
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" className="flex-1">{isFetching ? "Filtrando..." : "Aplicar"}</Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => { const e = { from: "", to: "", state: "", municipality: "" }; setOccFilter(e); setApplied(e); }}>Limpar</Button>
+            </div>
+            {hasRole(user, "analyst") && occurrences.length > 0 && (
+              <Button type="button" size="sm" variant="outline" className="w-full" onClick={exportCsv}><Download className="w-4 h-4 mr-1" aria-hidden />Exportar resultado (CSV)</Button>
+            )}
+          </form>
 
-          {/* Risk legend */}
-          <div className="flex flex-wrap gap-3">
-            {(["baixo", "moderado", "alto", "crítico"] as RiskLevel[]).map(level => (
-              <div key={level} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-full border border-white shadow-sm"
-                  style={{ backgroundColor: riskLevelColor(level) }} />
-                {level.charAt(0).toUpperCase() + level.slice(1)}
+          <section className="bg-card border rounded-2xl p-4 text-xs space-y-1.5" aria-labelledby="legend">
+            <p id="legend" className="font-semibold text-sm">Legenda</p>
+            {(["crítico", "alto", "moderado", "baixo"] as RiskLevel[]).map((l) => <div key={l}><RiskBadge level={l} size="sm" showIcon /></div>)}
+            <p className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-full border-2" style={{ borderColor: NO_ANALYSIS_COLOR }} />Área sem análise</p>
+            <p className="flex items-center gap-2"><span className="inline-block w-2.5 h-2.5 rotate-45" style={{ background: OCC_COLOR }} />Ocorrência importada (ponto pequeno)</p>
+          </section>
+        </aside>
+
+        <div className="rounded-2xl overflow-hidden border h-[70vh] min-h-[420px]">
+          <MapContainer center={[-14.5, -49]} zoom={5} className="h-full w-full" scrollWheelZoom>
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' />
+            <FitTo points={points} />
+            {showBiomes && <GeoJSON data={BIOME_GEOJSON} style={biomeStyle as any}
+              onEachFeature={(f, layer) => (layer as L.Path).bindTooltip(`${f.properties?.biome} (contorno aproximado)`, { sticky: true })} />}
+            {showAreas && visibleAreas.map((a) => (
+              <div key={a.id}>
+                {a.boundary ? <GeoJSON data={a.boundary as any} style={{ color: areaColor(a), weight: 2, fillOpacity: 0.15 }} /> : null}
+                {a.latitude != null && (
+                  <CircleMarker center={[a.latitude, a.longitude!]} radius={10} pathOptions={{ color: "#fff", weight: 2, fillColor: areaColor(a), fillOpacity: 0.95 }}>
+                    <Popup>
+                      <strong>{a.name}</strong><br />{a.municipality}/{a.state}<br />
+                      {a.latestAnalysis ? <>Índice {a.latestAnalysis.score}/100 — {a.latestAnalysis.level}<br />Análise de {format(new Date(a.latestAnalysis.createdAt), "dd/MM/yyyy HH:mm")}</> : "Sem análise"}
+                      <br /><button className="underline mt-1" onClick={() => setLocation(`/risk-analysis?area=${a.id}`)}>Analisar</button>
+                    </Popup>
+                  </CircleMarker>
+                )}
               </div>
             ))}
-          </div>
-
-          {/* Real Leaflet Map */}
-          <div className="rounded-2xl overflow-hidden border border-border/30 shadow-lg" style={{ height: 460 }}>
-            <MapContainer
-              center={[-14.5, -48.5]}
-              zoom={6}
-              style={{ height: "100%", width: "100%" }}
-              scrollWheelZoom={true}
-            >
-              {/* Satellite imagery — ESRI World Imagery (free, no API key) */}
-              <TileLayer
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                attribution='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
-                maxZoom={19}
-              />
-
-              {/* Biome polygons */}
-              {showBiomes && (
-                <GeoJSON
-                  key="biomes"
-                  data={BIOME_GEOJSON}
-                  style={biomeStyle}
-                  onEachFeature={onEachBiome}
-                />
-              )}
-
-              {/* Area markers */}
-              {filteredAreas.map(area => (
-                <CircleMarker
-                  key={area.id}
-                  center={[area.latitude, area.longitude]}
-                  radius={selectedArea?.id === area.id ? 16 : 12}
-                  pathOptions={{
-                    color: "#fff",
-                    weight: 2,
-                    fillColor: riskLevelColor(area.risk.level),
-                    fillOpacity: 0.9,
-                  }}
-                  eventHandlers={{
-                    click: () => setSelectedArea(prev => prev?.id === area.id ? null : area),
-                  }}
-                >
-                  <Popup minWidth={220} maxWidth={220}>
-                    <div style={{ fontFamily: "inherit", background: "#0f1f14" }}>
-                      {/* Header strip */}
-                      <div style={{ background: riskLevelColor(area.risk.level), padding: "10px 14px 8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <span style={{ color: "#fff", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.85 }}>
-                            {area.operationType}
-                          </span>
-                          <span style={{ background: "rgba(0,0,0,0.25)", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "2px 8px", textTransform: "uppercase" }}>
-                            {area.risk.level}
-                          </span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "flex-end", gap: 6, marginTop: 4 }}>
-                          <span style={{ color: "#fff", fontSize: 40, fontWeight: 800, lineHeight: 1 }}>
-                            {area.risk.score}
-                          </span>
-                          <div style={{ paddingBottom: 4 }}>
-                            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>/100</span>
-                            <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 10, marginTop: 1 }}>
-                              {Math.round(area.risk.confidence * 100)}% confiança
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Body */}
-                      <div style={{ padding: "10px 14px", background: "#0f1f14" }}>
-                        <p style={{ color: "#d1fae5", fontWeight: 700, fontSize: 13, margin: 0 }}>{area.name}</p>
-                        <p style={{ color: "#6ee7b7", fontSize: 11, margin: "2px 0 8px" }}>📍 {area.municipality}</p>
-
-                        {/* Biome pill */}
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.07)", borderRadius: 20, padding: "3px 10px", marginBottom: 8 }}>
-                          <span style={{ fontSize: 10 }}>🌿</span>
-                          <span style={{ color: "#a7f3d0", fontSize: 11, fontWeight: 600 }}>{area.biome}</span>
-                        </div>
-
-                        {/* Divider */}
-                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginBottom: 8 }} />
-
-                        {/* Top factors */}
-                        {area.risk.factors.slice(0, 2).map((f, i) => (
-                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                            <span style={{ color: "#fca5a5", fontSize: 11, fontWeight: 700, minWidth: 24 }}>+{f.contribution}</span>
-                            <span style={{ color: "#d1fae5", fontSize: 11 }}>{f.name}</span>
-                          </div>
-                        ))}
-
-                        {/* Area info */}
-                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                          <span style={{ color: "#6ee7b7", fontSize: 10 }}>
-                            {area.areaHectares?.toLocaleString("pt-BR")} ha
-                          </span>
-                          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10 }}>Simulado</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Popup>
-                </CircleMarker>
-              ))}
-
-              <FlyToArea area={selectedArea} />
-            </MapContainer>
-          </div>
-
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <Info className="w-3 h-3" />
-            Polígonos de biomas são aproximações visuais. Posições das áreas são demonstrativas.
-            Clique em um marcador para detalhes ou use o painel lateral.
-          </p>
-        </div>
-
-        {/* Side panel */}
-        <div className="space-y-4">
-          {selectedArea ? (
-            <div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-bold text-foreground">{selectedArea.name}</h3>
-                  <p className="text-xs text-muted-foreground">{selectedArea.municipality}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    🌿 Bioma: <span className="font-medium">{selectedArea.biome}</span>
-                  </p>
-                </div>
-                <button onClick={() => setSelectedArea(null)} className="text-muted-foreground hover:text-foreground">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-center">
-                  <p className="text-3xl font-bold" style={{ color: riskLevelColor(selectedArea.risk.level) }}>
-                    {selectedArea.risk.score}
-                  </p>
-                  <p className="text-xs text-muted-foreground">/100</p>
-                </div>
-                <div>
-                  <RiskBadge level={selectedArea.risk.level} size="md" />
-                  <p className="text-xs text-muted-foreground mt-1">{riskLevelDescription(selectedArea.risk.level)}</p>
-                </div>
-              </div>
-
-              <div className="space-y-2 mb-4 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Operação</span>
-                  <span className="font-medium">{selectedArea.operationType}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Área</span>
-                  <span className="font-medium">{selectedArea.areaHectares?.toLocaleString("pt-BR")} ha</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Bioma</span>
-                  <span className="font-medium">{selectedArea.biome}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Confiança</span>
-                  <span className="font-medium">{Math.round(selectedArea.risk.confidence * 100)}%</span>
-                </div>
-              </div>
-
-              {selectedArea.risk.factors.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-semibold text-muted-foreground mb-2">Fatores críticos</p>
-                  <div className="space-y-1">
-                    {selectedArea.risk.factors.slice(0, 3).map((f, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="font-bold text-red-600">+{f.contribution}</span>
-                        <span>{f.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {selectedArea.isSimulated && (
-                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-4">
-                  {SIMULATED_DATA_LABEL}
-                </p>
-              )}
-
-              <div className="space-y-2">
-                <Button size="sm" className="w-full" onClick={() => setLocation("/simulacao")}>
-                  <Flame className="w-4 h-4 mr-2" /> Nova análise
-                </Button>
-                <Button variant="outline" size="sm" className="w-full" onClick={() => setLocation("/alerts")}>
-                  <Bell className="w-4 h-4 mr-2" /> Ver alertas
-                </Button>
-                <Button variant="ghost" size="sm" className="w-full" onClick={() => setLocation("/reports")}>
-                  <FileText className="w-4 h-4 mr-2" /> Gerar relatório
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm text-center">
-              <MapPin className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-muted-foreground">Clique em uma área no mapa</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">para ver detalhes, índice, bioma e recomendações.</p>
-            </div>
-          )}
-
-          {/* Area list */}
-          <div className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm">
-            <p className="text-xs font-semibold text-muted-foreground mb-3">
-              Áreas no mapa ({filteredAreas.length})
-            </p>
-            <div className="space-y-2">
-              {filteredAreas.map(a => (
-                <button
-                  key={a.id}
-                  onClick={() => setSelectedArea(prev => prev?.id === a.id ? null : a)}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors",
-                    selectedArea?.id === a.id ? "bg-primary/10" : "hover:bg-muted/30"
-                  )}
-                >
-                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: riskLevelColor(a.risk.level) }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">{a.name}</p>
-                    <p className="text-xs text-muted-foreground">{a.biome} · {a.operationType}</p>
-                  </div>
-                  <span className="text-xs font-bold shrink-0" style={{ color: riskLevelColor(a.risk.level) }}>
-                    {a.risk.score}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Biome quick legend */}
-          <div className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm">
-            <p className="text-xs font-semibold text-muted-foreground mb-3">Biomas do Brasil</p>
-            <div className="space-y-2">
-              {(Object.entries(BIOME_COLORS) as [BrazilianBiome, string][]).map(([biome, color]) => (
-                <div key={biome} className="flex items-center gap-2 text-xs">
-                  <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: color }} />
-                  <span className="text-foreground">{biome}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2 text-xs text-muted-foreground">
-            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            {DECISION_SUPPORT_DISCLAIMER}
-          </div>
+            {showOcc && mappedOcc.map((o) => (
+              <CircleMarker key={`o${o.id}`} center={[o.latitude!, o.longitude!]} radius={4} pathOptions={{ color: OCC_COLOR, weight: 1, fillColor: OCC_COLOR, fillOpacity: 0.7 }}>
+                <Popup>
+                  <strong>Ocorrência histórica importada</strong><br />
+                  {o.occurrenceDate ?? "data não informada"} {o.occurrenceTime ?? ""}<br />
+                  {o.municipality ?? "—"}/{o.state ?? "—"}<br />
+                  {o.occurrenceType && <>Tipo: {o.occurrenceType}<br /></>}
+                  Fonte: {o.source || "arquivo importado"} · lote #{o.importBatchId}<br />
+                  Validação: {o.validationStatus}
+                </Popup>
+              </CircleMarker>
+            ))}
+          </MapContainer>
         </div>
       </div>
+      <p className="text-xs text-muted-foreground mt-4 flex items-start gap-1"><Info className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden />
+        Agrupamento de pontos, seleção por polígono desenhado e camada de focos de calor estão pendentes. {DECISION_SUPPORT_DISCLAIMER}</p>
+      {areas.length === 0 && (
+        <p className="text-sm mt-2"><Flame className="inline w-4 h-4" aria-hidden /> Cadastre áreas em <button className="underline" onClick={() => setLocation("/areas")}>Áreas Monitoradas</button> para vê-las no mapa.</p>
+      )}
     </Layout>
   );
 }

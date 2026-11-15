@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "@shared/schema";
 
@@ -77,4 +77,6 @@ const createFallbackDb = () => {
 };
 
 export const pool = databaseUrl ? new Pool(poolConfig) : undefined;
-export const db = databaseUrl ? drizzle(pool as pg.Pool, { schema }) : createFallbackDb();
+export const db: NodePgDatabase<typeof schema> = databaseUrl
+  ? drizzle(pool as pg.Pool, { schema })
+  : (createFallbackDb() as NodePgDatabase<typeof schema>);

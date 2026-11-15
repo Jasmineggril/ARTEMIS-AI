@@ -1,0 +1,93 @@
+# ARTEMIS AI — production stack for a single VPS (e.g. Hostinger KVM 2: 2 vCPU / 8 GB / 100 GB).
+#   cp .env.example .env   # fill in secrets
+#   docker compose up -d --build
+# Only Caddy publishes ports. PostgreSQL and the risk engine live on an internal network.
+name: artemis
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-artemis}
+      POSTGRES_USER: ${POSTGRES_USER:-artemis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=2GB
+      - -c
+      - max_connections=50
+      - -c
+      - log_min_duration_statement=1000
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy: { resources: { limits: { memory: 2g } } }
+    networks: [internal]
+    logging: *logging
+
+  risk-engine:
+    build: { context: ., dockerfile: infrastructure/docker/risk-engine.Dockerfile }
+    restart: unless-stopped
+    environment:
+      RISK_ENGINE_MODE: ${RISK_ENGINE_MODE:-rules}
+    deploy: { resources: { limits: { memory: 768m, cpus: "0.75" } } }
+    networks: [internal]
+    logging: *logging
+
+  api:
+    build: { context: ., dockerfile: infrastructure/docker/api.Dockerfile }
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+      risk-engine: { condition: service_started }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-artemis}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-artemis}
+      SESSION_SECRET: ${SESSION_SECRET:?defina SESSION_SECRET com 32+ caracteres}
+      PYTHON_SERVICE_URL: http://risk-engine:8000
+      RISK_ENGINE: ${RISK_ENGINE:-python}
+      PUBLIC_BASE_URL: https://${APP_DOMAIN:?defina APP_DOMAIN}
+      TRUST_PROXY_HOPS: "1"
+      ALERT_MIN_LEVEL: ${ALERT_MIN_LEVEL:-alto}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    deploy: { resources: { limits: { memory: 1g, cpus: "1.0" } } }
+    # `internal` (db, engine) + `edge` (Caddy). Outbound internet (Open-Meteo) goes via `edge`.
+    networks: [internal, edge]
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?defina ACME_EMAIL para o Let's Encrypt}
+    volumes:
+      - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    deploy: { resources: { limits: { memory: 256m } } }
+    networks: [edge]
+    logging: *logging
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal: { internal: true }
+  edge: {}
