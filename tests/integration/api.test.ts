@@ -428,7 +428,7 @@ test("insights aggregate only the caller's organization", async () => {
   assert.equal(b.body.occurrencesByMonth.points.length, 0);
 });
 
-test("Florestaí: only explicitly published batches are public, sanitised and filterable", async () => {
+test("Consulta Pública: only explicitly published batches are public, sanitised and filterable", async () => {
   const records = [
     { occurrenceDate: "2025-09-03", occurrenceTime: "14:30", municipality: "Cavalcante", state: "GO", latitude: -13.79712, longitude: -47.45678,
       occurrenceType: "Queimada", notes: "proprietário João, tel 6199999", sourceReference: "interno-123", validationStatus: "válido" },

@@ -19,9 +19,9 @@ export const PRODUCT_SUBTITLE = SUBMISSION_MODE
 
 export const PRODUCT_TAGLINE = "Inteligência para antecipar riscos. Tecnologia para proteger territórios.";
 
-/** Integrated modules (history and traceability of the previous projects). */
-export const MODULE_PREDICTIVE = "CERES AI";      // predictive risk analysis
-export const MODULE_MONITORING = "Florestaí";     // accessible public monitoring
+/** Platform modules (all under the ARTEMIS AI brand). */
+export const MODULE_PREDICTIVE = "Análise Preditiva";   // risk index, alerts, recommendations
+export const MODULE_MONITORING = "Consulta Pública";    // open lookup of published occurrences
 
 export const EMERGENCY_NOTICE =
   "A ARTEMIS AI não é um serviço de emergência. Em caso de incêndio ou perigo imediato, ligue 193 (Corpo de Bombeiros) ou 199 (Defesa Civil).";

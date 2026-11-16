@@ -4,8 +4,10 @@
 
 Plataforma brasileira de inteligência ambiental para prevenção de incêndios, análise preditiva de risco e apoio à decisão. Integra duas propostas anteriores, cuja história é preservada neste repositório:
 
-- **CERES AI** — núcleo preditivo: índice de risco 0–100 explicável, alertas e recomendações (documentação TRL 4 em `docs/trl4/`).
-- **Florestaí** — consulta pública e acessível de ocorrências de queimadas, prevenção e biomas (`/florestai`).
+- **Análise Preditiva** — índice de risco 0–100 explicável, alertas e recomendações.
+- **Consulta Pública** — consulta aberta de ocorrências de queimadas, prevenção e biomas (`/consulta-publica`).
+
+> Histórico: a ARTEMIS AI nasceu da unificação de dois projetos anteriores (CERES AI e Florestaí). O dossiê TRL 4 já submetido fica preservado sem alterações em `docs/trl4/`.
 
 > **Estágio:** protótipo em validação controlada (TRL 4). **Não está pronto para produção.**
 > O índice não está calibrado com incêndios reais. A plataforma apoia decisões humanas e **não é serviço de emergência** — em caso de incêndio ligue **193**.
@@ -23,7 +25,7 @@ Plataforma brasileira de inteligência ambiental para prevenção de incêndios,
 | Alertas com ciclo de vida, histórico e deduplicação | Implementado e testado |
 | Importação CSV/XLS/XLSX com revalidação no servidor | Implementado e testado |
 | Mapa com áreas, polígonos e ocorrências filtráveis | Parcial |
-| Consulta pública Florestaí (`/florestai`): só lotes publicados explicitamente, coordenadas ~1 km | Implementado e testado |
+| Consulta Pública (`/consulta-publica`): só lotes publicados explicitamente, coordenadas ~1 km | Implementado e testado |
 | Painel, relatório por área/período e indicadores agregados (fonte e data em cada bloco) | Implementado e testado |
 | Exportação CSV | Implementado e testado |
 | Docker Compose (Caddy + API + motor + PostgreSQL), backup cifrado | Backup/restauração testados; imagens não construídas aqui |

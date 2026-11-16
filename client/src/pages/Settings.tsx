@@ -12,7 +12,7 @@ import { api } from "@/lib/api";
 import { PRODUCT_NAME, SUBMISSION_MODE } from "@shared/identity";
 import { resetOnboarding } from "@/hooks/use-onboarding";
 
-const STORAGE_KEY = "ceres-profile-settings";
+const STORAGE_KEY = "artemis-profile-settings";
 
 const BRAZILIAN_REFERENCE_LOCATIONS = [
   { municipality: "Manaus", state: "AM", latitude: -3.119, longitude: -60.021 },
@@ -367,7 +367,7 @@ export default function Settings() {
                 )}
               </Avatar>
               <div>
-                <p className="text-lg font-semibold text-foreground">{settings.fullName || "Usuário CERES"}</p>
+                <p className="text-lg font-semibold text-foreground">{settings.fullName || "Usuário"}</p>
                 <p className="text-sm text-muted-foreground">{settings.role}</p>
               </div>
             </div>

@@ -248,7 +248,7 @@ function BatchPublication({ batches }: { batches: ImportBatch[] }) {
       api("PATCH", `/api/import-batches/${v.id}/visibility`, { visibility: v.visibility, confirm: v.visibility === "publico" ? true : undefined }),
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["/api/import-batches"] });
-      toast({ title: v.visibility === "publico" ? "Lote publicado no Florestaí" : "Lote tornado privado" });
+      toast({ title: v.visibility === "publico" ? "Lote publicado na Consulta Pública" : "Lote tornado privado" });
     },
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -256,7 +256,7 @@ function BatchPublication({ batches }: { batches: ImportBatch[] }) {
   function ask(b: ImportBatch & { visibility?: string }) {
     if (b.visibility === "publico") return toggle.mutate({ id: b.id, visibility: "privado" });
     const ok = window.confirm(
-      `Publicar "${b.filename}" na consulta pública Florestaí?\n\n` +
+      `Publicar "${b.filename}" na Consulta Pública da ARTEMIS AI?\n\n` +
       "• Confirme que a organização tem direito de divulgar estes registros.\n" +
       "• Serão públicos: data, hora, município, UF, tipo e coordenadas arredondadas (~1 km).\n" +
       "• Observações, referências internas e dados brutos NÃO são publicados.\n" +
@@ -269,7 +269,7 @@ function BatchPublication({ batches }: { batches: ImportBatch[] }) {
   return (
     <section className="mt-8 bg-card border rounded-2xl p-5" aria-labelledby="batches-title">
       <h2 id="batches-title" className="font-semibold">Lotes importados e publicação</h2>
-      <p className="text-xs text-muted-foreground mb-3">Todo lote é privado por padrão. Apenas administradores podem publicá-lo na <a href="/florestai" className="underline">consulta pública Florestaí</a>.</p>
+      <p className="text-xs text-muted-foreground mb-3">Todo lote é privado por padrão. Apenas administradores podem publicá-lo na <a href="/consulta-publica" className="underline">Consulta Pública</a>.</p>
       <div className="overflow-x-auto"><table className="w-full text-sm">
         <thead><tr className="text-left text-muted-foreground text-xs"><th className="py-1">Arquivo</th><th>Fonte</th><th>Importado</th><th>Válidos/total</th><th>Visibilidade</th><th><span className="sr-only">Ação</span></th></tr></thead>
         <tbody>{batches.map((b: ImportBatch & { visibility?: string }) => (

@@ -1,5 +1,5 @@
 /**
- * ARTEMIS AI — risk analysis orchestration (CERES AI module).
+ * ARTEMIS AI — risk analysis orchestration (predictive module).
  *
  * Builds engine inputs with per-field provenance, runs the Python service
  * (FastAPI) and falls back to the TypeScript transparent rule engine when it is

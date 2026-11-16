@@ -9,12 +9,12 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | 1 | Diagnóstico do repositório | Implementado | `00_DIAGNOSTICO.md` |
 | 2 | Requisitos funcionais e não funcionais | Implementado | `01_REQUISITOS.md` |
 | 3 | Arquitetura atualizada | Implementado | `02_ARQUITETURA.md` |
-| 4 | Identidade visual | Parcial | Marca, nome, paleta e telas de autenticação. Landing page ainda com textos do CERES AI; modo escuro não revisado tela a tela. |
+| 4 | Identidade visual | Parcial | Nome ARTEMIS AI em todas as telas, API, serviço Python e documentação; marca, paleta e telas de autenticação. Modo escuro não revisado tela a tela; landing ainda sem seções por perfil de usuário. |
 | 5 | Frontend funcional e responsivo | Parcial | Login, cadastro, recuperação de senha, dashboard, áreas, análise, alertas, mapa, organização e privacidade usam a API real. Relatórios e Inteligência Operacional também usam a API real. Testado em 1366 px e iPhone 13. |
 | 6 | Backend integrado | Implementado e testado | 27 testes de integração com PostgreSQL real |
 | 7 | Serviço de análise de risco | Implementado e testado | 109 pytest; caminho Node→Python testado com o serviço no ar e com fallback |
 | 8 | Banco de dados e migrações | Implementado e testado | `0002_artemis_core.sql`, idempotente, aplicada 2× sem erro |
-| 9 | Mapas e gráficos | Parcial | Áreas, polígonos e ocorrências com filtros; consulta pública Florestaí (`/florestai`) com mapa, gráficos por mês/hora e comparação de períodos. Pendente: agrupamento de pontos, desenho de polígono no mapa, busca por endereço, camada de focos de calor. |
+| 9 | Mapas e gráficos | Parcial | Áreas, polígonos e ocorrências com filtros; Consulta Pública (`/consulta-publica`) com mapa, gráficos por mês/hora e comparação de períodos. Pendente: agrupamento de pontos, desenho de polígono no mapa, busca por endereço, camada de focos de calor. |
 | 10 | Módulo de alertas | Implementado e testado | Ciclo de vida, histórico, deduplicação. **Notificação por e-mail pendente.** |
 | 11 | Importação de dados | Implementado e testado | Revalidação no servidor, motivos de rejeição por lote, isolamento por organização |
 | 12 | Relatórios | Parcial | Relatório por área e período (resumo, distribuição, histórico, alertas e medidas, fontes, qualidade, motor/versão, limitações), impressão/PDF pelo navegador e CSV. Pendentes: PDF gerado no servidor, mapa dentro do relatório, módulo PoV. |

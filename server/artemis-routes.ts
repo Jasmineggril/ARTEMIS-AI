@@ -300,7 +300,7 @@ export function registerArtemisRoutes(app: Express) {
     }
   }));
 
-  // ── Risk analyses (CERES AI) ───────────────────────────────────────────────
+  // ── Risk analyses ───────────────────────────────────────────────
   app.post("/api/areas/:id/analyses", requireOrg("analyst"), analysisLimiter, handle(async (req, res) => {
     const area = await loadArea(req.ctx.organizationId, idParam(req.params.id));
     if (!area) return res.status(404).json({ message: "Área não encontrada." });

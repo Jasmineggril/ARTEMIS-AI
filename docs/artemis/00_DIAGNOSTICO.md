@@ -63,6 +63,10 @@ Linha de base medida antes de qualquer alteração: `tsc` 0 erros · testes TS 3
 - **Supabase removido do frontend** (`@supabase/supabase-js`). O backend continua aceitando `SUPABASE_DATABASE_URL` como opção de Postgres gerenciado.
 - **Vercel mantido como alvo legado**; alvo principal passa a ser Docker Compose em VPS.
 
-## 4. Florestaí
+## 4. Consulta pública (proposta original do projeto Florestaí)
 
-A proposta original (consulta a dados do Sisfogo, geolocalização, filtros por data/local/horário, gráficos, denúncias) está parcialmente atendida pelo mapa com filtros e pela importação. A **experiência pública** (sem login) do Florestaí ainda não foi construída — ver `07_LIMITACOES_PENDENCIAS.md`.
+A proposta original (consulta a dados do Sisfogo, geolocalização, filtros por data/local/horário, gráficos, denúncias) foi incorporada à ARTEMIS AI como **Consulta Pública** (`/consulta-publica`), alimentada por lotes que as organizações publicam explicitamente. O canal de relatos com moderação ainda está pendente.
+
+## 5. Identidade
+
+Toda a interface, a API, o serviço Python e a documentação nova usam o nome **ARTEMIS AI**. Os nomes anteriores permanecem apenas nos registros históricos (`docs/trl4/`, `CERES-AI/`, `archive/`, `attached_assets/`) e no modo opcional de submissão anônima (`VITE_SUBMISSION_MODE=true`), que usa um nome genérico.

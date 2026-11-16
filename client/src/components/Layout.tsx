@@ -29,7 +29,7 @@ export function Layout({ children }: LayoutProps) {
     { icon: Map,             label: "Mapa Ambiental",            href: "/maps",          tour: "risk-map" },
     { icon: Bell,            label: "Alertas Preventivos",       href: "/alerts",        tour: "alerts" },
     { icon: Upload,          label: "Importação de Ocorrências", href: "/data-import",   tour: undefined },
-    { icon: Globe,           label: "Consulta pública (Florestaí)", href: "/florestai",   tour: undefined },
+    { icon: Globe,           label: "Consulta Pública", href: "/consulta-publica",   tour: undefined },
     { icon: Database,        label: "Fontes de Dados",           href: "/data-sources",  tour: undefined },
     { icon: TrendingUp,      label: "Inteligência Operacional",  href: "/insights",      tour: undefined },
     { icon: ShieldCheck,     label: "Protocolos de Prevenção",   href: "/prevention",    tour: undefined },

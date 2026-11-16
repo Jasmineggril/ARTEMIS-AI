@@ -14,11 +14,11 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
         </button>
         <div>
           <ArtemisMark className="w-14 h-14 mb-6" inverted />
-          <h2 className="text-3xl font-bold font-display mb-3">{SUBMISSION_MODE ? "Plataforma Preditiva" : PRODUCT_NAME}</h2>
+          <h2 className="text-3xl font-bold font-display mb-3">{PRODUCT_NAME}</h2>
           <p className="text-emerald-100 text-lg leading-relaxed mb-8">{PRODUCT_TAGLINE}</p>
           <ul className="space-y-3 text-sm text-emerald-50">
-            <li><strong>{MODULE_PREDICTIVE}</strong> — análise preditiva e explicável do risco de incêndio.</li>
-            <li><strong>{MODULE_MONITORING}</strong> — consulta acessível de ocorrências e prevenção.</li>
+            <li><strong>{MODULE_PREDICTIVE}</strong> — índice explicável do risco de incêndio.</li>
+            <li><strong>{MODULE_MONITORING}</strong> — consulta aberta de ocorrências e prevenção.</li>
             <li>Dados de cada organização isolados e auditados.</li>
           </ul>
         </div>

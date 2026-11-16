@@ -1,5 +1,5 @@
 /**
- * ARTEMIS AI — public read-only API for the Florestaí module.
+ * ARTEMIS AI — public read-only API (Consulta Pública).
  *
  * Only occurrences from import batches explicitly published by an
  * organization administrator (import_batches.visibility = 'publico') are

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import {
   PRODUCT_NAME, PRODUCT_TAGLINE, PRODUCT_DESCRIPTION,
-  SIMULATED_DATA_LABEL, TRL_LABEL, SUBMISSION_MODE
+  SIMULATED_DATA_LABEL, TRL_LABEL, SUBMISSION_MODE, PRODUCT_SUBTITLE
 } from "@shared/identity";
 import { useAuthStatus } from "@/hooks/use-auth";
 import { useLogout } from "@/hooks/use-auth";
@@ -33,7 +33,7 @@ function PublicHeader() {
           )}
         </div>
         <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-          <a href="/florestai" className="hover:text-foreground transition-colors font-semibold">Consulta pública</a>
+          <a href="/consulta-publica" className="hover:text-foreground transition-colors font-semibold">Consulta pública</a>
           <a href="#solucao" className="hover:text-foreground transition-colors">Solução</a>
           <a href="#como-funciona" className="hover:text-foreground transition-colors">Como funciona</a>
           <a href="#setores" className="hover:text-foreground transition-colors">Setores</a>
@@ -539,7 +539,7 @@ export default function Home() {
             {!SUBMISSION_MODE && <span className="font-medium">{PRODUCT_NAME}</span>}
           </div>
           <p className="text-center">
-            Plataforma preditiva de inteligência ambiental · {TRL_LABEL}
+            {PRODUCT_SUBTITLE} · {TRL_LABEL}
           </p>
           <p className="text-xs text-muted-foreground/60">
             © {new Date().getFullYear()} — Uso demonstrativo

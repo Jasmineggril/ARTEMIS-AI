@@ -1,6 +1,6 @@
 # 08 — Plano de validação da Prova de Valor (DB-IA)
 
-> **Nenhum resultado existe ainda.** Os valores abaixo são **metas propostas** na documentação do CERES AI, não resultados alcançados.
+> **Nenhum resultado existe ainda.** Os valores abaixo são **metas propostas** na documentação TRL 4 do projeto, não resultados alcançados.
 
 ## Metas propostas
 

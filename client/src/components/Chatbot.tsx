@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Bot, X, Send, Flame, AlertTriangle, Info, Loader2, Wifi, WifiOff, Trash2, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SIMULATED_DATA_LABEL } from "@shared/identity";
+import { SIMULATED_DATA_LABEL, PRODUCT_NAME } from "@shared/identity";
 import ReactMarkdown from "react-markdown";
 import { getLocationContextFromText, getCityLevelLocationContext } from "@/lib/biomes";
 
@@ -30,7 +30,7 @@ const QUICK_QUESTIONS = [
   "O que são dados simulados nesta plataforma?",
 ];
 
-const PROPERTY_PROFILE_LS_KEY = "ceres_property_profile";
+const PROPERTY_PROFILE_LS_KEY = "artemis_property_profile";
 
 function loadProfileFromStorage(): PropertyProfile {
   try {
@@ -305,7 +305,7 @@ export function Chatbot() {
               </div>
               <div>
                 <h3 className="font-bold text-sm leading-none">Assistente de Risco</h3>
-                <p className="text-emerald-200 text-xs mt-0.5">Plataforma Preditiva · TRL 4</p>
+                <p className="text-emerald-200 text-xs mt-0.5">{PRODUCT_NAME} · TRL 4</p>
               </div>
             </div>
             <div className="flex items-center gap-1.5">

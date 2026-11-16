@@ -1,5 +1,5 @@
 """
-CERES AI — Python Risk Analysis Service (FastAPI)
+ARTEMIS AI — Python Risk Analysis Service (FastAPI)
 
 Este serviço implementa o motor de classificação de risco de incêndio em Python,
 preparado para futura integração com modelo supervisionado Scikit-learn.
@@ -18,7 +18,7 @@ from schemas import RiskInput, RiskOutput, HealthResponse
 from risk_model import analyze_risk, validate_input, get_engine_mode, load_ml_model, MODEL_VERSION
 
 app = FastAPI(
-    title="CERES AI — Risk Analysis Service",
+    title="ARTEMIS AI — Risk Analysis Service",
     description=(
         "Serviço Python de análise de risco de incêndio. "
         "Motor atual: regras transparentes. "

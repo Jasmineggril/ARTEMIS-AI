@@ -41,7 +41,7 @@ function Empty({ text = "Sem dados no período." }: { text?: string }) {
   return <p className="text-sm text-muted-foreground py-8 text-center">{text}</p>;
 }
 
-export default function CeresInsights() {
+export default function Insights() {
   const [from, setFrom] = useState(format(subDays(new Date(), 90), "yyyy-MM-dd"));
   const [to, setTo] = useState(format(new Date(), "yyyy-MM-dd"));
   const { data, isLoading, error } = useQuery<Insights>({

@@ -1,5 +1,5 @@
 /**
- * Florestaí — consulta pública de ocorrências (sem login).
+ * ARTEMIS AI — Consulta Pública de ocorrências (sem login).
  * Exibe somente lotes publicados explicitamente por organizações.
  */
 import { useMemo, useState } from "react";
@@ -73,7 +73,7 @@ const TIPS = [
   "Se a fumaça chegar à sua casa: feche portas e janelas, mantenha-se hidratado e procure atendimento de saúde se houver falta de ar.",
 ];
 
-export default function Florestai() {
+export default function PublicLookup() {
   const [form, setForm] = useState<Filters>(readFilters);
   const [applied, setApplied] = useState<Filters>(form);
   const [copied, setCopied] = useState(false);
@@ -103,13 +103,13 @@ export default function Florestai() {
     setApplied(form);
     const q = toQuery(form);
     if (form.compare) q.set("compare", "1");
-    window.history.replaceState(null, "", `/florestai?${q.toString()}`);
+    window.history.replaceState(null, "", `/consulta-publica?${q.toString()}`);
   }
 
   async function share() {
     const url = window.location.href;
     try {
-      if (navigator.share) await navigator.share({ title: `${MODULE_MONITORING} — ${PRODUCT_NAME}`, url });
+      if (navigator.share) await navigator.share({ title: `${PRODUCT_NAME} — ${MODULE_MONITORING}`, url });
       else { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2500); }
     } catch { /* user cancelled */ }
   }

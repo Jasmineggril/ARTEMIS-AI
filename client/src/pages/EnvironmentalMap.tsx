@@ -121,7 +121,7 @@ function toCsv(rows: FireOccurrence[]) {
   return [head.join(","), ...rows.map((r) => [r.occurrenceDate, r.occurrenceTime, r.municipality, r.state, r.latitude, r.longitude, r.occurrenceType, r.occurrenceStatus, r.source, r.importBatchId].map(esc).join(","))].join("\n");
 }
 
-export default function CeresMaps() {
+export default function EnvironmentalMap() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuthStatus();
   const [level, setLevel] = useState<"all" | RiskLevel | "none">("all");

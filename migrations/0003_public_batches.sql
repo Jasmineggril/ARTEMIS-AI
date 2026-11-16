@@ -1,5 +1,5 @@
 -- ARTEMIS AI — migration 0003
--- Explicit opt-in publication of import batches for the public Florestaí view.
+-- Explicit opt-in publication of import batches for the public lookup (Consulta Pública).
 -- Default is private: nothing becomes public without an admin action.
 
 ALTER TABLE "import_batches" ADD COLUMN IF NOT EXISTS "visibility" text DEFAULT 'privado' NOT NULL;

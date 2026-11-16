@@ -9,7 +9,7 @@
 5. **Vegetação e foco próximo** são informados pelo usuário. Não há índice de vegetação por satélite nem focos de calor integrados.
 6. **Sem integração oficial** com Sisfogo, INPE ou qualquer órgão público. A importação é manual.
 7. Os contornos de biomas no mapa são retângulos ilustrativos, não os limites oficiais do IBGE. A tabela de referência de `client/src/lib/biomes.ts` (usada pelo assistente) classifica Recife, Salvador e Fortaleza como Caatinga, o que está incorreto para essas capitais litorâneas — substituir pela malha oficial de biomas do IBGE.
-9. **Florestaí** mostra apenas o que organizações escolheram publicar; ausência de registros não significa ausência de fogo. Publicar exige confirmação de direito de divulgação pelo administrador.
+9. A **Consulta Pública** mostra apenas o que organizações escolheram publicar; ausência de registros não significa ausência de fogo. Publicar exige confirmação de direito de divulgação pelo administrador.
 8. A camada de imagem `server.arcgisonline.com` (legado) tem termos de uso próprios — revisar antes de produção; o mapa novo usa OpenStreetMap.
 
 ## Pendências funcionais (por fase)
@@ -20,10 +20,10 @@
 | 2 | Relatório PDF gerado no servidor | — |
 | 2 | Sensores/leituras e `weather_data` sem escopo de organização (restritos a `platform_admin` na escrita) | Decidir se sensores IoT permanecem no escopo |
 | 2 | Painel de administração da plataforma (`/admin`) ainda é a tela legada de sensores | — |
-| 3 | Florestaí: implementado com dados de lotes publicados pelas organizações. Pendente: fonte pública oficial (INPE/Sisfogo) com licença compatível; cobertura hoje depende de quem publica | Acesso e licença das fontes |
+| 3 | Consulta Pública: implementada com dados de lotes publicados pelas organizações. Pendente: fonte pública oficial (INPE/Sisfogo) com licença compatível; cobertura hoje depende de quem publica | Acesso e licença das fontes |
 | 3 | Canal de relatos com moderação, anexos de imagem validados, anti-spam além do limite por IP (ex.: CAPTCHA), encaminhamentos | Validação jurídica e operacional |
 | 3 | Mapa: agrupamento de pontos, busca por endereço/município (geocodificação), desenho de polígono, camadas de focos de calor | Licença do geocodificador; acesso INPE |
-| 3 | Landing page ainda descreve o CERES AI; revisão completa da identidade e do modo escuro | — |
+| 3 | Landing page: conteúdo ainda focado em áreas produtivas; apresentar perfis (cidadão, pesquisador, gestor) e revisar o modo escuro tela a tela | — |
 | 4 | Registro de versões de modelo (`model_versions`), datasets, detecção de deriva, comparação entre versões | Dados reais rotulados |
 | 4 | Módulo de Prova de Valor na interface | Área piloto definida |
 | 4 | Teste de carga compatível com a VPS | VPS ou ambiente equivalente |

@@ -44,7 +44,7 @@ Códigos comuns: `400` validação · `401` sem sessão · `403` papel insuficie
 
 Esquema da área: `name` (2–160), `operationType` (`propriedade_rural`, `agroindustria`, `florestal`, `energia`, `mineracao`, `logistica`, `industria`, `unidade_conservacao`, `outro`), `municipality`, `state` (UF), `latitude`/`longitude` (juntas ou nenhuma), `areaHectares`, `status` (`ativo`, `inativo`, `em análise`), `vegetationCategory`, `boundary` (GeoJSON `Polygon`/`MultiPolygon`, [lon, lat], anéis fechados), `notes`.
 
-## Análises de risco (CERES AI)
+## Análises de risco
 
 | Método | Rota | Papel | Observações |
 |---|---|---|---|
@@ -104,7 +104,7 @@ Transições: `novo → reconhecido | em_acompanhamento | resolvido | descartado
 | GET | `/api/connectors` | público | Situação real de cada fonte |
 | GET | `/api/health` | público | `{ status, database, riskEngine }` — sem dados |
 
-## Consulta pública Florestaí (sem login, 60 req/min)
+## Consulta Pública (sem login, 60 req/min)
 
 Expõe **somente** ocorrências de lotes publicados explicitamente (`visibility = 'publico'`). Coordenadas arredondadas a 2 casas (~1 km). Nunca retorna `notes`, `cause`, `sourceReference` nem `rawData`.
 

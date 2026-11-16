@@ -237,7 +237,7 @@ export default function RiskAnalysisPage() {
         <div>
           <h1 className="text-3xl font-bold font-display flex items-center gap-2"><Flame className="w-8 h-8 text-primary" aria-hidden />Análise Preditiva de Risco</h1>
           <p className="text-muted-foreground mt-1">
-            Módulo CERES AI · {areaMode ? "análise armazenada e auditável da área selecionada" : "simulação pública — o resultado não é armazenado"}
+            ARTEMIS AI · {areaMode ? "análise armazenada e auditável da área selecionada" : "simulação pública — o resultado não é armazenado"}
           </p>
         </div>
         <button onClick={() => setTutorial(true)} className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm text-muted-foreground hover:bg-secondary/50">

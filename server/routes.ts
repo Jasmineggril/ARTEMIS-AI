@@ -424,7 +424,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Explicit publication of a batch to the public Florestaí view (admin only).
+  // Explicit publication of a batch to the public Consulta Pública (admin only).
   app.patch("/api/import-batches/:id/visibility", requireOrg("admin"), async (req, res, next) => {
     try {
       const { visibility, confirm } = z
