@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useAuthStatus, hasRole } from "@/hooks/use-auth";
+import { SisfogoSyncPanel } from "@/components/sources/SisfogoSyncPanel";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
@@ -212,6 +213,8 @@ export default function DataSources() {
           })}
         </div>
       )}
+
+      <SisfogoSyncPanel />
 
       <BatchPublication batches={batches} />
 

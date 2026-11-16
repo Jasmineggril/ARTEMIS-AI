@@ -1,0 +1,485 @@
+{
+ "_comment": "3 ROIs reais da API pública do Sisfogo (GET /api/v1/roi/publico, 16/11/2026). Nomes de local/subtipo substituídos; demais campos como publicados.",
+ "itens": [
+  {
+   "id": "3f4c1031-96f6-49eb-94ef-cdf42aaff550",
+   "numeroRoi": "ROI.14092026.AM.0017",
+   "statusRoi": "FINALIZADO",
+   "retificado": true,
+   "instituicaoResponsavel": {
+    "nome": "Centro Nacional de Prevenção e Combate aos Incendios Florestais",
+    "sigla": "PREVFOGO"
+   },
+   "dataHoraCriacao": "2026-09-14T16:31:13.642144Z",
+   "dataHoraUltimaAtualizacao": "2026-11-10T19:04:10.542691Z",
+   "houveCombate": true,
+   "localIncendio": {
+    "latitude": -7.2775,
+    "longitude": -64.766111,
+    "municipio": {
+     "nomeMunicipio": "Lábrea",
+     "isAmazoniaLegal": true,
+     "unidadeFederativa": {
+      "nomeUnidadeFederativa": "Amazonas",
+      "siglaUnidadeFederativa": "AM"
+     }
+    },
+    "bioma": {
+     "nomeBioma": "Amazônia"
+    },
+    "nivelAcionamentoRoi": "NIVEL_2",
+    "nomeLocal": "LOCAL 1 (anonimizado)",
+    "isAmazoniaLegal": true,
+    "classificacaoArea": {
+     "area": "Pública"
+    },
+    "tipoLocalidade": {
+     "localidade": "Outro",
+     "classificacaoArea": {
+      "area": "Pública"
+     }
+    },
+    "subTipoLocalidade": "SUBTIPO 1 (anonimizado)"
+   },
+   "datasIncendio": {
+    "dataInicioIncendio": "2026-09-10T12:10:00Z",
+    "dataDeteccaoIncendio": "2026-09-10T12:10:00Z",
+    "dataInicioDeslocamento": "2026-09-10T12:18:00Z",
+    "dataPrimeiroAtaque": "2026-09-10T12:29:00Z",
+    "dataControleIncendio": "2026-09-10T12:30:00Z",
+    "dataExtincaoIncendio": "2026-09-11T14:18:00Z"
+   },
+   "combateRecursosHumanos": [
+    {
+     "dataReferencia": "2026-09-10",
+     "status": "MANTIDO",
+     "metodosDeteccao": [
+      {
+       "metodo": "Ponto de observação"
+      }
+     ],
+     "formaExtincao": "COMBATE",
+     "qtdBrigadistasVoluntarios": 0,
+     "qtdBrigadistasMunicipais": 0,
+     "qtdBrigadistasComunitarios": 0,
+     "qtdBrigadistasEstaduais": 0,
+     "qtdApoioComunidade": 0,
+     "qtdCombatentesIbama": 0,
+     "qtdCombatentesIcmbio": 0,
+     "qtdCombatentesBombeirosMilitares": 0,
+     "qtdCombatentesForcasArmadas": 0,
+     "qtdCombatentesOutrasInstituicoes": 0,
+     "qtdCombatentesTotal": 0
+    },
+    {
+     "dataReferencia": "2026-09-11",
+     "status": "ALTERADO",
+     "metodosDeteccao": [
+      {
+       "metodo": "Ponto de observação"
+      }
+     ],
+     "formaExtincao": "COMBATE",
+     "qtdBrigadistasVoluntarios": 0,
+     "qtdBrigadistasMunicipais": 0,
+     "qtdBrigadistasComunitarios": 0,
+     "qtdBrigadistasEstaduais": 0,
+     "qtdApoioComunidade": 0,
+     "qtdCombatentesIbama": 5,
+     "qtdCombatentesIcmbio": 0,
+     "qtdCombatentesBombeirosMilitares": 0,
+     "qtdCombatentesForcasArmadas": 0,
+     "qtdCombatentesOutrasInstituicoes": 0,
+     "qtdCombatentesTotal": 5
+    }
+   ],
+   "informacoesPosIncendio": {
+    "vegetacoesAtingidas": [
+     {
+      "vegetacao": "Outro"
+     }
+    ],
+    "estruturasAtingidas": [
+     {
+      "estrutura": "Cerca"
+     }
+    ],
+    "estimativaAreaQueimada": 0.01
+   },
+   "frentesCombate": [
+    {
+     "id": "1f4afad0-bb99-4d03-a700-bcafdba2feba",
+     "numeroFrente": "1",
+     "dataCombate": "2026-09-10",
+     "horaCombate": "03:00:00",
+     "latitude": -7.2775,
+     "longitude": -64.766111,
+     "instituicaoResponsavel": {
+      "nome": "Centro Nacional de Prevenção e Combate aos Incendios Florestais",
+      "sigla": "PREVFOGO"
+     },
+     "isFrenteReferencia": true
+    }
+   ],
+   "meiosLocomocaoCombateIncendioDiario": [
+    {
+     "data": "2026-09-10T03:00:00Z",
+     "status": "MANTIDO",
+     "quantidadeTotal": 0
+    },
+    {
+     "data": "2026-09-11T03:00:00Z",
+     "status": "ALTERADO",
+     "quantidadeTotal": 1,
+     "meiosLocomocao": [
+      {
+       "meioLocomocao": "Pá carregadeira",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Helicóptero",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Motoniveladora",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "ABTF (Auto Bomba Tanque Florestal)",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Moto",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Avião tanque",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Trator de esteira",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "ATV (quadriciclo)",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Ônibus",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "ABT (Auto Bomba Tanque)",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Retroescavadeira",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Viatura adaptada",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Drone",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Caminhão de transporte de carga",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "UTV",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Van",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Avião de monitoramento",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Embarcação/lancha",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Outros meios",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Viatura (VTR)",
+       "quantidade": 1
+      },
+      {
+       "meioLocomocao": "Trator de pneu",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Posto de comando móvel",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Caminhão pipa",
+       "quantidade": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "39bfa2bf-4b5e-452d-8172-2cb04777c605",
+   "numeroRoi": "ROI.16112026.MT.0006",
+   "statusRoi": "FINALIZADO",
+   "retificado": false,
+   "instituicaoResponsavel": {
+    "nome": "Centro Nacional de Prevenção e Combate aos Incendios Florestais",
+    "sigla": "PREVFOGO"
+   },
+   "dataHoraCriacao": "2026-11-16T18:24:08.800118Z",
+   "dataHoraUltimaAtualizacao": "2026-11-16T20:03:30.698206Z",
+   "houveCombate": false,
+   "localIncendio": {
+    "latitude": -9.600278,
+    "longitude": -58.963611,
+    "municipio": {
+     "nomeMunicipio": "Cotriguaçu",
+     "isAmazoniaLegal": true,
+     "unidadeFederativa": {
+      "nomeUnidadeFederativa": "Mato Grosso",
+      "siglaUnidadeFederativa": "MT"
+     }
+    },
+    "bioma": {
+     "nomeBioma": "Amazônia"
+    },
+    "nivelAcionamentoRoi": "NIVEL_1",
+    "nomeLocal": "LOCAL 2 (anonimizado)",
+    "isAmazoniaLegal": true,
+    "classificacaoArea": {
+     "area": "Pública"
+    },
+    "tipoLocalidade": {
+     "localidade": "Projeto de Assentamento Federal",
+     "classificacaoArea": {
+      "area": "Pública"
+     }
+    },
+    "subTipoLocalidade": "SUBTIPO 2 (anonimizado)"
+   },
+   "datasIncendio": {
+    "dataInicioIncendio": "2026-11-12T16:00:00Z",
+    "dataDeteccaoIncendio": "2026-11-13T12:38:00Z"
+   },
+   "informacoesPosIncendio": {
+    "vegetacoesAtingidas": [
+     {
+      "vegetacao": "Vegetação nativa"
+     }
+    ],
+    "estruturasAtingidas": [
+     {
+      "estrutura": "Nenhuma estrutura atingida"
+     }
+    ]
+   }
+  },
+  {
+   "id": "292ba7d4-0035-4a00-9542-559f513fbe5c",
+   "numeroRoi": "ROI.10112026.AP.0026",
+   "statusRoi": "FINALIZADO",
+   "retificado": false,
+   "instituicaoResponsavel": {
+    "nome": "Centro Nacional de Prevenção e Combate aos Incendios Florestais",
+    "sigla": "PREVFOGO"
+   },
+   "dataHoraCriacao": "2026-11-10T18:45:57.714139Z",
+   "dataHoraUltimaAtualizacao": "2026-11-10T18:49:07.480501Z",
+   "houveCombate": true,
+   "localIncendio": {
+    "latitude": 1.475556,
+    "longitude": -50.895556,
+    "municipio": {
+     "nomeMunicipio": "Tartarugalzinho",
+     "isAmazoniaLegal": true,
+     "unidadeFederativa": {
+      "nomeUnidadeFederativa": "Amapá",
+      "siglaUnidadeFederativa": "AP"
+     }
+    },
+    "bioma": {
+     "nomeBioma": "Amazônia"
+    },
+    "nivelAcionamentoRoi": "NIVEL_1",
+    "nomeLocal": "LOCAL 3 (anonimizado)",
+    "isAmazoniaLegal": true,
+    "classificacaoArea": {
+     "area": "Não Identificada"
+    }
+   },
+   "datasIncendio": {
+    "dataInicioIncendio": "2026-09-05T22:50:00Z",
+    "dataDeteccaoIncendio": "2026-09-05T22:50:00Z",
+    "dataInicioDeslocamento": "2026-09-05T23:34:00Z",
+    "dataPrimeiroAtaque": "2026-09-06T00:01:00Z",
+    "dataControleIncendio": "2026-09-06T00:52:00Z",
+    "dataExtincaoIncendio": "2026-09-06T00:56:00Z"
+   },
+   "combateRecursosHumanos": [
+    {
+     "dataReferencia": "2026-09-05",
+     "status": "ALTERADO",
+     "metodosDeteccao": [
+      {
+       "metodo": "Outro"
+      }
+     ],
+     "formaExtincao": "COMBATE",
+     "qtdBrigadistasVoluntarios": 0,
+     "qtdBrigadistasMunicipais": 0,
+     "qtdBrigadistasComunitarios": 0,
+     "qtdBrigadistasEstaduais": 0,
+     "qtdApoioComunidade": 0,
+     "qtdCombatentesIbama": 10,
+     "qtdCombatentesIcmbio": 0,
+     "qtdCombatentesBombeirosMilitares": 5,
+     "qtdCombatentesForcasArmadas": 0,
+     "qtdCombatentesOutrasInstituicoes": 0,
+     "qtdCombatentesTotal": 15
+    }
+   ],
+   "informacoesPosIncendio": {
+    "vegetacoesAtingidas": [
+     {
+      "vegetacao": "Outro"
+     },
+     {
+      "vegetacao": "Vegetação nativa"
+     }
+    ],
+    "estruturasAtingidas": [
+     {
+      "estrutura": "Nenhuma estrutura atingida"
+     }
+    ]
+   },
+   "frentesCombate": [
+    {
+     "id": "fd089661-bced-4144-b02e-2a33e69ba02d",
+     "numeroFrente": "1",
+     "dataCombate": "2026-11-10",
+     "horaCombate": "18:45:57.728861",
+     "latitude": 1.475556,
+     "longitude": -50.895556,
+     "instituicaoResponsavel": {
+      "nome": "Centro Nacional de Prevenção e Combate aos Incendios Florestais",
+      "sigla": "PREVFOGO"
+     },
+     "isFrenteReferencia": true
+    }
+   ],
+   "meiosLocomocaoCombateIncendioDiario": [
+    {
+     "data": "2026-09-05T03:00:00Z",
+     "status": "ALTERADO",
+     "quantidadeTotal": 2,
+     "meiosLocomocao": [
+      {
+       "meioLocomocao": "Pá carregadeira",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Helicóptero",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Motoniveladora",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "ABTF (Auto Bomba Tanque Florestal)",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Moto",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Avião tanque",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Trator de esteira",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "ATV (quadriciclo)",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Ônibus",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "ABT (Auto Bomba Tanque)",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Retroescavadeira",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Viatura adaptada",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Drone",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Caminhão de transporte de carga",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "UTV",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Van",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Avião de monitoramento",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Embarcação/lancha",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Outros meios",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Viatura (VTR)",
+       "quantidade": 2
+      },
+      {
+       "meioLocomocao": "Trator de pneu",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Posto de comando móvel",
+       "quantidade": 0
+      },
+      {
+       "meioLocomocao": "Caminhão pipa",
+       "quantidade": 0
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -24,6 +24,7 @@ import {
 import { getRiskWeatherCached } from "./services/weather-cache";
 import { inpeFreshness } from "./connectors/inpe";
 import { hasPostgisGeom } from "./spatial";
+import { historyContext, type HistoryContext } from "./services/history-context";
 import { upsertAlertFromAnalysis, transitionAlert, TransitionError, shouldAlert, allowedTransitions, OPEN_STATUSES } from "./services/alert-service";
 import { fetchRiskWeather, ConnectorError, OPEN_METEO_SOURCE } from "./connectors/open-meteo";
 import { BR_STATES } from "@shared/br-states";
@@ -100,25 +101,6 @@ async function loadAlert(orgId: number, id: number | null): Promise<Alert | null
   return a ?? null;
 }
 
-/** Count organization occurrences within radiusKm of a point. */
-async function countNearbyOccurrences(orgId: number, latitude: number, longitude: number, radiusKm = 10) {
-  const dLat = radiusKm / 111;
-  const dLng = radiusKm / (111 * Math.max(Math.cos((latitude * Math.PI) / 180), 0.01));
-  const rows = await db
-    .select({ latitude: fireOccurrences.latitude, longitude: fireOccurrences.longitude })
-    .from(fireOccurrences)
-    .where(
-      and(
-        eq(fireOccurrences.organizationId, orgId),
-        isNotNull(fireOccurrences.latitude),
-        gte(fireOccurrences.latitude, latitude - dLat),
-        lte(fireOccurrences.latitude, latitude + dLat),
-        gte(fireOccurrences.longitude, longitude - dLng),
-        lte(fireOccurrences.longitude, longitude + dLng),
-      ),
-    );
-  return rows.filter((r) => distanceKm(latitude, longitude, r.latitude!, r.longitude!) <= radiusKm).length;
-}
 
 /** limit/offset pagination; the body stays an array (backwards compatible), totals go in headers. */
 export function pageSchema(defaultLimit: number) {
@@ -197,7 +179,7 @@ async function modelVersionIdFor(engineType: string, modelVersion: string): Prom
   return m?.id ?? null;
 }
 
-function analysisSourceRows(analysisId: number, resolved: Awaited<ReturnType<typeof resolveInputs>>, historical: number | null) {
+function analysisSourceRows(analysisId: number, resolved: Awaited<ReturnType<typeof resolveInputs>>, history: HistoryContext | null) {
   const byOrigin = new Map<string, string[]>();
   for (const p of resolved.provenance) {
     if (p.origin === "nao-verificado") continue;
@@ -211,14 +193,18 @@ function analysisSourceRows(analysisId: number, resolved: Awaited<ReturnType<typ
     referenceAt:
       sourceKey === "open-meteo" && resolved.weather ? new Date(resolved.weather.referenceAt)
       : sourceKey === "inpe-queimadas" ? resolved.hotspots?.lastSyncAt ?? null
+      : sourceKey === "sisfogo-roi" ? history?.officialLastCompleteAt ?? null
       : null,
     recordCount:
-      sourceKey === "fire_occurrences" ? historical
+      sourceKey === "fire_occurrences" ? history?.orgCount ?? null
+      : sourceKey === "sisfogo-roi" ? history?.officialCount ?? null
       : sourceKey === "inpe-queimadas" ? resolved.hotspots?.count ?? null
       : null,
     detail:
       sourceKey === "open-meteo" ? { cached: Boolean(resolved.weather?.cached) }
       : sourceKey === "inpe-queimadas" ? { radiusKm: resolved.hotspots?.radiusKm, windowHours: resolved.hotspots?.windowHours, nearestKm: resolved.hotspots?.nearestKm }
+      : sourceKey === "fire_occurrences" ? { radiusKm: history?.radiusKm, period: "todo o período importado pela organização", officialIncluded: history?.officialIncluded ?? false, officialReason: history?.officialReason ?? null }
+      : sourceKey === "sisfogo-roi" ? { radiusKm: history?.radiusKm, period: history?.officialRange ?? null, duplicatesExcluded: history?.duplicatesExcluded ?? 0, coverage: "ROIs finalizados dos órgãos aderentes ao Sisfogo" }
       : null,
   }));
 }
@@ -401,17 +387,18 @@ export function registerArtemisRoutes(app: Express) {
     if (!area) return res.status(404).json({ message: "Área não encontrada." });
     const request = analysisRequestSchema.parse(req.body);
 
-    const historical =
+    const history =
       area.latitude != null && area.longitude != null
-        ? await countNearbyOccurrences(req.ctx.organizationId, area.latitude, area.longitude)
+        ? await historyContext(req.ctx.organizationId, area.latitude, area.longitude)
         : null;
+    const historical = history?.total ?? null;
 
     let resolved;
     try {
       const hotspots = request.inputs.nearbyHotspot === undefined && area.latitude != null && area.longitude != null
         ? await hotspotContext(area.latitude, area.longitude)
         : null;
-      resolved = await resolveInputs(request, area, historical, undefined, { hotspots, weatherProvider: getRiskWeatherCached });
+      resolved = await resolveInputs(request, area, historical, undefined, { hotspots, weatherProvider: getRiskWeatherCached, history });
     } catch (err) {
       if (err instanceof MissingInputError) {
         return res.status(422).json({
@@ -488,7 +475,7 @@ export function registerArtemisRoutes(app: Express) {
       await db.update(riskAnalyses).set({ modelVersionId }).where(eq(riskAnalyses.id, analysis.id));
       analysis.modelVersionId = modelVersionId;
     }
-    const srcRows = analysisSourceRows(analysis.id, resolved, historical);
+    const srcRows = analysisSourceRows(analysis.id, resolved, history);
     if (srcRows.length) await db.insert(riskAnalysisSources).values(srcRows);
 
     await audit(req, "analysis.created", { type: "risk_analysis", id: analysis.id }, {

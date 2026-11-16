@@ -10,20 +10,14 @@ import { calculateRisk } from "@shared/risk-engine";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerArtemisRoutes } from "./artemis-routes";
 import { registerPublicRoutes } from "./public-routes";
-import { rateLimit, requireAuth, requireOrg } from "./security";
+import { rateLimit, requireAuth, requireOrg, requirePlatformAdmin } from "./security";
+import { registerSisfogoRoutes } from "./sisfogo-routes";
 import { audit } from "./services/audit";
 import { fetchWeatherData } from "./weather-service";
 import { normalizeOccurrenceDate } from "@shared/dates";
 
 const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL ?? "http://127.0.0.1:8000";
 
-/** Platform-level administrator (users.role = 'platform_admin'). */
-async function requirePlatformAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.session?.userId) return res.status(401).json({ message: "Autenticação necessária." });
-  const [u] = await db.select({ role: users.role }).from(users).where(eq(users.id, req.session.userId));
-  if (u?.role !== "platform_admin") return res.status(403).json({ message: "Acesso restrito à administração da plataforma." });
-  next();
-}
 
 function zodError(res: Response, err: unknown) {
   if (err instanceof z.ZodError) {
@@ -108,6 +102,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   registerAuthRoutes(app);
   registerArtemisRoutes(app);
   registerPublicRoutes(app);
+  registerSisfogoRoutes(app);
 
   // ── Profile ────────────────────────────────────────────────────────────────
   app.get(api.user.profile.get.path, requireAuth, async (req, res) => {
