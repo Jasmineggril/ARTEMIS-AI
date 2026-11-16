@@ -395,6 +395,33 @@ export const satelliteHotspots = pgTable("satellite_hotspots", {
   syncRunId: integer("sync_run_id"),
 });
 
+// Sisfogo (Ibama/Prevfogo) public ROI records (migration 0010).
+export const sisfogoRoiRecords = pgTable("sisfogo_roi_records", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  sourceId: integer("source_id").notNull(),
+  externalId: text("external_id").notNull(),
+  roiNumber: text("roi_number"),
+  roiStatus: text("roi_status"),
+  rectified: boolean("rectified"),
+  startedOn: date("started_on", { mode: "string" }),
+  startedLocalTime: text("started_local_time"),
+  detectedOn: date("detected_on", { mode: "string" }),
+  extinguishedOn: date("extinguished_on", { mode: "string" }),
+  municipality: text("municipality"),
+  municipalityIbgeCode: char("municipality_ibge_code", { length: 7 }),
+  state: char("state", { length: 2 }),
+  biome: text("biome"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
+  burnedAreaHa: doublePrecision("burned_area_ha"),
+  vegetation: text("vegetation"),
+  raw: json("raw").notNull(),
+  firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  syncRunId: integer("sync_run_id"),
+});
+export type SisfogoRoiRecord = typeof sisfogoRoiRecords.$inferSelect;
+
 export type SourceSyncRun = typeof sourceSyncRuns.$inferSelect;
 export type SatelliteHotspot = typeof satelliteHotspots.$inferSelect;
 

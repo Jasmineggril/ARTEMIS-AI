@@ -118,6 +118,7 @@ Expõe **somente** ocorrências de lotes publicados explicitamente (`visibility 
 | GET | `/api/public/municipalities?state=` | municípios com registros publicados |
 | GET | `/api/public/hotspots?state=&municipality=&satellite=&from=&to=` | focos de calor do INPE (padrão: últimos 2 dias; máx. 31 dias); até 5000 pontos |
 | GET | `/api/public/hotspots/summary?…` | total, por satélite, por dia, top municípios, última sincronização e aviso de interpretação |
+| GET | `/api/public/sisfogo/summary?state=&municipality=&from=&to=` | ROIs do Sisfogo (Ibama/Prevfogo): total, área queimada estimada, período, por UF, por mês, 20 mais recentes, última sincronização e aviso de cobertura (ver `11_SISFOGO.md`) |
 | PATCH | `/api/import-batches/:id/visibility` | **admin**; `{ visibility: "publico" \| "privado", confirm: true }` (confirmação obrigatória para publicar); auditado |
 
 ## Rotas legadas mantidas

@@ -14,6 +14,7 @@ Protocolo para cada etapa: backup cifrado → restauração numa cópia nova →
 | 0007_model_versions_analysis_sources | `model_versions`, `risk_analyses.model_version_id`, `risk_analysis_sources` (com reconstrução do histórico) | idêntica | idêntica |
 | 0008_postgis_optional | colunas `geom` + GiST se PostGIS existir; caso contrário, nada | aplicada (sem PostGIS: no-op) | aplicada |
 | 0009_session_table | tabela de sessão criada por migração (API sem DDL) | — | aplicada |
+| 0010_sisfogo_roi | fonte `sisfogo-roi` + tabela `sisfogo_roi_records` (aditiva) | — | aplicada |
 
 Nenhum `DROP TABLE`, `DROP COLUMN` ou `TRUNCATE`. Único `DROP` usado: `DROP INDEX fire_occurrences_org_idx`, substituído por índice composto `(organization_id, occurred_on)`. Índice não contém dados.
 
@@ -49,7 +50,8 @@ Criação: `infrastructure/postgres/initdb/01-roles-extensions.sh` (roda uma ún
 | Fonte | Tabela | Como entra | Situação |
 |---|---|---|---|
 | INPE — Programa Queimadas | `satellite_hotspots` | `npm run sync:inpe` / job `inpe-sync` (upsert por id do foco) | **verificado com dados reais**: 16.552 focos em 2 dias; segunda execução: 0 inseridos, 0 atualizados |
-| Arquivos autorizados (ex.: Sisfogo) | `import_batches` + `fire_occurrences` | upload na interface | implementado; **não** é integração oficial com o Sisfogo |
+| Arquivos autorizados da organização | `import_batches` + `fire_occurrences` | upload na interface | implementado |
+| Sisfogo — ROI públicos (Ibama) | `sisfogo_roi_records` | `npm run sync:sisfogo` / job `sisfogo-sync` (upsert por UUID do ROI) | implementado e testado com respostas simuladas; **não verificado com a API real** (host bloqueado no ambiente de desenvolvimento) — ver `11_SISFOGO.md` |
 | Open-Meteo | `weather_data` (`kind='atual'`) | sob demanda na análise, cache de 30 min | implementado |
 | IBGE — municípios | `municipalities` | `npm run db:load-municipalities` | **pendente**: o servidor do IBGE derrubou todas as conexões nesta sessão; aceita `--file` com o JSON baixado manualmente |
 

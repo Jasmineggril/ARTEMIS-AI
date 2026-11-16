@@ -7,7 +7,7 @@
 3. **Recomendações do nível crítico** ("paralisar operações", "evacuar pessoal", "acionar Defesa Civil") vêm do motor existente e são diretivas fortes para um índice não calibrado. **Requer revisão técnica por especialista em manejo do fogo antes de qualquer uso real.**
 4. **Open-Meteo**: estimativa de modelo numérico, não medição local. Plano gratuito para uso não comercial — uso comercial exige revisar os termos. **O conector não foi verificado contra a API real** (rede bloqueada neste ambiente); só com respostas simuladas.
 5. **Vegetação e foco próximo** são informados pelo usuário. Não há índice de vegetação por satélite nem focos de calor integrados.
-6. **Sem integração oficial** com Sisfogo, INPE ou qualquer órgão público. A importação é manual.
+6. **Sem convênio** com Sisfogo, INPE ou qualquer órgão público. INPE e Sisfogo são lidos por endpoints públicos; o conector do Sisfogo (`11_SISFOGO.md`) **ainda não foi verificado contra a API real**. Arquivos da organização entram por importação manual.
 7. Os contornos de biomas no mapa são retângulos ilustrativos, não os limites oficiais do IBGE. A tabela de referência de `client/src/lib/biomes.ts` (usada pelo assistente) classifica Recife, Salvador e Fortaleza como Caatinga, o que está incorreto para essas capitais litorâneas — substituir pela malha oficial de biomas do IBGE.
 9. A **Consulta Pública** mostra apenas o que organizações escolheram publicar; ausência de registros não significa ausência de fogo. Publicar exige confirmação de direito de divulgação pelo administrador.
 8. A camada de imagem `server.arcgisonline.com` (legado) tem termos de uso próprios — revisar antes de produção; o mapa novo usa OpenStreetMap.

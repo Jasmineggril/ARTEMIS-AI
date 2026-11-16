@@ -370,7 +370,7 @@ export default function DataImport() {
         <div className="mt-2 flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
           <Info className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
-            A integração atual ocorre por <strong>importação de arquivos</strong> e não representa conexão direta ou oficial com o Sisfogo.
+            Esta tela é para <strong>arquivos da sua organização</strong>. Os ROIs públicos do Sisfogo são sincronizados à parte, pela API pública do Ibama.
             Nenhum registro é descartado silenciosamente — todos são registrados com status de validação.
           </span>
         </div>

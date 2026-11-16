@@ -124,6 +124,22 @@ services:
     networks: [internal, edge]
     logging: *logging
 
+  # Sisfogo ROI sync (public Ibama API; daily is enough):
+  #   docker compose run --rm sisfogo-sync
+  sisfogo-sync:
+    <<: *api-build
+    profiles: ["jobs"]
+    command: ["node", "dist/sync-sisfogo.cjs"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://artemis_app:${ARTEMIS_APP_PASSWORD}@db:5432/artemis_ai
+    deploy: { resources: { limits: { memory: 512m, cpus: "0.5" } } }
+    networks: [internal, edge]
+    logging: *logging
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped

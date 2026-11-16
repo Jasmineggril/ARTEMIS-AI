@@ -12,7 +12,7 @@ import type { Express, Response } from "express";
 import { z } from "zod";
 import { and, eq, gte, lte, sql, desc, type SQL } from "drizzle-orm";
 import { db } from "./db";
-import { fireOccurrences, importBatches, organizations, satelliteHotspots, sourceSyncRuns, dataSources } from "@shared/schema";
+import { fireOccurrences, importBatches, organizations, satelliteHotspots, sourceSyncRuns, dataSources, sisfogoRoiRecords } from "@shared/schema";
 import { rateLimit } from "./security";
 import { BR_STATES } from "@shared/br-states";
 
@@ -68,6 +68,13 @@ async function countWhere(c: SQL[]) {
 }
 
 // ── Satellite hotspots (INPE) — public data, separate from imported records ───
+export const sisfogoFilterSchema = z.object({
+  state: z.string().trim().toUpperCase().refine((s) => (BR_STATES as readonly string[]).includes(s), "UF inválida.").optional(),
+  municipality: z.string().trim().min(2).max(120).optional(),
+  from: date.optional(),
+  to: date.optional(),
+}).refine((f) => !f.from || !f.to || f.from <= f.to, "Data inicial posterior à final.");
+
 export const hotspotFilterSchema = z.object({
   state: z.string().trim().toUpperCase().refine((s) => (BR_STATES as readonly string[]).includes(s), "UF inválida.").optional(),
   municipality: z.string().trim().min(2).max(120).optional(),
@@ -170,6 +177,42 @@ export function registerPublicRoutes(app: Express) {
       source: { name: "INPE — Programa Queimadas", url: "https://terrabrasilis.dpi.inpe.br/queimadas/portal/" } });
   }));
 
+
+  // ── Sisfogo (Ibama/Prevfogo) ROI records (migration 0010) ──────────────
+  app.get("/api/public/sisfogo/summary", limiter, handle(async (req, res) => {
+    const f = sisfogoFilterSchema.parse(req.query);
+    const t = sisfogoRoiRecords;
+    const c = and(
+      f.state ? eq(t.state, f.state) : undefined,
+      f.municipality ? sql`lower(${t.municipality}) = lower(${f.municipality})` : undefined,
+      f.from ? gte(t.startedOn, f.from) : undefined,
+      f.to ? lte(t.startedOn, f.to) : undefined,
+    );
+    const [agg] = await db.select({
+      total: sql<number>`count(*)::int`,
+      withArea: sql<number>`count(${t.burnedAreaHa})::int`,
+      burnedAreaHa: sql<number | null>`round(sum(${t.burnedAreaHa})::numeric, 1)::float8`,
+      firstDay: sql<string | null>`min(${t.startedOn})::text`,
+      lastDay: sql<string | null>`max(${t.startedOn})::text`,
+    }).from(t).where(c);
+    const byState = await db.select({ state: t.state, n: sql<number>`count(*)::int` })
+      .from(t).where(and(c, sql`${t.state} is not null`)).groupBy(t.state).orderBy(desc(sql`2`)).limit(27);
+    const byMonth = await db.select({ month: sql<string>`to_char(${t.startedOn}, 'YYYY-MM')`, n: sql<number>`count(*)::int` })
+      .from(t).where(and(c, sql`${t.startedOn} is not null`)).groupBy(sql`1`).orderBy(sql`1`);
+    const recent = await db.select({
+      roiNumber: t.roiNumber, startedOn: t.startedOn, municipality: t.municipality, state: t.state,
+      biome: t.biome, burnedAreaHa: t.burnedAreaHa, vegetation: t.vegetation,
+    }).from(t).where(c).orderBy(sql`${t.startedOn} desc nulls last`).limit(20);
+    const [last] = await db.select({ at: sql<string | null>`max(${sourceSyncRuns.finishedAt})` })
+      .from(sourceSyncRuns).innerJoin(dataSources, eq(dataSources.id, sourceSyncRuns.sourceId))
+      .where(and(eq(dataSources.key, "sisfogo-roi"), eq(sourceSyncRuns.status, "sucesso")));
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.json({
+      ...agg, byState, byMonth, recent, lastSyncAt: last?.at ?? null,
+      notice: "Registros de Ocorrência de Incêndio (ROI) finalizados e publicados pelo Ibama/Prevfogo no Sisfogo. Cobrem apenas os órgãos que aderiram ao Sisfogo — não representam todos os incêndios do país. Área queimada é estimativa informada no registro.",
+      source: { name: "Ibama/Prevfogo — Sisfogo", url: "https://sisfogo.sistema.gov.br" },
+    });
+  }));
 
   app.get("/api/public/occurrences", limiter, handle(async (req, res) => {
     const f = publicFilterSchema.parse(req.query);

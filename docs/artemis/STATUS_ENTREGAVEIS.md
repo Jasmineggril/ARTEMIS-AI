@@ -13,7 +13,7 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | 5 | Frontend funcional e responsivo | Parcial | Login, cadastro, recuperação de senha, dashboard, áreas, análise, alertas, mapa, organização e privacidade usam a API real. Relatórios e Inteligência Operacional também usam a API real. Testado em 1366 px e iPhone 13. |
 | 6 | Backend integrado | Implementado e testado | 27 testes de integração com PostgreSQL real |
 | 7 | Serviço de análise de risco | Implementado e testado | 109 pytest; caminho Node→Python testado com o serviço no ar e com fallback |
-| 8 | Banco de dados e migrações | Implementado e testado | 10 migrações versionadas (0000–0009); 0004–0009 aplicadas em cópia restaurada e em dev com impressão digital idêntica; papéis com privilégio mínimo verificados; ver `09` e `10` |
+| 8 | Banco de dados e migrações | Implementado e testado | 11 migrações versionadas (0000–0010); 0004–0009 aplicadas em cópia restaurada e em dev com impressão digital idêntica; papéis com privilégio mínimo verificados; 0010 (Sisfogo) aplicada em dev; ver `09`, `10` e `11` |
 | 9 | Mapas e gráficos | Parcial | Áreas, polígonos e ocorrências com filtros; Consulta Pública (`/consulta-publica`) com mapa, gráficos por mês/hora e comparação de períodos. Pendente: agrupamento de pontos, desenho de polígono no mapa, busca por endereço, camada de focos de calor. |
 | 10 | Módulo de alertas | Implementado e testado | Ciclo de vida, histórico, deduplicação. **Notificação por e-mail pendente.** |
 | 11 | Importação de dados | Implementado e testado | Revalidação no servidor, motivos de rejeição por lote, isolamento por organização |

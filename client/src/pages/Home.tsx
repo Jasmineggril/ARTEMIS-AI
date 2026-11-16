@@ -235,7 +235,7 @@ const LIMITS = [
   { icon: Phone, t: "Não é serviço de emergência", d: "Em caso de incêndio, ligue 193 (Bombeiros) ou 199 (Defesa Civil)." },
   { icon: AlertTriangle, t: "Índice ainda não calibrado", d: "Limiares documentados e transparentes; validação com incêndios reais prevista na Prova de Valor." },
   { icon: Satellite, t: "Foco de calor ≠ incêndio", d: "É uma detecção térmica; o mesmo fogo pode gerar várias detecções." },
-  { icon: Upload, t: "Sem integração oficial com o Sisfogo", d: "Históricos entram por importação de arquivos autorizados." },
+  { icon: Upload, t: "Sisfogo: só dados públicos", d: "Lemos a API pública de ROIs finalizados do Ibama; sem convênio nem acesso privilegiado." },
   { icon: Database, t: "Modelo de ML experimental", d: "Treinado com dados sintéticos e desligado por padrão." },
   { icon: CloudSun, t: "Clima por modelo numérico", d: "Open-Meteo estima para a coordenada; não é estação local." },
 ];

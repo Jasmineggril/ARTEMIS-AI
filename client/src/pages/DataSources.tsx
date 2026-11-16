@@ -230,8 +230,8 @@ export default function DataSources() {
       <div className="mt-4 text-xs text-muted-foreground flex items-start gap-1.5">
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
         <span>
-          Fontes integradas: INPE (focos de calor por satélite, sincronização incremental), Open-Meteo (clima sob demanda, com cache) e
-          importação de arquivos autorizados. A importação de arquivos não é integração oficial com o Sisfogo. Fontes marcadas como
+          Fontes integradas: INPE (focos de calor por satélite, sincronização incremental), Sisfogo (API pública de ROIs finalizados do
+          Ibama/Prevfogo, sem convênio), Open-Meteo (clima sob demanda, com cache) e importação de arquivos autorizados. Fontes marcadas como
           "Simulado" usam dados demonstrativos.
         </span>
       </div>

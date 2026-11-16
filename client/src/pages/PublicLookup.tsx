@@ -10,6 +10,7 @@ import { differenceInCalendarDays, format, subDays } from "date-fns";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Search, Share2, Phone, Leaf, ShieldAlert, Info, Flame } from "lucide-react";
 import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
+import { SisfogoPanel } from "@/components/public/SisfogoPanel";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { BR_STATES } from "@shared/br-states";
@@ -236,6 +237,8 @@ export default function PublicLookup() {
           </section>
         )}
 
+        <SisfogoPanel state={applied.state} municipality={applied.municipality} from={applied.from} to={applied.to} />
+
         {summary && summary.total > 0 && (
           <div className="grid lg:grid-cols-2 gap-6">
             <section className="bg-card border rounded-2xl p-5">
@@ -277,7 +280,7 @@ export default function PublicLookup() {
               <h2 className="font-semibold mb-2">Quem publicou estes dados</h2>
               <ul className="text-sm space-y-1">{summary.sources.map((s, i) => (
                 <li key={i}>• <strong>{s.organization}</strong> — {s.source || "fonte não informada"} ({s.batches} lote(s){s.publishedAt ? `, publicado em ${format(new Date(s.publishedAt), "dd/MM/yyyy")}` : ""})</li>))}</ul>
-              <p className="text-xs text-muted-foreground mt-2">Importações de arquivos. Não representam integração oficial com Sisfogo, INPE ou outro órgão.</p>
+              <p className="text-xs text-muted-foreground mt-2">Arquivos importados e publicados por organizações — distintos dos registros oficiais do Sisfogo e dos focos do INPE mostrados nesta página.</p>
             </section>
           </div>
         )}
