@@ -19,7 +19,8 @@ export const analysisRequestSchema = z.object({
       windSpeed: z.number().min(0).max(200).optional(),
       recentRainfall: z.number().min(0).max(2000).optional(),
       vegetationCondition: z.enum(["very_dry", "dry", "moderate", "humid"]),
-      nearbyHotspot: z.boolean().default(false),
+      // omitted = check INPE satellite detections automatically (when data is fresh)
+      nearbyHotspot: z.boolean().optional(),
       hotspotDistance: z.number().min(0).max(1000).optional(),
       historicalOccurrences: z.number().int().min(0).max(100000).optional(),
       dataQuality: z.enum(["poor", "regular", "good", "excellent"]).optional(),
@@ -29,7 +30,7 @@ export const analysisRequestSchema = z.object({
 });
 export type AnalysisRequest = z.infer<typeof analysisRequestSchema>;
 
-type FieldOrigin = "manual" | "open-meteo" | "base-historica-organizacao";
+type FieldOrigin = "manual" | "open-meteo" | "base-historica-organizacao" | "inpe-queimadas" | "nao-verificado";
 
 export interface Provenance {
   field: string;
@@ -70,11 +71,25 @@ export function normalizeLevel(level: string): RiskLevel {
   throw new Error(`Nível de risco desconhecido: ${level}`);
 }
 
+/** Satellite detections around the area, computed by the caller from satellite_hotspots. */
+export interface HotspotContext {
+  fresh: boolean;
+  lastSyncAt: Date | null;
+  nearestKm: number | null;
+  count: number;
+  radiusKm: number;
+  windowHours: number;
+}
+
+export type WeatherProvider = (lat: number, lng: number) => Promise<RiskWeather & { cached?: boolean }>;
+
 export interface ResolvedInputs {
   engineInput: RiskInput;
   pythonPayload: Record<string, unknown>;
   provenance: Provenance[];
-  weather: RiskWeather | null;
+  weather: (RiskWeather & { cached?: boolean }) | null;
+  hotspots: HotspotContext | null;
+  hotspotOrigin: "manual" | "inpe-queimadas" | "nao-verificado";
   connectorError?: string;
   qualityLabel: string;
 }
@@ -88,10 +103,11 @@ export async function resolveInputs(
   area: { latitude: number | null; longitude: number | null },
   historicalCount: number | null,
   fetchImpl?: FetchLike,
+  ctx: { hotspots?: HotspotContext | null; weatherProvider?: WeatherProvider } = {},
 ): Promise<ResolvedInputs> {
   const i = req.inputs;
   const provenance: Provenance[] = [];
-  let weather: RiskWeather | null = null;
+  let weather: (RiskWeather & { cached?: boolean }) | null = null;
   let connectorError: string | undefined;
 
   const meteoFields = ["temperature", "humidity", "windSpeed", "recentRainfall"] as const;
@@ -102,7 +118,9 @@ export async function resolveInputs(
       connectorError = "Área sem coordenadas: não é possível consultar dados meteorológicos.";
     } else {
       try {
-        weather = await fetchRiskWeather(area.latitude, area.longitude, fetchImpl);
+        weather = ctx.weatherProvider && !fetchImpl
+          ? await ctx.weatherProvider(area.latitude, area.longitude)
+          : await fetchRiskWeather(area.latitude, area.longitude, fetchImpl);
       } catch (err) {
         connectorError = err instanceof Error ? err.message : "Falha no conector meteorológico.";
       }
@@ -145,7 +163,26 @@ export async function resolveInputs(
     historical = 0;
   }
   provenance.push({ field: "vegetationCondition", origin: "manual" });
-  provenance.push({ field: "nearbyHotspot", origin: "manual" });
+
+  // Nearby hotspot: user statement wins; otherwise fresh INPE detections; otherwise unverified.
+  let nearbyHotspot: boolean;
+  let hotspotDistance: number | undefined = i.hotspotDistance;
+  let hotspotOrigin: ResolvedInputs["hotspotOrigin"];
+  const hs = ctx.hotspots ?? null;
+  if (i.nearbyHotspot !== undefined) {
+    nearbyHotspot = i.nearbyHotspot;
+    hotspotOrigin = "manual";
+    provenance.push({ field: "nearbyHotspot", origin: "manual" });
+  } else if (hs && hs.fresh) {
+    nearbyHotspot = hs.count > 0;
+    hotspotDistance = hs.nearestKm ?? undefined;
+    hotspotOrigin = "inpe-queimadas";
+    provenance.push({ field: "nearbyHotspot", origin: "inpe-queimadas", referenceAt: hs.lastSyncAt?.toISOString() });
+  } else {
+    nearbyHotspot = false;
+    hotspotOrigin = "nao-verificado";
+    provenance.push({ field: "nearbyHotspot", origin: "nao-verificado" });
+  }
 
   // Data quality: explicit user statement wins; otherwise derived from origins.
   const derivedQuality = weather ? "good" : "regular";
@@ -157,8 +194,8 @@ export async function resolveInputs(
     windSpeed: values.windSpeed!,
     recentRainfall: values.recentRainfall!,
     vegetationCondition: VEG_TO_NUM[i.vegetationCondition],
-    nearbyHotspot: i.nearbyHotspot,
-    hotspotDistance: i.nearbyHotspot ? (i.hotspotDistance ?? 0) : 0,
+    nearbyHotspot,
+    hotspotDistance: nearbyHotspot ? (hotspotDistance ?? 0) : 0,
     historicalOccurrences: historical,
     dataQuality: QUALITY_TO_NUM[quality],
   };
@@ -169,14 +206,14 @@ export async function resolveInputs(
     wind_speed: engineInput.windSpeed,
     recent_rainfall: engineInput.recentRainfall,
     vegetation_condition: i.vegetationCondition,
-    nearby_hotspot: i.nearbyHotspot,
-    hotspot_distance: i.nearbyHotspot ? (i.hotspotDistance ?? null) : null,
+    nearby_hotspot: nearbyHotspot,
+    hotspot_distance: nearbyHotspot ? (hotspotDistance ?? null) : null,
     historical_occurrences: historical,
     data_quality: quality,
   };
 
   const qualityLabel = { poor: "ruim", regular: "regular", good: "boa", excellent: "excelente" }[quality];
-  return { engineInput, pythonPayload, provenance, weather, connectorError, qualityLabel };
+  return { engineInput, pythonPayload, provenance, weather, hotspots: hs, hotspotOrigin, connectorError, qualityLabel };
 }
 
 function runTsEngine(input: RiskInput, engineType: string): EngineOutput {
@@ -250,7 +287,17 @@ export function buildLimitations(resolved: ResolvedInputs, engine: EngineOutput)
   if (resolved.connectorError) {
     out.push(`Conector meteorológico: ${resolved.connectorError}`);
   }
-  out.push("Condição da vegetação e proximidade de focos foram informadas pelo usuário; integração com focos de calor do INPE ainda não implementada.");
+  out.push("Condição da vegetação informada pelo usuário (não há índice de vegetação por satélite integrado).");
+  if (resolved.hotspotOrigin === "inpe-queimadas" && resolved.hotspots) {
+    const h = resolved.hotspots;
+    out.push(`Proximidade de focos calculada com detecções do INPE num raio de ${h.radiusKm} km nas últimas ${h.windowHours} h ` +
+      `(${h.count} detecção(ões); última sincronização ${h.lastSyncAt?.toISOString() ?? "—"}). Várias detecções podem ser do mesmo fogo.`);
+  } else if (resolved.hotspotOrigin === "nao-verificado") {
+    out.push("Proximidade de focos NÃO verificada: dados do INPE ausentes ou desatualizados. Considerada ausente — informe manualmente se houver foco conhecido.");
+  } else {
+    out.push("Proximidade de focos informada pelo usuário.");
+  }
+  if (resolved.weather?.cached) out.push("Dados meteorológicos reaproveitados do cache local (consulta ao Open-Meteo de até 30 min atrás).");
   out.push("Focos de calor detectados por satélite não equivalem a incêndios confirmados.");
   out.push(DECISION_SUPPORT_DISCLAIMER);
   return out;
@@ -269,6 +316,9 @@ export function buildDataSources(resolved: ResolvedInputs) {
       url: OPEN_METEO_SOURCE.url,
       licence: OPEN_METEO_SOURCE.licence,
     });
+  }
+  if (resolved.hotspotOrigin === "inpe-queimadas" && resolved.hotspots) {
+    sources.push({ key: "inpe-queimadas", name: "INPE — Programa Queimadas (focos de calor por satélite)", referenceAt: resolved.hotspots.lastSyncAt?.toISOString(), url: "https://terrabrasilis.dpi.inpe.br/queimadas/portal/" });
   }
   if (resolved.provenance.some((p) => p.origin === "base-historica-organizacao")) {
     sources.push({ key: "fire_occurrences", name: "Ocorrências históricas importadas pela organização (raio de 10 km)" });

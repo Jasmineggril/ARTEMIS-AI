@@ -28,7 +28,9 @@ Plataforma brasileira de inteligência ambiental para prevenção de incêndios,
 | Consulta Pública (`/consulta-publica`): só lotes publicados explicitamente, coordenadas ~1 km | Implementado e testado |
 | Painel, relatório por área/período e indicadores agregados (fonte e data em cada bloco) | Implementado e testado |
 | Exportação CSV | Implementado e testado |
-| Docker Compose (Caddy + API + motor + PostgreSQL), backup cifrado | Backup/restauração testados; imagens não construídas aqui |
+| Focos de calor do INPE (sincronização incremental real) e uso na análise de risco | Implementado e testado |
+| Banco `artemis_ai`: 10 migrações, FKs, PostGIS opcional, papéis com privilégio mínimo | Implementado e testado |
+| Docker Compose (Caddy + API + motor + PostgreSQL/PostGIS + migrate + job INPE), backup cifrado | Pilha executada e restauração testada; build completo das imagens a validar na VPS |
 
 Situação completa dos 20 entregáveis: **[`docs/artemis/STATUS_ENTREGAVEIS.md`](docs/artemis/STATUS_ENTREGAVEIS.md)**.
 
@@ -45,6 +47,8 @@ Situação completa dos 20 entregáveis: **[`docs/artemis/STATUS_ENTREGAVEIS.md`
 | [06 Manual](docs/artemis/06_MANUAL.md) | Usuário e administrador |
 | [07 Limitações](docs/artemis/07_LIMITACOES_PENDENCIAS.md) | Limitações científicas, pendências, dependências |
 | [08 Prova de Valor](docs/artemis/08_PLANO_PROVA_DE_VALOR.md) | Plano de validação (metas, não resultados) |
+| [09 Banco — diagnóstico e plano](docs/artemis/09_BANCO_DIAGNOSTICO_E_PLANO.md) | Auditoria do banco, ER, plano de migrações |
+| [10 Banco — execução, manutenção e segurança](docs/artemis/10_BANCO_MANUTENCAO_SEGURANCA.md) | Migrações aplicadas com evidências, papéis, fontes, rotinas |
 
 ## Desenvolvimento local
 
@@ -84,8 +88,8 @@ DEMO_SEED_PASSWORD='escolhaUmaSenha1' npm run db:seed-demo
 |---|---|
 | `npm run check` | TypeScript (0 erros) |
 | `npm test` | Motor de risco TS (34) + hash de senha (10) |
-| `npm run test:unit` | Conector, procedência, alertas, segurança, CSV, GeoJSON, importação (14) |
-| `TEST_DATABASE_URL=... npm run test:integration` | API completa contra PostgreSQL real, incl. isolamento entre organizações (30). **Apaga o banco de teste**; o nome precisa conter `test`. Com `TEST_PYTHON_URL` usa o FastAPI real. |
+| `npm run test:unit` | Conectores (INPE com amostra real, Open-Meteo), procedência, alertas, segurança, CSV, GeoJSON, importação, conexão (19) |
+| `TEST_DATABASE_URL=... npm run test:integration` | API completa contra PostgreSQL real, incl. isolamento, deduplicação, rollback de importação, INPE e PostGIS opcional (39), mais `tests/integration/database.test.ts` (9: migrações, FKs, deriva de schema, falha de conexão, PostGIS). Os 2 testes de PostGIS só rodam com `TEST_SUPERUSER_URL`. **Apaga o banco de teste**; o nome precisa conter `test`. Com `TEST_PYTHON_URL` usa o FastAPI real. |
 | `npm run test:python` | Serviço FastAPI (109) |
 | `E2E_BASE_URL=... npm run test:e2e` | Fluxos no navegador, desktop e celular (12) |
 | `E2E_BASE_URL=... E2E_DEMO_PASSWORD=... npm run test:a11y` | axe-core WCAG A/AA em 12 telas |

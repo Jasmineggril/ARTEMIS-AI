@@ -391,6 +391,11 @@ export class DatabaseStorage implements IStorage {
           uvIndex: data.uvIndex ?? null,
           condition: data.condition ?? null,
           timestamp: new Date(),
+          sourceKey: data.sourceKey ?? "open-meteo",
+          kind: data.kind ?? "atual",
+          observedAt: data.observedAt ?? null,
+          fetchedAt: new Date(),
+          precipitation72h: data.precipitation72h ?? null,
         };
         fallbackState.weatherData.push(newWeather);
         return newWeather;

@@ -90,6 +90,13 @@ before(async () => {
   await c.connect();
   await c.query("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
   await c.end();
+  // Optional PostGIS path (extension created by a superuser, as in Docker init).
+  if (process.env.TEST_SUPERUSER_URL) {
+    const su = new pg.Client({ connectionString: (() => { const x = new URL(process.env.TEST_SUPERUSER_URL!); x.pathname = new URL(TEST_DB!).pathname; return x.toString(); })() });
+    await su.connect();
+    await su.query("CREATE EXTENSION IF NOT EXISTS postgis");
+    await su.end();
+  }
 
   const origLog = console.log;
   console.log = (...args: unknown[]) => {
@@ -547,6 +554,108 @@ test("imports resolve the official IBGE municipality code when the list is loade
   const byMun = Object.fromEntries(occ.map((o: any) => [o.municipality, o.municipalityIbgeCode]));
   assert.equal(byMun["CAVALCANTE"], "5205307");
   assert.equal(byMun["Lugar Inexistente"], null, "unknown name is left NULL, never guessed");
+});
+
+// ── INPE hotspots, weather cache and AI traceability ─────────────────────────
+import { readFileSync } from "node:fs";
+const INPE_SAMPLE = readFileSync(new URL("../fixtures/inpe_focos_diario_amostra.csv", import.meta.url), "utf8");
+
+/** Real INPE sample with timestamps moved to `hoursAgo` and the first 3 rows placed ~2 km from the test area. */
+function inpeFixture(hoursAgo = 2, frpOverride?: string) {
+  const ts = new Date(Date.now() - hoursAgo * 3600_000).toISOString().slice(0, 19).replace("T", " ");
+  const [head, ...lines] = INPE_SAMPLE.trim().split("\n");
+  const out = lines.map((l, i) => {
+    const c = l.split(",");
+    if (c[3] && /^\d{4}-/.test(c[3])) c[3] = ts;
+    if (i < 3) { c[1] = String(AREA.latitude + 0.015 * (i + 1)); c[2] = String(AREA.longitude); c[9] = "52"; }
+    if (i === 0 && frpOverride !== undefined) c[15] = frpOverride;
+    return c.join(",");
+  });
+  return [head, ...out].join("\n") + "\n";
+}
+
+test("analysis without hotspot info and without INPE data flags proximity as NOT verified", async () => {
+  const { nearbyHotspot, hotspotDistance, ...rest } = CRITICAL_INPUTS;
+  const r = await alice.post(`/api/areas/${areaId}/analyses`, { inputs: rest });
+  assert.equal(r.status, 201);
+  assert.equal(r.body.inputData.nearbyHotspot, false);
+  assert.ok(r.body.limitations.some((l: string) => /NÃO verificada/.test(l)));
+  assert.ok(!r.body.dataSources.some((s: any) => s.key === "inpe-queimadas"));
+});
+
+test("INPE sync: failure is recorded without rows; success is idempotent; real changes are updates", async () => {
+  const { syncInpeDay } = await import("../../server/connectors/inpe");
+  const day = new Date().toISOString().slice(0, 10);
+  const failed = await syncInpeDay(day, async () => ({ ok: false, status: 404, text: "" }));
+  assert.equal(failed.status, "falha");
+  assert.match(failed.error!, /404/);
+  const broken = await syncInpeDay(day, async () => ({ ok: true, status: 200, text: "coluna_errada\n1\n" }));
+  assert.equal(broken.status, "falha");
+  assert.match(broken.error!, /colunas ausentes/);
+
+  const first = await syncInpeDay(day, async () => ({ ok: true, status: 200, text: inpeFixture() }));
+  assert.equal(first.status, "sucesso");
+  assert.deepEqual([first.read, first.inserted, first.updated, first.rejected], [16, 12, 0, 4]);
+  const again = await syncInpeDay(day, async () => ({ ok: true, status: 200, text: inpeFixture() }));
+  assert.deepEqual([again.inserted, again.updated, again.unchanged], [0, 0, 12], "idempotent re-sync");
+  const changed = await syncInpeDay(day, async () => ({ ok: true, status: 200, text: inpeFixture(2, "999.9") }));
+  assert.deepEqual([changed.inserted, changed.updated], [0, 1], "INPE correction updates the row");
+
+  const conn = (await anon.get("/api/connectors")).body.find((c: any) => c.key === "inpe-queimadas");
+  assert.ok(conn.lastSuccessAt, "registry shows last successful sync");
+  assert.equal(conn.lastRun.status, "sucesso");
+});
+
+test("public hotspot API: separate from imported records, explicit caveats, bounded range", async () => {
+  const s = await anon.get("/api/public/hotspots/summary");
+  assert.equal(s.status, 200);
+  assert.equal(s.body.total, 12);
+  assert.ok(s.body.bySatellite.length >= 1);
+  assert.match(s.body.notice, /não é incêndio confirmado/);
+  const p = await anon.get("/api/public/hotspots?state=GO");
+  assert.ok(p.body.points.length >= 3);
+  assert.ok(p.body.points.every((x: any) => x.state === "GO"));
+  assert.equal((await anon.get("/api/public/hotspots?from=2026-01-01&to=2026-03-01")).status, 400);
+  // public occurrence lookup never includes satellite detections
+  const occ = await anon.get("/api/public/summary");
+  assert.ok(!JSON.stringify(occ.body).includes("NOAA"));
+});
+
+test("analysis infers nearby hotspot from fresh INPE data and records full traceability", async () => {
+  const { nearbyHotspot, hotspotDistance, ...rest } = CRITICAL_INPUTS;
+  const r = await alice.post(`/api/areas/${areaId}/analyses`, { inputs: rest });
+  assert.equal(r.status, 201);
+  assert.equal(r.body.inputData.nearbyHotspot, true);
+  assert.ok(r.body.inputData.hotspotDistance > 1 && r.body.inputData.hotspotDistance < 2, `distance ${r.body.inputData.hotspotDistance}`);
+  assert.ok(r.body.dataSources.some((x: any) => x.key === "inpe-queimadas"));
+  assert.ok(r.body.limitations.some((l: string) => /detecções do INPE/.test(l)));
+  const d = await alice.get(`/api/analyses/${r.body.id}`);
+  assert.equal(d.body.modelVersion.engineFamily, WITH_PYTHON ? "regras-python" : "regras-typescript");
+  assert.equal(d.body.modelVersion.isExperimental, false);
+  const inpe = d.body.sourcesUsed.find((x: any) => x.sourceKey === "inpe-queimadas");
+  assert.deepEqual(inpe.fields, ["nearbyHotspot"]);
+  assert.equal(inpe.recordCount, 3);
+  assert.ok(d.body.sourcesUsed.some((x: any) => x.sourceKey === "manual" && x.fields.includes("temperature")));
+  const current = await alice.get(`/api/areas/${areaId}`);
+  assert.equal(d.body.areaSnapshot.name, current.body.name, "snapshot = area as it was at analysis time");
+});
+
+test("weather cache: a recent Open-Meteo value for the same coordinate is reused (no API call)", async () => {
+  const c = new pg.Client({ connectionString: TEST_DB });
+  await c.connect();
+  await c.query(
+    `INSERT INTO weather_data (latitude, longitude, temperature, humidity, wind_speed, precipitation_72h, source_key, kind, observed_at, fetched_at)
+     VALUES ($1, $2, 37.5, 16, 33, 0.4, 'open-meteo', 'atual', now() - interval '20 minutes', now() - interval '5 minutes')`,
+    [AREA.latitude + 0.001, AREA.longitude - 0.001],
+  );
+  await c.end();
+  const r = await alice.post(`/api/areas/${areaId}/analyses`, { useLiveWeather: true, inputs: { vegetationCondition: "dry", nearbyHotspot: false } });
+  assert.equal(r.status, 201, JSON.stringify(r.body));
+  assert.equal(r.body.inputData.temperature, 37.5);
+  assert.equal(r.body.dataQuality.provenance.find((p: any) => p.field === "humidity").origin, "open-meteo");
+  assert.ok(r.body.limitations.some((l: string) => /cache local/.test(l)));
+  const d = await alice.get(`/api/analyses/${r.body.id}`);
+  assert.equal(d.body.sourcesUsed.find((x: any) => x.sourceKey === "open-meteo").detail.cached, true);
 });
 
 test("critical operations are written to the audit log", async () => {

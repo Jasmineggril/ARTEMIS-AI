@@ -7,10 +7,16 @@ export function log(message: string, source = "express") {
 }
 
 (async () => {
-  // Apply pending migrations on startup. In production a failure is fatal:
-  // the API must not run against an outdated schema.
+  // Migrations: in the production stack a one-shot `migrate` service applies
+  // them with the owner role (RUN_MIGRATIONS_ON_START=false here), and the API
+  // only verifies that nothing is pending. In development they run on start.
   try {
-    await runMigrations();
+    if (process.env.RUN_MIGRATIONS_ON_START === "false") {
+      const pending = await runMigrations({ dryRun: true });
+      if (pending.length) throw new Error(`migrações pendentes: ${pending.join(", ")}`);
+    } else {
+      await runMigrations();
+    }
   } catch (err) {
     console.error("[migrate] failed:", err instanceof Error ? err.message : err);
     if (process.env.NODE_ENV === "production") process.exit(1);

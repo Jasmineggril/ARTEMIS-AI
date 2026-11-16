@@ -230,8 +230,9 @@ export default function DataSources() {
       <div className="mt-4 text-xs text-muted-foreground flex items-start gap-1.5">
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
         <span>
-          As fontes marcadas como "Simulado" utilizam dados demonstrativos gerados em ambiente controlado.
-          A integração com fontes externas reais será implementada durante a Prova de Valor.
+          Fontes integradas: INPE (focos de calor por satélite, sincronização incremental), Open-Meteo (clima sob demanda, com cache) e
+          importação de arquivos autorizados. A importação de arquivos não é integração oficial com o Sisfogo. Fontes marcadas como
+          "Simulado" usam dados demonstrativos.
         </span>
       </div>
     </Layout>

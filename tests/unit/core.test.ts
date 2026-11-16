@@ -172,3 +172,66 @@ test("import: server re-validation downgrades physically impossible records", ()
   assert.equal(br.status, "válido");
   assert.equal(br.isoDate, "2025-08-10");
 });
+
+// ── INPE connector (real sample + marked synthetic invalid rows) ─────────────
+import { readFileSync } from "node:fs";
+import { parseInpeCsv, inpeDailyUrl, recentUtcDays, IBGE_UF } from "../../server/connectors/inpe";
+
+const INPE_SAMPLE = readFileSync(new URL("../fixtures/inpe_focos_diario_amostra.csv", import.meta.url), "utf8");
+
+test("inpe: parses the real CSV format, -999 and empty values become null, UTC timestamps", () => {
+  const r = parseInpeCsv(INPE_SAMPLE);
+  assert.equal(r.read, 16);
+  assert.equal(r.rows.length, 12);
+  assert.deepEqual(r.rejected, {
+    "sem identificador": 1, "coordenadas inválidas": 1, "data/hora inválida": 1, "identificador repetido no arquivo": 1,
+  });
+  const first = r.rows[0];
+  assert.match(first.externalId, /^[0-9a-f-]{36}$/);
+  assert.equal(first.detectedAt.toISOString(), "2026-11-15T00:00:00.000Z");
+  assert.equal(first.state, "PA");
+  assert.equal(first.municipalityIbgeCode, "1500503");
+  assert.ok(r.rows.some((x) => x.daysWithoutRain === null), "-999 -> null");
+  assert.ok(r.rows.some((x) => x.frpMw === null), "empty FRP -> null");
+  assert.ok(r.rows.every((x) => x.fireRisk === null || (x.fireRisk >= 0 && x.fireRisk <= 1)));
+  assert.ok(r.rows.some((x) => x.state === "GO" && x.biome === "Cerrado"));
+});
+
+test("inpe: unexpected header is rejected instead of guessed", () => {
+  assert.throws(() => parseInpeCsv("lat,lon\n1,2\n"), /colunas ausentes/);
+  assert.throws(() => parseInpeCsv(""), /vazio/);
+});
+
+test("inpe: URL, recent days and UF table", () => {
+  assert.equal(inpeDailyUrl("2026-11-15"), "https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil/focos_diario_br_20261115.csv");
+  assert.deepEqual(recentUtcDays(2, new Date("2026-11-16T01:00:00Z")), ["2026-11-16", "2026-11-15"]);
+  assert.equal(Object.keys(IBGE_UF).length, 27);
+  assert.equal(IBGE_UF["52"], "GO");
+});
+
+test("db-url: DATABASE_URL wins, Supabase is legacy and refused in production", async () => {
+  const { resolveDatabaseUrl, describeDbUrl } = await import("../../server/db-url");
+  const both = resolveDatabaseUrl({ DATABASE_URL: "postgresql://a:secret@db:5432/artemis_ai", SUPABASE_DATABASE_URL: "postgresql://x@sb.supabase.co/p" });
+  assert.equal(both.origin, "DATABASE_URL");
+  assert.match(both.warnings[0], /IGNORADA/);
+  assert.equal(resolveDatabaseUrl({ PGHOST: "db", PGPASSWORD: "p@ss" }).url, "postgresql://artemis_app:p%40ss@db:5432/artemis_ai");
+  assert.throws(() => resolveDatabaseUrl({ NODE_ENV: "production", SUPABASE_DATABASE_URL: "postgresql://x@sb.supabase.co/p" }), /ALLOW_LEGACY_SUPABASE/);
+  assert.equal(resolveDatabaseUrl({ NODE_ENV: "production", SUPABASE_DATABASE_URL: "postgresql://x@sb.supabase.co/p", ALLOW_LEGACY_SUPABASE: "true" }).origin, "SUPABASE_DATABASE_URL");
+  assert.throws(() => resolveDatabaseUrl({ NODE_ENV: "production" }), /DATABASE_URL não definida/);
+  assert.equal(describeDbUrl("postgresql://user:secret@db:5432/artemis_ai"), "db:5432/artemis_ai", "no credentials");
+});
+
+test("risk-service: hotspot proximity — manual wins, fresh INPE data is used, stale data is flagged", async () => {
+  const base = { temperature: 30, humidity: 30, windSpeed: 10, recentRainfall: 0, vegetationCondition: "dry" as const };
+  const fresh = { fresh: true, lastSyncAt: new Date("2026-11-16T10:00:00Z"), nearestKm: 3.2, count: 4, radiusKm: 10, windowHours: 48 };
+  const a = await resolveInputs({ useLiveWeather: false, inputs: { ...base } }, area, null, undefined, { hotspots: fresh });
+  assert.equal(a.engineInput.nearbyHotspot, true);
+  assert.equal(a.engineInput.hotspotDistance, 3.2);
+  assert.equal(a.hotspotOrigin, "inpe-queimadas");
+  const b = await resolveInputs({ useLiveWeather: false, inputs: { ...base, nearbyHotspot: false } }, area, null, undefined, { hotspots: fresh });
+  assert.equal(b.engineInput.nearbyHotspot, false, "user statement wins");
+  const c = await resolveInputs({ useLiveWeather: false, inputs: { ...base } }, area, null, undefined, { hotspots: { ...fresh, fresh: false } });
+  assert.equal(c.hotspotOrigin, "nao-verificado");
+  const eng = await runEngine(c, (async () => { throw new Error("off"); }) as any);
+  assert.ok(buildLimitations(c, eng).some((l) => /NÃO verificada/.test(l)));
+});

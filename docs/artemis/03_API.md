@@ -73,6 +73,9 @@ Requisição:
 - Campos meteorológicos ausentes são preenchidos pelo Open-Meteo **somente** se `useLiveWeather=true`; valores informados sempre prevalecem.
 - Se faltarem dados → `422 { missing: [...], connectorError }`. Nada é preenchido com valor padrão.
 - `historicalOccurrences` ausente → contagem de ocorrências da organização a até 10 km.
+- `nearbyHotspot` ausente → focos de calor do INPE a até 10 km nas últimas 48 h, **somente se** a última sincronização tiver menos de `INPE_MAX_AGE_HOURS` (padrão 6 h); caso contrário, a análise registra "proximidade de focos NÃO verificada".
+- Dados meteorológicos reaproveitam o cache local (`weather_data`, 30 min) para a mesma coordenada.
+- `GET /api/analyses/:id` inclui `modelVersion` (motor, versão, tipo de dataset, aviso sobre métricas) e `sourcesUsed` (uma linha por fonte, com campos alimentados, horário de referência e nº de registros).
 
 Resposta (`201`): a análise armazenada com `score`, `level`, `factors[]`, `recommendations[]`, `engineType`, `calculationVersion`, `isExperimental`, `dataSources[]`, `dataQuality { level, provenance[], connectorError }`, `limitations[]`, `confidence: null` e `alert: { id, created } | null`.
 
@@ -80,7 +83,7 @@ Resposta (`201`): a análise armazenada com `score`, `level`, `factors[]`, `reco
 
 | Método | Rota | Papel | Observações |
 |---|---|---|---|
-| GET | `/api/alerts?status=&areaId=` | viewer | `status`: um dos status ou `abertos` |
+| GET | `/api/alerts?status=&areaId=&limit=&offset=` | viewer | `status`: um dos status ou `abertos`; `limit` ≤ 500; total em `X-Total-Count` |
 | GET | `/api/alerts/:id` | viewer | Inclui `events[]` e `allowedTransitions[]` |
 | POST | `/api/alerts/:id/status` | analyst | `{ status, note?, assignToMe? }`; `descartado` exige `note`; transição inválida → `409` |
 
@@ -90,10 +93,10 @@ Transições: `novo → reconhecido | em_acompanhamento | resolvido | descartado
 
 | Método | Rota | Papel | Observações |
 |---|---|---|---|
-| POST | `/api/import-batches` | manager | `{ filename, sourceName?, records[] }` (≤ 50 000). Resposta com relatório do lote e `rejectionReasons`. |
+| POST | `/api/import-batches` | manager | `{ filename, sourceName?, records[] }` (≤ 50 000). Transação única: qualquer erro desfaz o lote inteiro. Ocorrências já importadas pela organização (mesma data, município, UF, coordenadas a ~100 m e tipo) contam como duplicadas, com motivo em `rejectionReasons`. Código IBGE preenchido quando a lista de municípios está carregada. |
 | GET | `/api/import-batches` | viewer | |
 | GET | `/api/import-batches/:id` | viewer | |
-| GET | `/api/fire-occurrences?from=&to=&state=&municipality=&batchId=` | viewer | Datas `AAAA-MM-DD`; até 5000 registros |
+| GET | `/api/fire-occurrences?from=&to=&state=&municipality=&batchId=&limit=&offset=` | viewer | Datas `AAAA-MM-DD`; `limit` ≤ 5000 (padrão 5000); total em `X-Total-Count`; corpo continua sendo lista |
 
 ## Painel, fontes e saúde
 
@@ -101,7 +104,7 @@ Transições: `novo → reconhecido | em_acompanhamento | resolvido | descartado
 |---|---|---|---|
 | GET | `/api/dashboard/summary` | viewer | Cada bloco traz `source` e `lastUpdate` |
 | GET | `/api/insights?from=&to=` | viewer | Análises por semana e nível, fatores frequentes, alertas por status, ocorrências por mês |
-| GET | `/api/connectors` | público | Situação real de cada fonte |
+| GET | `/api/connectors` | público | Fontes cadastradas no banco (`data_sources`), licença, periodicidade, última execução e último sucesso de sincronização |
 | GET | `/api/health` | público | `{ status, database, riskEngine }` — sem dados |
 
 ## Consulta Pública (sem login, 60 req/min)
@@ -113,6 +116,8 @@ Expõe **somente** ocorrências de lotes publicados explicitamente (`visibility 
 | GET | `/api/public/occurrences?state=&municipality=&from=&to=&hourFrom=&hourTo=` | até 3000 pontos, `truncated` |
 | GET | `/api/public/summary?…&compareFrom=&compareTo=` | total, por mês, por hora (0–23), top municípios, quem publicou, comparação de períodos |
 | GET | `/api/public/municipalities?state=` | municípios com registros publicados |
+| GET | `/api/public/hotspots?state=&municipality=&satellite=&from=&to=` | focos de calor do INPE (padrão: últimos 2 dias; máx. 31 dias); até 5000 pontos |
+| GET | `/api/public/hotspots/summary?…` | total, por satélite, por dia, top municípios, última sincronização e aviso de interpretação |
 | PATCH | `/api/import-batches/:id/visibility` | **admin**; `{ visibility: "publico" \| "privado", confirm: true }` (confirmação obrigatória para publicar); auditado |
 
 ## Rotas legadas mantidas

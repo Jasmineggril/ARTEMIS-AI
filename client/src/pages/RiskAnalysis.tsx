@@ -36,6 +36,8 @@ const FIELD_LABEL: Record<string, string> = {
 const ORIGIN_LABEL: Record<string, string> = {
   manual: "informado pelo usuário", "open-meteo": "Open-Meteo (modelo numérico)",
   "base-historica-organizacao": "ocorrências importadas (raio 10 km)",
+  "inpe-queimadas": "focos de calor do INPE (satélite)",
+  "nao-verificado": "não verificado (dados do INPE indisponíveis)",
 };
 
 interface Factor { name: string; contribution: number; description: string; weight: string; value: string }
@@ -63,12 +65,12 @@ interface ResultView {
 
 interface FormState {
   temperature: string; humidity: string; windSpeed: string; recentRainfall: string;
-  vegetationCondition: string; nearbyHotspot: boolean; hotspotDistance: string;
+  vegetationCondition: string; nearbyHotspot: "auto" | "sim" | "nao"; hotspotDistance: string;
   historicalOccurrences: string; dataQuality: string; useLiveWeather: boolean; notes: string;
 }
 const DEFAULT_FORM: FormState = {
   temperature: "", humidity: "", windSpeed: "", recentRainfall: "", vegetationCondition: "moderate",
-  nearbyHotspot: false, hotspotDistance: "", historicalOccurrences: "", dataQuality: "", useLiveWeather: true, notes: "",
+  nearbyHotspot: "auto", hotspotDistance: "", historicalOccurrences: "", dataQuality: "", useLiveWeather: true, notes: "",
 };
 
 function engineLabel(t: string) {
@@ -161,7 +163,7 @@ export default function RiskAnalysisPage() {
     setForm((f) => ({
       ...f, temperature: String(i.temperature), humidity: String(i.humidity), windSpeed: String(i.windSpeed),
       recentRainfall: String(i.recentRainfall), vegetationCondition: VEG_FROM_NUM[i.vegetationCondition],
-      nearbyHotspot: i.nearbyHotspot, hotspotDistance: String(i.hotspotDistance),
+      nearbyHotspot: i.nearbyHotspot ? "sim" : "nao", hotspotDistance: String(i.hotspotDistance),
       historicalOccurrences: String(i.historicalOccurrences), useLiveWeather: false,
     }));
     toast({ title: `Cenário demonstrativo "${s.label}" carregado`, description: "Valores fictícios para teste — não representam medições." });
@@ -192,9 +194,10 @@ export default function RiskAnalysisPage() {
           notes: form.notes.trim() || undefined,
           inputs: Object.fromEntries(Object.entries({
             ...values,
-            hotspotDistance: form.nearbyHotspot ? values.hotspotDistance : undefined,
+            hotspotDistance: form.nearbyHotspot === "sim" ? values.hotspotDistance : undefined,
             vegetationCondition: form.vegetationCondition,
-            nearbyHotspot: form.nearbyHotspot,
+            // "auto" = omit: the server checks INPE satellite detections (when data is fresh)
+            nearbyHotspot: form.nearbyHotspot === "auto" ? undefined : form.nearbyHotspot === "sim",
             dataQuality: form.dataQuality || undefined,
           }).filter(([, v]) => v !== undefined)),
         };
@@ -210,7 +213,7 @@ export default function RiskAnalysisPage() {
         const r = await api<any>("POST", "/api/python-risk-analysis", {
           temperature: values.temperature, humidity: values.humidity, wind_speed: values.windSpeed,
           recent_rainfall: values.recentRainfall, vegetation_condition: form.vegetationCondition,
-          nearby_hotspot: form.nearbyHotspot, hotspot_distance: form.nearbyHotspot ? values.hotspotDistance ?? null : null,
+          nearby_hotspot: form.nearbyHotspot === "sim", hotspot_distance: form.nearbyHotspot === "sim" ? values.hotspotDistance ?? null : null,
           historical_occurrences: values.historicalOccurrences ?? 0, data_quality: form.dataQuality || "regular",
         });
         setResult({
@@ -307,11 +310,17 @@ export default function RiskAnalysisPage() {
                 hint={areaMode ? "Vazio = contar ocorrências importadas num raio de 10 km." : undefined} />
             </div>
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <input type="checkbox" checked={form.nearbyHotspot} onChange={(e) => set("nearbyHotspot", e.target.checked)} />
-                Há foco de calor ou incêndio conhecido próximo à área
-              </label>
-              {form.nearbyHotspot && (
+              <label htmlFor="hs" className="text-xs font-medium text-muted-foreground mb-1 block">Foco de calor ou incêndio próximo à área</label>
+              <select id="hs" className={inputCls} value={areaMode ? form.nearbyHotspot : form.nearbyHotspot === "auto" ? "nao" : form.nearbyHotspot}
+                onChange={(e) => set("nearbyHotspot", e.target.value as FormState["nearbyHotspot"])} aria-describedby="hs-hint">
+                {areaMode && <option value="auto">Verificar automaticamente (focos do INPE, raio de 10 km, últimas 48 h)</option>}
+                <option value="sim">Sim, há foco conhecido</option>
+                <option value="nao">Não há foco conhecido</option>
+              </select>
+              <p id="hs-hint" className="text-[11px] text-muted-foreground mt-0.5">
+                {areaMode ? "A verificação automática só é usada se os dados do INPE estiverem atualizados; caso contrário, a análise registra que não foi verificada." : "Na simulação, informe manualmente."}
+              </p>
+              {form.nearbyHotspot === "sim" && (
                 <div className="mt-2"><NumberField id="dist" label="Distância estimada (km)" value={form.hotspotDistance} onChange={(v) => set("hotspotDistance", v)} /></div>
               )}
             </div>

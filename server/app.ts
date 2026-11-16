@@ -50,7 +50,8 @@ export async function createApp(): Promise<{ app: Express; httpServer: Server }>
   app.use(
     session({
       name: "artemis.sid",
-      store: pool ? new PgSession({ pool, createTableIfMissing: true }) : new session.MemoryStore(),
+      // table created by migration 0009 (runtime role has no CREATE privilege)
+      store: pool ? new PgSession({ pool, createTableIfMissing: false }) : new session.MemoryStore(),
       secret: resolveSessionSecret(),
       resave: false,
       saveUninitialized: false,

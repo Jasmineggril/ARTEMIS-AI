@@ -29,6 +29,14 @@ before(async () => {
   await admin.query(`DROP DATABASE IF EXISTS "${DB_NAME}" WITH (FORCE)`);
   await admin.query(`CREATE DATABASE "${DB_NAME}"`);
   await admin.end();
+  // Optional: a superuser creates PostGIS (as the Docker init script does), so
+  // migration 0008 takes the geography path. Without it, those tests are skipped.
+  if (process.env.TEST_SUPERUSER_URL) {
+    const su = new pg.Client({ connectionString: (() => { const x = new URL(process.env.TEST_SUPERUSER_URL!); x.pathname = `/${DB_NAME}`; return x.toString(); })() });
+    await su.connect();
+    await su.query("CREATE EXTENSION IF NOT EXISTS postgis");
+    await su.end();
+  }
   const origLog = console.log;
   console.log = (...a: unknown[]) => { if (process.env.TEST_VERBOSE) origLog(...a); };
   ({ runMigrations: migrate } = await import("../../server/migrate"));
@@ -153,6 +161,8 @@ test("schema drift: every column declared in shared/schema.ts exists in the data
         (declared.startsWith("timestamp") && actual === (declared.includes("with time zone") ? "timestamp with time zone" : "timestamp without time zone")) ||
         (declared === "double precision" && actual === "double precision") ||
         (declared === "serial" && actual === "integer") ||
+        (declared === "bigserial" && actual === "bigint") ||
+        (declared.endsWith("[]") && actual === "ARRAY") ||
         (declared.startsWith("char") && actual === "character") ||
         family(declared) === family(actual) || declared === actual;
       if (!ok) problems.push(`${key}: schema=${declared} banco=${actual}`);
@@ -182,4 +192,34 @@ test("connection failure: API reports 503 and refuses writes, never falls back t
   assert.equal(res.health, 503);
   assert.equal(res.signup, 500);
   assert.equal(res.msg, "Erro interno. Tente novamente mais tarde.", "no internal details leaked");
+});
+
+const POSTGIS = Boolean(process.env.TEST_SUPERUSER_URL);
+
+test("0008 adds geography columns + GiST indexes when PostGIS exists", { skip: !POSTGIS && "TEST_SUPERUSER_URL não definido" }, async () => {
+  const cols = await q(`SELECT table_name FROM information_schema.columns WHERE column_name='geom' ORDER BY 1`);
+  assert.deepEqual(cols.map((r) => r.table_name), ["fire_occurrences", "satellite_hotspots"]);
+  const idx = await q(`SELECT indexname FROM pg_indexes WHERE indexdef ILIKE '%gist%' AND indexname LIKE '%geom%' ORDER BY 1`);
+  assert.equal(idx.length, 2);
+});
+
+test("PostGIS distance agrees with the haversine fallback (within 0.5%)", { skip: !POSTGIS && "TEST_SUPERUSER_URL não definido" }, async () => {
+  const [src] = await q(`SELECT id FROM data_sources WHERE key='inpe-queimadas'`);
+  const pts = [[-14.0, -47.0], [-14.05, -47.03], [-14.2, -47.4], [-15.79, -47.88]];
+  for (const [i, [lat, lng]] of pts.entries()) {
+    await q(`INSERT INTO satellite_hotspots (source_id, external_id, satellite, detected_at, latitude, longitude) VALUES ($1, $2, 'TESTE', now(), $3, $4)`, [src.id, `t${i}`, lat, lng]);
+  }
+  const rows = await q(`
+    SELECT external_id,
+      ST_Distance(geom, ST_SetSRID(ST_MakePoint(-47.0, -14.0), 4326)::geography) / 1000 AS gis_km,
+      2 * 6371 * asin(sqrt(power(sin(radians(latitude - -14.0) / 2), 2) + cos(radians(-14.0)) * cos(radians(latitude)) * power(sin(radians(longitude - -47.0) / 2), 2))) AS hav_km
+    FROM satellite_hotspots WHERE satellite = 'TESTE' ORDER BY external_id`);
+  for (const r of rows.slice(1)) {
+    const rel = Math.abs(r.gis_km - r.hav_km) / r.gis_km;
+    assert.ok(rel < 0.005, `${r.external_id}: PostGIS ${r.gis_km.toFixed(3)} km vs haversine ${r.hav_km.toFixed(3)} km`);
+  }
+  const within = await q(`SELECT count(*)::int n FROM satellite_hotspots WHERE ST_DWithin(geom, ST_SetSRID(ST_MakePoint(-47.0, -14.0), 4326)::geography, 10000)`);
+  assert.equal(within[0].n, 2, "ST_DWithin 10 km finds the 2 nearby detections");
+  const plan = (await q(`EXPLAIN SELECT 1 FROM satellite_hotspots WHERE ST_DWithin(geom, ST_SetSRID(ST_MakePoint(-47.0, -14.0), 4326)::geography, 10000)`)).map((r) => r["QUERY PLAN"]).join(" ");
+  assert.ok(/geom_gix|Seq Scan/.test(plan));
 });

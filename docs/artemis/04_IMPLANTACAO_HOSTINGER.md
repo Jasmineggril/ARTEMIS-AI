@@ -68,7 +68,7 @@ git clone <URL_DO_REPOSITORIO> ~/artemis && cd ~/artemis
 cp .env.example .env && chmod 600 .env
 ```
 
-Gere os segredos e preencha `.env` (`APP_DOMAIN`, `ACME_EMAIL`, `POSTGRES_PASSWORD`, `SESSION_SECRET`):
+Gere os segredos e preencha `.env` (`APP_DOMAIN`, `ACME_EMAIL`, `POSTGRES_ADMIN_PASSWORD`, `ARTEMIS_OWNER_PASSWORD`, `ARTEMIS_APP_PASSWORD`, `SESSION_SECRET`), um valor diferente para cada:
 
 ```bash
 openssl rand -base64 48
@@ -82,7 +82,17 @@ docker compose up -d --build
 docker compose ps && curl -fsS https://$APP_DOMAIN/api/health
 ```
 
-As migrações rodam automaticamente na inicialização da API; uma falha de migração impede a API de subir (intencional).
+Ordem de subida (automática): `db` saudável → `migrate` aplica as migrações com o papel **dono** e termina → `api` sobe com o papel **restrito** e apenas confere que nada ficou pendente. Uma falha de migração impede a API de subir (intencional).
+
+Banco: `artemis_ai` (PostgreSQL 16 + PostGIS 3.4). Na primeira subida, `infrastructure/postgres/initdb/01-roles-extensions.sh` cria os papéis `artemis_owner` e `artemis_app` e a extensão PostGIS. Detalhes: `10_BANCO_MANUTENCAO_SEGURANCA.md`.
+
+Dados iniciais (opcional): lista oficial de municípios do IBGE, usada para preencher o código IBGE nas importações:
+
+```bash
+docker compose --profile jobs run --rm inpe-sync node dist/load-municipalities.cjs
+```
+
+Sem essa carga, a plataforma funciona normalmente; as ocorrências importadas apenas ficam sem código IBGE.
 
 ## 6. Monitoramento básico
 
@@ -94,14 +104,22 @@ As migrações rodam automaticamente na inicialização da API; uma falha de mig
 docker compose logs --since 1h api
 ```
 
-## 7. Backups
+## 7. Rotinas agendadas (cron)
+
+Focos de calor do INPE (de hora em hora) e backup diário. As linhas exatas estão em `10_BANCO_MANUTENCAO_SEGURANCA.md`, seção 5. Primeira carga do INPE (últimos 7 dias):
+
+```bash
+docker compose --profile jobs run --rm inpe-sync node dist/sync-inpe.cjs --days 7
+```
+
+## 7b. Backups
 
 Ver `05_BACKUP_RECUPERACAO.md`. Agende antes de liberar acesso a usuários.
 
 ## 8. Atualização da aplicação
 
 ```bash
-cd ~/artemis && scripts/ops/backup.sh && git pull && docker compose up -d --build
+cd ~/artemis && scripts/ops/backup.sh && git pull && docker compose up -d --build   # migrate roda antes da api
 ```
 
 ## 9. Liberação

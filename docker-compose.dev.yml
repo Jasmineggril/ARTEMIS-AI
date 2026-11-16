@@ -5,7 +5,7 @@
 name: artemis-dev
 services:
   db:
-    image: postgres:16-alpine
+    image: postgis/postgis:16-3.4   # same major/PostGIS as production
     environment:
       POSTGRES_DB: artemis_dev
       POSTGRES_USER: artemis

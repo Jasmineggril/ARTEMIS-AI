@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json, uniqueIndex, index, date, smallint, char } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json, uniqueIndex, index, date, smallint, char, bigserial } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -75,6 +75,12 @@ export const weatherData = pgTable("weather_data", {
   uvIndex: doublePrecision("uv_index"),
   condition: text("condition"),
   timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow(),
+  // migration 0006: provenance and cache
+  sourceKey: text("source_key").notNull().default("open-meteo"),
+  kind: text("kind").notNull().default("atual"), // atual | previsao | historico | estacao
+  observedAt: timestamp("observed_at", { withTimezone: true }),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+  precipitation72h: doublePrecision("precipitation_72h"),
 });
 
 export const userStats = pgTable("user_stats", {
@@ -155,6 +161,7 @@ export const riskAnalyses = pgTable("risk_analyses", {
   dataQuality: json("data_quality"),        // { level, missingFields[], notes[] }
   limitations: json("limitations"),         // string[]
   areaSnapshot: json("area_snapshot"),      // area as it was at analysis time (migration 0004)
+  modelVersionId: integer("model_version_id"), // migration 0007
 });
 
 /** Fontes de dados disponíveis */
@@ -167,6 +174,14 @@ export const dataSources = pgTable("data_sources", {
   lastUpdate: timestamp("last_update", { withTimezone: true }).defaultNow(),
   quality: doublePrecision("quality"), // 0–1
   description: text("description"),
+  // migration 0006
+  key: text("key"),
+  url: text("url"),
+  licence: text("licence"),
+  accessMethod: text("access_method"),
+  updateFrequency: text("update_frequency"),
+  isOfficial: boolean("is_official").notNull().default(false),
+  integrationStatus: text("integration_status"),
 });
 
 /** Lotes de importação de ocorrências históricas */
@@ -338,3 +353,78 @@ export type ImportBatch = typeof importBatches.$inferSelect;
 export type InsertImportBatch = z.infer<typeof insertImportBatchSchema>;
 export type FireOccurrence = typeof fireOccurrences.$inferSelect;
 export type InsertFireOccurrence = z.infer<typeof insertFireOccurrenceSchema>;
+
+// ─── Environmental sources (migration 0006) ──────────────────────────────────
+
+export const sourceSyncRuns = pgTable("source_sync_runs", {
+  id: serial("id").primaryKey(),
+  sourceId: integer("source_id").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  status: text("status").notNull().default("em_execucao"), // em_execucao | sucesso | falha
+  params: json("params"),
+  recordsRead: integer("records_read").notNull().default(0),
+  recordsInserted: integer("records_inserted").notNull().default(0),
+  recordsUpdated: integer("records_updated").notNull().default(0),
+  recordsRejected: integer("records_rejected").notNull().default(0),
+  rejectionReasons: json("rejection_reasons"),
+  error: text("error"),
+});
+
+/** Satellite fire detections (INPE). NOT confirmed fires. */
+export const satelliteHotspots = pgTable("satellite_hotspots", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  sourceId: integer("source_id").notNull(),
+  externalId: text("external_id").notNull(),
+  satellite: text("satellite").notNull(),
+  detectedAt: timestamp("detected_at", { withTimezone: true }).notNull(),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  municipality: text("municipality"),
+  municipalityIbgeCode: char("municipality_ibge_code", { length: 7 }),
+  state: char("state", { length: 2 }),
+  stateName: text("state_name"),
+  biome: text("biome"),
+  daysWithoutRain: integer("days_without_rain"),
+  precipitationMm: doublePrecision("precipitation_mm"),
+  fireRisk: doublePrecision("fire_risk"),
+  frpMw: doublePrecision("frp_mw"),
+  raw: json("raw"),
+  firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  syncRunId: integer("sync_run_id"),
+});
+
+export type SourceSyncRun = typeof sourceSyncRuns.$inferSelect;
+export type SatelliteHotspot = typeof satelliteHotspots.$inferSelect;
+
+// ─── AI traceability (migration 0007) ────────────────────────────────────────
+
+export const modelVersions = pgTable("model_versions", {
+  id: serial("id").primaryKey(),
+  engineFamily: text("engine_family").notNull(),   // regras-python | regras-typescript | rf-sintetico
+  version: text("version").notNull(),
+  description: text("description").notNull(),
+  datasetType: text("dataset_type").notNull(),     // nao-se-aplica | sintetico | real
+  datasetDescription: text("dataset_description"),
+  metrics: json("metrics"),
+  metricsWarning: text("metrics_warning"),
+  artifactSha256: text("artifact_sha256"),
+  isExperimental: boolean("is_experimental").notNull().default(false),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const riskAnalysisSources = pgTable("risk_analysis_sources", {
+  id: serial("id").primaryKey(),
+  analysisId: integer("analysis_id").notNull(),
+  sourceKey: text("source_key").notNull(),
+  dataSourceId: integer("data_source_id"),
+  fields: text("fields").array().notNull().default(sql`'{}'::text[]`),
+  referenceAt: timestamp("reference_at", { withTimezone: true }),
+  recordCount: integer("record_count"),
+  detail: json("detail"),
+});
+
+export type ModelVersion = typeof modelVersions.$inferSelect;
+export type RiskAnalysisSource = typeof riskAnalysisSources.$inferSelect;

@@ -12,7 +12,7 @@ import type { Express, Response } from "express";
 import { z } from "zod";
 import { and, eq, gte, lte, sql, desc, type SQL } from "drizzle-orm";
 import { db } from "./db";
-import { fireOccurrences, importBatches, organizations } from "@shared/schema";
+import { fireOccurrences, importBatches, organizations, satelliteHotspots, sourceSyncRuns, dataSources } from "@shared/schema";
 import { rateLimit } from "./security";
 import { BR_STATES } from "@shared/br-states";
 
@@ -67,8 +67,77 @@ async function countWhere(c: SQL[]) {
   return n;
 }
 
+// ── Satellite hotspots (INPE) — public data, separate from imported records ───
+export const hotspotFilterSchema = z.object({
+  state: z.string().trim().toUpperCase().refine((s) => (BR_STATES as readonly string[]).includes(s), "UF inválida.").optional(),
+  municipality: z.string().trim().min(2).max(120).optional(),
+  satellite: z.string().trim().max(40).optional(),
+  from: date.optional(),
+  to: date.optional(),
+}).transform((f, ctx) => {
+  const to = f.to ?? new Date().toISOString().slice(0, 10);
+  const from = f.from ?? new Date(Date.parse(`${to}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+  const span = (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000;
+  if (span < 0) ctx.addIssue({ code: "custom", message: "Data inicial posterior à final." });
+  if (span > 31) ctx.addIssue({ code: "custom", message: "Intervalo máximo de 31 dias para focos de calor." });
+  return { ...f, from, to };
+});
+
+function hotspotConditions(f: z.infer<typeof hotspotFilterSchema>): SQL[] {
+  const c: SQL[] = [
+    gte(satelliteHotspots.detectedAt, new Date(`${f.from}T00:00:00Z`)),
+    lte(satelliteHotspots.detectedAt, new Date(`${f.to}T23:59:59.999Z`)),
+  ];
+  if (f.state) c.push(eq(satelliteHotspots.state, f.state));
+  if (f.municipality) c.push(sql`lower(${satelliteHotspots.municipality}) = lower(${f.municipality})`);
+  if (f.satellite) c.push(eq(satelliteHotspots.satellite, f.satellite));
+  return c;
+}
+
+export const HOTSPOT_NOTICE =
+  "Focos de calor detectados por satélite (INPE — Programa Queimadas). Foco de calor não é incêndio confirmado; " +
+  "o mesmo fogo pode ser detectado por vários satélites, então contagens de satélites diferentes não devem ser somadas para comparar períodos.";
+
 export function registerPublicRoutes(app: Express) {
   const limiter = rateLimit({ windowMs: 60_000, max: 60, key: "public" });
+
+  app.get("/api/public/hotspots", limiter, handle(async (req, res) => {
+    const f = hotspotFilterSchema.parse(req.query);
+    const LIMIT = 5000;
+    const rows = await db
+      .select({
+        detectedAt: satelliteHotspots.detectedAt, satellite: satelliteHotspots.satellite,
+        latitude: satelliteHotspots.latitude, longitude: satelliteHotspots.longitude,
+        municipality: satelliteHotspots.municipality, state: satelliteHotspots.state, biome: satelliteHotspots.biome,
+        frpMw: satelliteHotspots.frpMw, daysWithoutRain: satelliteHotspots.daysWithoutRain,
+      })
+      .from(satelliteHotspots)
+      .where(and(...hotspotConditions(f)))
+      .orderBy(desc(satelliteHotspots.detectedAt))
+      .limit(LIMIT + 1);
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.json({ truncated: rows.length > LIMIT, points: rows.slice(0, LIMIT), period: { from: f.from, to: f.to }, notice: HOTSPOT_NOTICE });
+  }));
+
+  app.get("/api/public/hotspots/summary", limiter, handle(async (req, res) => {
+    const f = hotspotFilterSchema.parse(req.query);
+    const c = and(...hotspotConditions(f));
+    const [{ total }] = await db.select({ total: sql<number>`count(*)::int` }).from(satelliteHotspots).where(c);
+    const bySatellite = await db.select({ satellite: satelliteHotspots.satellite, n: sql<number>`count(*)::int` })
+      .from(satelliteHotspots).where(c).groupBy(satelliteHotspots.satellite).orderBy(desc(sql`2`));
+    const byDay = await db.select({ day: sql<string>`to_char(${satelliteHotspots.detectedAt} at time zone 'UTC', 'YYYY-MM-DD')`, n: sql<number>`count(*)::int` })
+      .from(satelliteHotspots).where(c).groupBy(sql`1`).orderBy(sql`1`);
+    const topMunicipalities = await db.select({ municipality: satelliteHotspots.municipality, state: satelliteHotspots.state, n: sql<number>`count(*)::int` })
+      .from(satelliteHotspots).where(and(c, sql`${satelliteHotspots.municipality} is not null`))
+      .groupBy(satelliteHotspots.municipality, satelliteHotspots.state).orderBy(desc(sql`3`)).limit(10);
+    const [last] = await db.select({ at: sql<string | null>`max(${sourceSyncRuns.finishedAt})` })
+      .from(sourceSyncRuns).innerJoin(dataSources, eq(dataSources.id, sourceSyncRuns.sourceId))
+      .where(and(eq(dataSources.key, "inpe-queimadas"), eq(sourceSyncRuns.status, "sucesso")));
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.json({ period: { from: f.from, to: f.to }, total, bySatellite, byDay, topMunicipalities, lastSyncAt: last?.at ?? null, notice: HOTSPOT_NOTICE,
+      source: { name: "INPE — Programa Queimadas", url: "https://terrabrasilis.dpi.inpe.br/queimadas/portal/" } });
+  }));
+
 
   app.get("/api/public/occurrences", limiter, handle(async (req, res) => {
     const f = publicFilterSchema.parse(req.query);

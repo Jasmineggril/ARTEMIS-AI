@@ -28,17 +28,13 @@ crontab -e
 
 ## Restauração
 
-1. Crie um banco **vazio** (nunca restaure sobre produção diretamente):
+1. Restaure num banco **novo** dentro do contêiner `db` (criado automaticamente; nenhuma porta precisa ser publicada). O script recusa `RESTORE_DB=artemis_ai`:
 
 ```bash
-docker compose exec db createdb -U artemis artemis_restore
+BACKUP_PASSPHRASE_FILE=~/.artemis-backup-pass RESTORE_DB=artemis_restore scripts/ops/restore.sh backups/artemis-AAAAMMDDTHHMMSSZ.dump.gpg
 ```
 
-2. Restaure e confira as contagens impressas pelo script (de dentro de um container com acesso à rede interna, ou publicando temporariamente a porta do banco em `127.0.0.1`):
-
-```bash
-BACKUP_PASSPHRASE_FILE=~/.artemis-backup-pass RESTORE_PG_URL=postgresql://artemis:SENHA@127.0.0.1:5432/artemis_restore scripts/ops/restore.sh backups/artemis-AAAAMMDDTHHMMSSZ.dump.gpg
-```
+2. Confira as contagens impressas (migrações, usuários, organizações, áreas, análises, alertas, ocorrências, focos). Fora do Docker, use `RESTORE_PG_URL=postgresql://…` no lugar de `RESTORE_DB`.
 
 3. Valide no aplicativo apontando `DATABASE_URL` para `artemis_restore`; só então troque o banco de produção.
 
@@ -54,4 +50,4 @@ O script recusa restaurar em banco com tabelas (`exit 2`), salvo `RESTORE_FORCE=
 | Recusa banco não vazio | ✅ `exit 2` |
 | Senha incorreta | ✅ falha (`decryption failed`), nada restaurado |
 | Envio externo via rclone | ⏳ não testado (sem remote configurado) |
-| Backup via `docker compose exec` | ⏳ não testado (imagens não construídas neste ambiente) |
+| Backup e restauração via `docker compose exec` (pilha `artemis_ai` com PostGIS) | ✅ 16/11/2026: contagens idênticas; recusa de restaurar sobre `artemis_ai` |

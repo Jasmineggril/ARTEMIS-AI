@@ -1,6 +1,8 @@
 # 09 — Banco de dados: diagnóstico e plano de migrações
 
-Auditoria em 16/11/2026 sobre o banco de desenvolvimento (PostgreSQL 16.15) com as migrações `0000`–`0003` aplicadas. **Nenhuma alteração foi feita no banco nesta etapa.**
+Auditoria em 16/11/2026 sobre o banco de desenvolvimento (PostgreSQL 16.15) com as migrações `0000`–`0003` aplicadas.
+
+> **Situação:** plano aprovado e executado em 16/11/2026 (0004–0009). Registro, evidências e diferenças em relação ao plano: `10_BANCO_MANUTENCAO_SEGURANCA.md`. Adicionada além do plano: `0009_session_table` (necessária para o papel da aplicação sem DDL).
 
 ## 1. O prompt e o estado atual do repositório
 

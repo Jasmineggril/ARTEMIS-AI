@@ -19,7 +19,7 @@ interface Summary {
   occurrences: { total: number; source: string; lastUpdate: string | null };
   riskTrend: { period: string; points: { date: string; avg: number; max: number; n: number }[]; source: string };
 }
-interface Connector { key: string; name: string; status: string; note: string }
+interface Connector { key: string; name: string; status: string; note: string; lastSuccessAt?: string | null }
 
 const fmt = (d: string | null) => (d ? format(new Date(d), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "sem registros");
 
@@ -133,8 +133,8 @@ export default function Dashboard() {
             <li key={c.key} className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
               <span className="font-medium">{c.name}</span>
               <span className="text-xs text-muted-foreground sm:text-right">
-                {c.status === "implementado" ? <CheckCircle2 className="inline w-3.5 h-3.5 mr-1 text-green-700" aria-hidden /> : <Info className="inline w-3.5 h-3.5 mr-1" aria-hidden />}
-                <strong>{c.status}</strong> — {c.note}
+                {c.status.startsWith("implementado") ? <CheckCircle2 className="inline w-3.5 h-3.5 mr-1 text-green-700" aria-hidden /> : <Info className="inline w-3.5 h-3.5 mr-1" aria-hidden />}
+                <strong>{c.status}</strong> — {c.note}{c.lastSuccessAt && <> · última sincronização {new Date(c.lastSuccessAt).toLocaleString("pt-BR")}</>}
               </span>
             </li>
           ))}

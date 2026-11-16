@@ -27,6 +27,10 @@ interface Summary {
 type Filters = { state: string; municipality: string; from: string; to: string; hourFrom: string; hourTo: string; compare: boolean };
 const PRIMARY = "#0F5132";
 const OCC = "#9a3412";
+const HOT = "#7e22ce";
+
+interface HotspotPoint { detectedAt: string; satellite: string; latitude: number; longitude: number; municipality: string | null; state: string | null; biome: string | null; frpMw: number | null }
+interface HotspotSummary { total: number; bySatellite: { satellite: string; n: number }[]; lastSyncAt: string | null; notice: string; period: { from: string; to: string } }
 
 function readFilters(): Filters {
   const q = new URLSearchParams(window.location.search);
@@ -97,6 +101,16 @@ export default function PublicLookup() {
     queryKey: ["/api/public/occurrences", query], queryFn: () => api("GET", `/api/public/occurrences?${query}`),
   });
   const mapped = (occ?.points ?? []).filter((p) => p.latitude != null && p.longitude != null);
+
+  // Satellite hotspots (INPE): separate public dataset, last 2 days, same place filters.
+  const [showHot, setShowHot] = useState(true);
+  const hotQuery = new URLSearchParams(Object.entries({ state: applied.state, municipality: applied.municipality.trim() }).filter(([, v]) => v)).toString();
+  const { data: hot } = useQuery<{ points: HotspotPoint[]; truncated: boolean }>({
+    queryKey: ["/api/public/hotspots", hotQuery], queryFn: () => api("GET", `/api/public/hotspots?${hotQuery}`),
+  });
+  const { data: hotSum } = useQuery<HotspotSummary>({
+    queryKey: ["/api/public/hotspots/summary", hotQuery], queryFn: () => api("GET", `/api/public/hotspots/summary?${hotQuery}`),
+  });
 
   function apply(e: React.FormEvent) {
     e.preventDefault();
@@ -191,6 +205,11 @@ export default function PublicLookup() {
         <section className="rounded-2xl overflow-hidden border h-[55vh] min-h-[320px]" aria-label="Mapa de ocorrências">
           <MapContainer key={query} center={center} zoom={mapped.length ? 8 : 4} className="h-full w-full" scrollWheelZoom={false}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' />
+            {showHot && (hot?.points ?? []).map((h, i) => (
+              <CircleMarker key={`h${i}`} center={[h.latitude, h.longitude]} radius={4} pathOptions={{ color: "#fff", weight: 1, fillColor: HOT, fillOpacity: 0.85 }}>
+                <Popup><strong>Foco de calor (satélite)</strong><br />{format(new Date(h.detectedAt), "dd/MM/yyyy HH:mm")} (UTC {h.detectedAt.slice(11, 16)})<br />{h.satellite}<br />{h.municipality ?? "—"}/{h.state ?? "—"}{h.biome && <> · {h.biome}</>}<br />Não é incêndio confirmado. Fonte: INPE.</Popup>
+              </CircleMarker>
+            ))}
             {mapped.map((p, i) => (
               <CircleMarker key={i} center={[p.latitude!, p.longitude!]} radius={5} pathOptions={{ color: "#fff", weight: 1, fillColor: OCC, fillOpacity: 0.85 }}>
                 <Popup>{p.date ?? "data não informada"} {p.time ?? ""}<br />{p.municipality ?? "—"}/{p.state ?? "—"}{p.type && <><br />{p.type}</>}<br />Fonte: {p.source || "—"}</Popup>
@@ -198,7 +217,24 @@ export default function PublicLookup() {
             ))}
           </MapContainer>
         </section>
+        <div className="flex flex-wrap items-center gap-4 text-xs" aria-label="Legenda do mapa">
+          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full" style={{ background: OCC }} aria-hidden />Ocorrência importada (registro histórico publicado)</span>
+          <label className="flex items-center gap-1.5"><input type="checkbox" checked={showHot} onChange={(e) => setShowHot(e.target.checked)} />
+            <span className="inline-block w-3 h-3 rounded-full" style={{ background: HOT }} aria-hidden />Foco de calor por satélite (INPE, últimas 48 h) — não é incêndio confirmado</label>
+        </div>
         {occ?.truncated && <p className="text-xs text-muted-foreground">Mostrando os 3.000 registros mais recentes. Refine os filtros para ver todos.</p>}
+        {hot?.truncated && <p className="text-xs text-muted-foreground">Mostrando 5.000 focos de calor. Filtre por UF ou município.</p>}
+
+        {hotSum && (
+          <section className="bg-card border rounded-2xl p-5" aria-labelledby="hot-title">
+            <h2 id="hot-title" className="font-semibold">Focos de calor por satélite — {hotSum.total.toLocaleString("pt-BR")} detecção(ões) em {format(new Date(`${hotSum.period.from}T12:00:00`), "dd/MM")}–{format(new Date(`${hotSum.period.to}T12:00:00`), "dd/MM")}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{hotSum.notice}</p>
+            <p className="text-xs text-muted-foreground">Fonte: INPE — Programa Queimadas · última sincronização: {hotSum.lastSyncAt ? format(new Date(hotSum.lastSyncAt), "dd/MM/yyyy HH:mm") : "nunca sincronizado"}</p>
+            {hotSum.bySatellite.length > 0 && (
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm mt-2">{hotSum.bySatellite.map((b) => <li key={b.satellite}>{b.satellite}: <strong className="tabular-nums">{b.n}</strong></li>)}</ul>
+            )}
+          </section>
+        )}
 
         {summary && summary.total > 0 && (
           <div className="grid lg:grid-cols-2 gap-6">

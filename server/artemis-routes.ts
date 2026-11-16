@@ -11,15 +11,19 @@ import { and, desc, eq, gte, lte, sql, inArray, isNotNull } from "drizzle-orm";
 import { db, pool } from "./db";
 import {
   monitoredAreas, riskAnalyses, alerts, alertEvents, auditLogs, fireOccurrences, importBatches,
-  organizations, organizationMembers, users, ALERT_STATUSES, ORG_ROLES,
+  organizations, organizationMembers, users, ALERT_STATUSES, ORG_ROLES, dataSources, sourceSyncRuns,
+  satelliteHotspots, modelVersions, riskAnalysisSources,
   type MonitoredArea, type Alert,
 } from "@shared/schema";
 import { requireOrg, idParam, roleAtLeast, rateLimit } from "./security";
 import { audit } from "./services/audit";
 import {
   analysisRequestSchema, resolveInputs, runEngine, buildLimitations, buildDataSources,
-  MissingInputError, distanceKm,
+  MissingInputError, distanceKm, type HotspotContext,
 } from "./services/risk-service";
+import { getRiskWeatherCached } from "./services/weather-cache";
+import { inpeFreshness } from "./connectors/inpe";
+import { hasPostgisGeom } from "./spatial";
 import { upsertAlertFromAnalysis, transitionAlert, TransitionError, shouldAlert, allowedTransitions, OPEN_STATUSES } from "./services/alert-service";
 import { fetchRiskWeather, ConnectorError, OPEN_METEO_SOURCE } from "./connectors/open-meteo";
 import { BR_STATES } from "@shared/br-states";
@@ -140,6 +144,83 @@ function csvCell(v: unknown): string {
 
 export function toCsv(header: string[], rows: unknown[][]): string {
   return [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\n") + "\n";
+}
+
+/** Satellite detections within radiusKm of a point in the last windowHours (bbox + haversine). */
+export async function hotspotContext(latitude: number, longitude: number, radiusKm = 10, windowHours = 48): Promise<HotspotContext> {
+  const fresh = await inpeFreshness();
+  if (await hasPostgisGeom()) {
+    // PostGIS path: GiST index on geography (migration 0008).
+    const r = await db.execute<{ n: number; nearest: number | null }>(sql`
+      SELECT count(*)::int AS n, min(ST_Distance(geom, ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography)) / 1000 AS nearest
+      FROM satellite_hotspots
+      WHERE detected_at >= now() - make_interval(hours => ${windowHours})
+        AND ST_DWithin(geom, ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography, ${radiusKm * 1000})`);
+    const row = r.rows[0];
+    return {
+      fresh: fresh.fresh, lastSyncAt: fresh.lastSuccessAt, count: Number(row?.n ?? 0),
+      nearestKm: row?.nearest != null ? Math.round(Number(row.nearest) * 10) / 10 : null, radiusKm, windowHours,
+    };
+  }
+  const dLat = radiusKm / 111;
+  const dLng = radiusKm / (111 * Math.max(Math.cos((latitude * Math.PI) / 180), 0.01));
+  const [r] = await db
+    .select({
+      n: sql<number>`count(*)::int`,
+      nearest: sql<number | null>`min(2 * 6371 * asin(sqrt(power(sin(radians(${satelliteHotspots.latitude} - ${latitude}) / 2), 2) + cos(radians(${latitude})) * cos(radians(${satelliteHotspots.latitude})) * power(sin(radians(${satelliteHotspots.longitude} - ${longitude}) / 2), 2))))`,
+    })
+    .from(satelliteHotspots)
+    .where(and(
+      gte(satelliteHotspots.detectedAt, sql`now() - make_interval(hours => ${windowHours})`),
+      gte(satelliteHotspots.latitude, latitude - dLat), lte(satelliteHotspots.latitude, latitude + dLat),
+      gte(satelliteHotspots.longitude, longitude - dLng), lte(satelliteHotspots.longitude, longitude + dLng),
+      sql`2 * 6371 * asin(sqrt(power(sin(radians(${satelliteHotspots.latitude} - ${latitude}) / 2), 2) + cos(radians(${latitude})) * cos(radians(${satelliteHotspots.latitude})) * power(sin(radians(${satelliteHotspots.longitude} - ${longitude}) / 2), 2))) <= ${radiusKm}`,
+    ));
+  return {
+    fresh: fresh.fresh, lastSyncAt: fresh.lastSuccessAt, count: r?.n ?? 0,
+    nearestKm: r?.nearest != null ? Math.round(r.nearest * 10) / 10 : null, radiusKm, windowHours,
+  };
+}
+
+const MODEL_FAMILY: Record<string, string> = {
+  "transparent-rule-engine": "regras-python",
+  "transparent-rule-engine-ts": "regras-typescript",
+  "transparent-rule-engine-ts-fallback": "regras-typescript",
+  "supervised-ml": "rf-sintetico",
+};
+async function modelVersionIdFor(engineType: string, modelVersion: string): Promise<number | null> {
+  const family = MODEL_FAMILY[engineType];
+  if (!family) return null;
+  const [m] = await db.select({ id: modelVersions.id }).from(modelVersions)
+    .where(and(eq(modelVersions.engineFamily, family), eq(modelVersions.version, modelVersion)));
+  if (!m) console.warn(JSON.stringify({ level: "warn", msg: "model_version_not_registered", family, modelVersion }));
+  return m?.id ?? null;
+}
+
+function analysisSourceRows(analysisId: number, resolved: Awaited<ReturnType<typeof resolveInputs>>, historical: number | null) {
+  const byOrigin = new Map<string, string[]>();
+  for (const p of resolved.provenance) {
+    if (p.origin === "nao-verificado") continue;
+    const key = p.origin === "base-historica-organizacao" ? "fire_occurrences" : p.origin;
+    byOrigin.set(key, [...(byOrigin.get(key) ?? []), p.field]);
+  }
+  return Array.from(byOrigin, ([sourceKey, fields]) => ({
+    analysisId,
+    sourceKey,
+    fields,
+    referenceAt:
+      sourceKey === "open-meteo" && resolved.weather ? new Date(resolved.weather.referenceAt)
+      : sourceKey === "inpe-queimadas" ? resolved.hotspots?.lastSyncAt ?? null
+      : null,
+    recordCount:
+      sourceKey === "fire_occurrences" ? historical
+      : sourceKey === "inpe-queimadas" ? resolved.hotspots?.count ?? null
+      : null,
+    detail:
+      sourceKey === "open-meteo" ? { cached: Boolean(resolved.weather?.cached) }
+      : sourceKey === "inpe-queimadas" ? { radiusKm: resolved.hotspots?.radiusKm, windowHours: resolved.hotspots?.windowHours, nearestKm: resolved.hotspots?.nearestKm }
+      : null,
+  }));
 }
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
@@ -327,7 +408,10 @@ export function registerArtemisRoutes(app: Express) {
 
     let resolved;
     try {
-      resolved = await resolveInputs(request, area, historical);
+      const hotspots = request.inputs.nearbyHotspot === undefined && area.latitude != null && area.longitude != null
+        ? await hotspotContext(area.latitude, area.longitude)
+        : null;
+      resolved = await resolveInputs(request, area, historical, undefined, { hotspots, weatherProvider: getRiskWeatherCached });
     } catch (err) {
       if (err instanceof MissingInputError) {
         return res.status(422).json({
@@ -398,6 +482,15 @@ export function registerArtemisRoutes(app: Express) {
       alertResult = { id: alert.id, created };
     }
 
+    // Traceability: model version + one row per source that fed the analysis.
+    const modelVersionId = await modelVersionIdFor(engine.engineType, engine.modelVersion);
+    if (modelVersionId) {
+      await db.update(riskAnalyses).set({ modelVersionId }).where(eq(riskAnalyses.id, analysis.id));
+      analysis.modelVersionId = modelVersionId;
+    }
+    const srcRows = analysisSourceRows(analysis.id, resolved, historical);
+    if (srcRows.length) await db.insert(riskAnalysisSources).values(srcRows);
+
     await audit(req, "analysis.created", { type: "risk_analysis", id: analysis.id }, {
       areaId: area.id, score: engine.score, level: engine.level, engine: engine.engineType,
     });
@@ -425,7 +518,11 @@ export function registerArtemisRoutes(app: Express) {
       .from(riskAnalyses)
       .where(and(eq(riskAnalyses.id, id), eq(riskAnalyses.organizationId, req.ctx.organizationId)));
     if (!row) return res.status(404).json({ message: "Análise não encontrada." });
-    res.json(row);
+    const [modelVersion] = row.modelVersionId
+      ? await db.select().from(modelVersions).where(eq(modelVersions.id, row.modelVersionId))
+      : [null];
+    const sources = await db.select().from(riskAnalysisSources).where(eq(riskAnalysisSources.analysisId, row.id)).orderBy(riskAnalysisSources.id);
+    res.json({ ...row, modelVersion: modelVersion ?? null, sourcesUsed: sources });
   }));
 
   // ── Alerts ─────────────────────────────────────────────────────────────────
@@ -723,15 +820,28 @@ export function registerArtemisRoutes(app: Express) {
   }));
 
   // ── Data source registry (honest status) ───────────────────────────────────
-  app.get("/api/connectors", (_req, res) => {
-    res.json([
-      { ...OPEN_METEO_SOURCE, status: "implementado", note: "Usado sob demanda na análise de risco. Sem armazenamento contínuo." },
-      { key: "inpe-queimadas", name: "INPE — Programa Queimadas (focos de calor)", url: "https://terrabrasilis.dpi.inpe.br/queimadas/portal/", status: "não integrado", note: "Pendente: avaliar formato, licença e condições de acesso. Focos de calor não equivalem a incêndios confirmados." },
-      { key: "sisfogo", name: "Sisfogo (Ibama/Prevfogo)", url: "https://sisfogo.ibama.gov.br/", status: "importação manual", note: "Apenas importação de arquivos autorizados (CSV/XLS/XLSX). Não há integração oficial por API." },
-      { key: "ibge", name: "IBGE — malhas territoriais e municípios", url: "https://servicodados.ibge.gov.br/api/docs", status: "não integrado", note: "Pendente." },
-      { key: "file-import", name: "Importação de arquivos da organização", status: "implementado", note: "CSV, XLS e XLSX com validação e relatório por lote." },
-    ]);
-  });
+  // Source registry from the database, with the latest sync run (public, no private data).
+  app.get("/api/connectors", handle(async (_req, res) => {
+    const sources = await db.select().from(dataSources).where(isNotNull(dataSources.key)).orderBy(dataSources.id);
+    const runs = await db
+      .selectDistinctOn([sourceSyncRuns.sourceId], {
+        sourceId: sourceSyncRuns.sourceId, status: sourceSyncRuns.status, startedAt: sourceSyncRuns.startedAt,
+        finishedAt: sourceSyncRuns.finishedAt, error: sourceSyncRuns.error, inserted: sourceSyncRuns.recordsInserted,
+      })
+      .from(sourceSyncRuns)
+      .orderBy(sourceSyncRuns.sourceId, desc(sourceSyncRuns.startedAt));
+    const lastOk = await db
+      .select({ sourceId: sourceSyncRuns.sourceId, at: sql<string>`max(${sourceSyncRuns.finishedAt})` })
+      .from(sourceSyncRuns).where(eq(sourceSyncRuns.status, "sucesso")).groupBy(sourceSyncRuns.sourceId);
+    const byRun = new Map(runs.map((r) => [r.sourceId, r]));
+    const byOk = new Map(lastOk.map((r) => [r.sourceId, r.at]));
+    res.json(sources.map((src) => ({
+      key: src.key, name: src.name, url: src.url, licence: src.licence, accessMethod: src.accessMethod,
+      updateFrequency: src.updateFrequency, isOfficial: src.isOfficial,
+      status: src.integrationStatus ?? src.status, note: src.description,
+      lastRun: byRun.get(src.id) ?? null, lastSuccessAt: byOk.get(src.id) ?? null,
+    })));
+  }));
 }
 
 export { roleAtLeast };

@@ -101,6 +101,8 @@ const BIOME_GEOJSON: GeoJSON.FeatureCollection = {
 type AreaRow = MonitoredArea & { latestAnalysis: { id: number; score: number; level: RiskLevel; createdAt: string } | null };
 const NO_ANALYSIS_COLOR = "#64748b";
 const OCC_COLOR = "#7c2d12";
+const HOT_COLOR = "#7e22ce";
+interface HotspotPoint { detectedAt: string; satellite: string; latitude: number; longitude: number; municipality: string | null; state: string | null; biome: string | null }
 
 function FitTo({ points }: { points: [number, number][] }) {
   const map = useMap();
@@ -128,6 +130,7 @@ export default function EnvironmentalMap() {
   const [showAreas, setShowAreas] = useState(true);
   const [showOcc, setShowOcc] = useState(true);
   const [showBiomes, setShowBiomes] = useState(false);
+  const [showHot, setShowHot] = useState(true);
   const [occFilter, setOccFilter] = useState({ from: "", to: "", state: "", municipality: "" });
   const [applied, setApplied] = useState(occFilter);
 
@@ -136,6 +139,11 @@ export default function EnvironmentalMap() {
   const { data: occurrences = [], isFetching } = useQuery<FireOccurrence[]>({
     queryKey: ["/api/fire-occurrences", occQuery],
     queryFn: () => api("GET", `/api/fire-occurrences${occQuery ? `?${occQuery}` : ""}`),
+  });
+
+  const hotQuery = applied.state ? `?state=${applied.state}` : "";
+  const { data: hot } = useQuery<{ points: HotspotPoint[]; truncated: boolean; notice: string }>({
+    queryKey: ["/api/public/hotspots", hotQuery], queryFn: () => api("GET", `/api/public/hotspots${hotQuery}`), enabled: showHot,
   });
 
   const visibleAreas = areas.filter((a) => level === "all" || (level === "none" ? !a.latestAnalysis : a.latestAnalysis?.level === level));
@@ -168,7 +176,7 @@ export default function EnvironmentalMap() {
         <h1 className="text-3xl font-bold font-display flex items-center gap-2"><MapPin className="w-8 h-8 text-primary" aria-hidden />Mapa Ambiental</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {areas.length} área(s) da organização · {mappedOcc.length} ocorrência(s) histórica(s) importada(s) com coordenadas.
-          Ocorrências importadas são registros históricos, não monitoramento em tempo real. Focos de calor por satélite (INPE) ainda não estão integrados.
+          Ocorrências importadas são registros históricos. Focos de calor do INPE são detecções por satélite das últimas 48 h (atualizadas pela sincronização), não incêndios confirmados.
         </p>
       </header>
 
@@ -178,6 +186,7 @@ export default function EnvironmentalMap() {
             <legend className="font-semibold text-sm px-1">Camadas</legend>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showAreas} onChange={(e) => setShowAreas(e.target.checked)} />Áreas monitoradas</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showOcc} onChange={(e) => setShowOcc(e.target.checked)} />Ocorrências importadas</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showHot} onChange={(e) => setShowHot(e.target.checked)} />Focos de calor INPE (48 h)</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showBiomes} onChange={(e) => setShowBiomes(e.target.checked)} />Biomas (contorno ilustrativo, não oficial)</label>
           </fieldset>
 
@@ -218,6 +227,7 @@ export default function EnvironmentalMap() {
             {(["crítico", "alto", "moderado", "baixo"] as RiskLevel[]).map((l) => <div key={l}><RiskBadge level={l} size="sm" showIcon /></div>)}
             <p className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-full border-2" style={{ borderColor: NO_ANALYSIS_COLOR }} />Área sem análise</p>
             <p className="flex items-center gap-2"><span className="inline-block w-2.5 h-2.5 rotate-45" style={{ background: OCC_COLOR }} />Ocorrência importada (ponto pequeno)</p>
+            <p className="flex items-center gap-2"><span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: HOT_COLOR }} />Foco de calor por satélite (INPE) — não é incêndio confirmado</p>
           </section>
         </aside>
 
@@ -242,6 +252,11 @@ export default function EnvironmentalMap() {
                 )}
               </div>
             ))}
+            {showHot && (hot?.points ?? []).map((h, i) => (
+              <CircleMarker key={`h${i}`} center={[h.latitude, h.longitude]} radius={3} pathOptions={{ color: "#fff", weight: 1, fillColor: HOT_COLOR, fillOpacity: 0.8 }}>
+                <Popup><strong>Foco de calor (satélite)</strong><br />{format(new Date(h.detectedAt), "dd/MM/yyyy HH:mm")} · {h.satellite}<br />{h.municipality ?? "—"}/{h.state ?? "—"}<br />Não é incêndio confirmado. Fonte: INPE.</Popup>
+              </CircleMarker>
+            ))}
             {showOcc && mappedOcc.map((o) => (
               <CircleMarker key={`o${o.id}`} center={[o.latitude!, o.longitude!]} radius={4} pathOptions={{ color: OCC_COLOR, weight: 1, fillColor: OCC_COLOR, fillOpacity: 0.7 }}>
                 <Popup>
@@ -258,7 +273,7 @@ export default function EnvironmentalMap() {
         </div>
       </div>
       <p className="text-xs text-muted-foreground mt-4 flex items-start gap-1"><Info className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden />
-        Agrupamento de pontos, seleção por polígono desenhado e camada de focos de calor estão pendentes. {DECISION_SUPPORT_DISCLAIMER}</p>
+        Agrupamento de pontos e seleção por polígono desenhado estão pendentes. {DECISION_SUPPORT_DISCLAIMER}</p>
       {areas.length === 0 && (
         <p className="text-sm mt-2"><Flame className="inline w-4 h-4" aria-hidden /> Cadastre áreas em <button className="underline" onClick={() => setLocation("/areas")}>Áreas Monitoradas</button> para vê-las no mapa.</p>
       )}

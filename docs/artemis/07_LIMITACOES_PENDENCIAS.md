@@ -3,7 +3,7 @@
 ## Limitações científicas e de dados
 
 1. **O índice não está calibrado.** Os limiares do motor de regras são documentados, mas não foram validados com incêndios reais da área. Nenhuma precisão operacional pode ser afirmada.
-2. **O modelo supervisionado foi treinado com dados sintéticos** gerados pelo próprio motor de regras; suas métricas (accuracy 84,25 %, F1 macro 87,29 %) medem só a reprodução das regras, não a previsão de incêndios. Está desligado por padrão.
+2. **O modelo supervisionado foi treinado com dados sintéticos** gerados pelo próprio motor de regras; suas métricas medem só a reprodução das regras, não a previsão de incêndios. **Atenção:** o arquivo `python_service/results/metrics.json` atual registra acurácia de 100 %, enquanto o dossiê TRL 4 cita 84,25 % (F1 macro 87,29 %). A divergência deve ser esclarecida antes de qualquer citação. Nenhum dos dois valores é evidência de desempenho. Desligado por padrão.
 3. **Recomendações do nível crítico** ("paralisar operações", "evacuar pessoal", "acionar Defesa Civil") vêm do motor existente e são diretivas fortes para um índice não calibrado. **Requer revisão técnica por especialista em manejo do fogo antes de qualquer uso real.**
 4. **Open-Meteo**: estimativa de modelo numérico, não medição local. Plano gratuito para uso não comercial — uso comercial exige revisar os termos. **O conector não foi verificado contra a API real** (rede bloqueada neste ambiente); só com respostas simuladas.
 5. **Vegetação e foco próximo** são informados pelo usuário. Não há índice de vegetação por satélite nem focos de calor integrados.
@@ -27,7 +27,9 @@
 | 4 | Registro de versões de modelo (`model_versions`), datasets, detecção de deriva, comparação entre versões | Dados reais rotulados |
 | 4 | Módulo de Prova de Valor na interface | Área piloto definida |
 | 4 | Teste de carga compatível com a VPS | VPS ou ambiente equivalente |
-| 5 | Build das imagens Docker e subida do stack completo | Docker Hub respondeu HTTP 429 neste ambiente |
+| 5 | Build completo das imagens (`npm ci`/`pip` dentro do build) | Neste ambiente os contêineres de build não alcançam npm/PyPI; a pilha foi validada com uma imagem de runtime local equivalente e motor Python simulado. Validar o build completo na VPS |
+| 5 | Carga da lista de municípios do IBGE | Servidor do IBGE derrubou as conexões nesta sessão; rodar `load-municipalities` na VPS |
+| 5 | Política de retenção de `satellite_hotspots` (proposta: 24 meses; remover `raw` após 90 dias) | Aprovação — envolve apagar dados |
 | 5 | CI (GitHub Actions) com os testes | Autorização para adicionar workflow |
 | 5 | Limpeza periódica de tokens expirados e retenção de auditoria | Aprovação da política |
 

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { pool } from "./db";
+import pg from "pg";
+import { pool as appPool } from "./db";
 
 /**
  * Runs all pending SQL migrations from the ./migrations directory.
@@ -15,6 +16,11 @@ export interface MigrateOptions {
 }
 
 export async function runMigrations(opts: MigrateOptions = {}): Promise<string[]> {
+  // Migrations may run with a different (owner) role than the application.
+  const ownPool = process.env.MIGRATION_DATABASE_URL
+    ? new pg.Pool({ connectionString: process.env.MIGRATION_DATABASE_URL, max: 1 })
+    : null;
+  const pool = ownPool ?? appPool;
   if (!pool) {
     console.warn("[migrate] No database pool — skipping migrations");
     return [];
@@ -22,6 +28,19 @@ export async function runMigrations(opts: MigrateOptions = {}): Promise<string[]
 
   const client = await pool.connect();
   try {
+    // Read-only check (runtime role has no CREATE privilege): never issue DDL here.
+    if (opts.dryRun) {
+      const { rows: [t] } = await client.query(`SELECT to_regclass('public._drizzle_migrations') AS t`);
+      const migrationsDir = path.resolve(process.cwd(), "migrations");
+      const files = fs.existsSync(migrationsDir)
+        ? fs.readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort().filter((f) => !opts.upTo || f <= opts.upTo)
+        : [];
+      const applied = t?.t ? new Set((await client.query(`SELECT name FROM "_drizzle_migrations"`)).rows.map((r: { name: string }) => r.name)) : new Set<string>();
+      const pending = files.filter((f) => !applied.has(f));
+      console.log(pending.length ? `[migrate] pendentes: ${pending.join(", ")}` : "[migrate] nenhuma migração pendente");
+      return pending;
+    }
+
     // Create migrations tracking table if it doesn't exist
     await client.query(`
       CREATE TABLE IF NOT EXISTS "_drizzle_migrations" (
@@ -100,5 +119,6 @@ export async function runMigrations(opts: MigrateOptions = {}): Promise<string[]
     return pending;
   } finally {
     client.release();
+    await ownPool?.end();
   }
 }
