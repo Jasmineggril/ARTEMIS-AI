@@ -61,7 +61,7 @@ Linha de base medida antes de qualquer alteração: `tsc` 0 erros · testes TS 3
 - **Sem PostGIS por enquanto**: consultas espaciais atuais (raio de 10 km, caixa delimitadora) resolvidas em SQL + haversine. PostGIS entra quando houver consultas de interseção de polígonos.
 - **Sem novas dependências pagas**. Única dependência nova: `axe-core` (dev, MIT).
 - **Supabase removido do frontend** (`@supabase/supabase-js`). O backend continua aceitando `SUPABASE_DATABASE_URL` como opção de Postgres gerenciado.
-- **Vercel mantido como alvo legado**; alvo principal passa a ser Docker Compose em VPS.
+- **Vercel descontinuado** (16/11/2026: `vercel.json` e o adaptador `api/` removidos); o único alvo de implantação é Docker Compose na VPS Hostinger.
 
 ## 4. Consulta pública (proposta original do projeto Florestaí)
 

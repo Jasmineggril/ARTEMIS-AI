@@ -1,6 +1,6 @@
 /**
- * ARTEMIS AI — Express application factory (shared by the Node server,
- * the integration tests and the Vercel adapter).
+ * ARTEMIS AI — Express application factory (shared by the Node server and
+ * the integration tests).
  */
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import session from "express-session";
