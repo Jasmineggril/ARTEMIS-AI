@@ -658,7 +658,7 @@ export function registerArtemisRoutes(app: Express) {
       .where(and(eq(alerts.organizationId, orgId), gte(alerts.createdAt, from), lte(alerts.createdAt, to)))
       .groupBy(alerts.status);
     const occMonthly = await db
-      .select({ month: sql<string>`substr(${fireOccurrences.occurrenceDate}, 1, 7)`, n: sql<number>`count(*)::int` })
+      .select({ month: sql<string>`coalesce(to_char(${fireOccurrences.occurrenceAt}, 'YYYY-MM'), substr(${fireOccurrences.occurrenceDate}, 1, 7))`, n: sql<number>`count(*)::int` })
       .from(fireOccurrences)
       .where(and(eq(fireOccurrences.organizationId, orgId), isNotNull(fireOccurrences.occurrenceDate)))
       .groupBy(sql`1`).orderBy(sql`1`);

@@ -1,4 +1,4 @@
--- ARTEMIS AI — migration 0002
+﻿-- ARTEMIS AI â€” migration 0002
 -- Organizations and multi-tenant isolation, alert lifecycle with history,
 -- audit log, password reset tokens and analysis provenance.
 -- Additive only: no existing column is dropped or rewritten.
@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS "import_batches" (
 	"duplicate_rows" integer DEFAULT 0 NOT NULL,
 	"imported_at" timestamp DEFAULT now(),
 	"imported_by" integer,
-	"status" text DEFAULT 'concluído' NOT NULL,
+	"status" text DEFAULT 'concluÃ­do' NOT NULL,
 	"notes" text
 );
 --> statement-breakpoint
@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS "fire_occurrences" (
 	"notes" text,
 	"source" text,
 	"source_reference" text,
-	"validation_status" text DEFAULT 'válido' NOT NULL,
+	"validation_status" text DEFAULT 'vÃ¡lido' NOT NULL,
 	"raw_data" json,
 	"created_at" timestamp DEFAULT now()
 );
@@ -196,3 +196,4 @@ CREATE TABLE IF NOT EXISTS "password_reset_tokens" (
 	"used_at" timestamp,
 	"created_at" timestamp DEFAULT now()
 );
+

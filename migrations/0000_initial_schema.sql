@@ -1,4 +1,4 @@
-CREATE TABLE "achievements" (
+﻿CREATE TABLE "achievements" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"badge_id" text NOT NULL,
@@ -129,3 +129,4 @@ CREATE TABLE "weather_data" (
 	"condition" text,
 	"timestamp" timestamp DEFAULT now()
 );
+

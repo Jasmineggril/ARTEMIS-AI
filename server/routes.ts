@@ -14,6 +14,7 @@ import { rateLimit, requireAuth, requireOrg } from "./security";
 import { audit } from "./services/audit";
 import { fetchWeatherData } from "./weather-service";
 import { normalizeOccurrenceDate } from "@shared/dates";
+import crypto from "node:crypto";
 
 const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL ?? "http://127.0.0.1:8000";
 
@@ -365,31 +366,49 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           })
           .returning();
         const toInsert = checked.filter((c) => c.status === "válido" || c.status === "válido com ressalvas");
+
+        const dedupKeyFor = (r: (typeof toInsert)[number]["r"]) =>
+          crypto
+            .createHash("md5")
+            .update(
+              [
+                orgId,
+                r.occurrenceDate ?? "",
+                (r.municipality ?? "").toLowerCase(),
+                r.latitude ?? "",
+                r.longitude ?? "",
+                (r.occurrenceType ?? "").toLowerCase(),
+              ].join("|"),
+            )
+            .digest("hex");
+
+        let saved = 0;
         for (let i = 0; i < toInsert.length; i += 1000) {
-          await tx.insert(fireOccurrences).values(
-            toInsert.slice(i, i + 1000).map(({ r, status, isoDate }) => ({
-              importBatchId: batch.id,
-              organizationId: orgId,
-              occurrenceDate: isoDate,
-              occurrenceTime: r.occurrenceTime ?? null,
-              municipality: r.municipality ?? null,
-              state: r.state ? r.state.toUpperCase().slice(0, 40) : null,
-              latitude: r.latitude ?? null,
-              longitude: r.longitude ?? null,
-              occurrenceType: r.occurrenceType ?? null,
-              occurrenceStatus: r.occurrenceStatus ?? null,
-              affectedArea: r.affectedArea ?? null,
-              cause: r.cause ?? null,
-              vegetationCondition: r.vegetationCondition ?? null,
-              notes: r.notes ?? null,
-              source: r.source ?? null,
-              sourceReference: r.sourceReference ?? null,
-              validationStatus: status,
-              rawData: r.rawData ?? null,
-            })),
-          );
+          const chunk = toInsert.slice(i, i + 1000).map(({ r, status, isoDate }) => ({
+            importBatchId: batch.id,
+            organizationId: orgId,
+            occurrenceDate: isoDate,
+            occurrenceTime: r.occurrenceTime ?? null,
+            municipality: r.municipality ?? null,
+            state: r.state ? r.state.toUpperCase().slice(0, 40) : null,
+            latitude: r.latitude ?? null,
+            longitude: r.longitude ?? null,
+            occurrenceType: r.occurrenceType ?? null,
+            occurrenceStatus: r.occurrenceStatus ?? null,
+            affectedArea: r.affectedArea ?? null,
+            cause: r.cause ?? null,
+            vegetationCondition: r.vegetationCondition ?? null,
+            notes: r.notes ?? null,
+            source: r.source ?? null,
+            sourceReference: r.sourceReference ?? null,
+            validationStatus: status,
+            rawData: r.rawData ?? null,
+            dedupKey: dedupKeyFor(r),
+          }));
+          const inserted = await tx.insert(fireOccurrences).values(chunk).onConflictDoNothing().returning({ id: fireOccurrences.id });
+          saved += inserted.length;
         }
-        return { batch, saved: toInsert.length };
+        return { batch, saved };
       });
 
       await audit(req, "import.batch_created", { type: "import_batch", id: result.batch.id }, {

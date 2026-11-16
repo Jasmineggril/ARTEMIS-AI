@@ -31,7 +31,7 @@ export const sensors = pgTable("sensors", {
 
 export const readings = pgTable("readings", {
   id: serial("id").primaryKey(),
-  sensorId: integer("sensor_id").notNull(),
+  sensorId: integer("sensor_id").notNull().references(() => sensors.id, { onDelete: "cascade" }),
   value: real("value").notNull(),
   unit: text("unit").notNull(),
   timestamp: timestamp("timestamp").defaultNow(),
@@ -39,21 +39,21 @@ export const readings = pgTable("readings", {
 
 export const alerts = pgTable("alerts", {
   id: serial("id").primaryKey(),
-  sensorId: integer("sensor_id"),
+  sensorId: integer("sensor_id").references(() => sensors.id, { onDelete: "set null" }),
   title: text("title").notNull(),
   message: text("message").notNull(),
   severity: text("severity").notNull(),
   isResolved: boolean("is_resolved").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   // ARTEMIS AI (migration 0002)
-  organizationId: integer("organization_id"),
-  areaId: integer("area_id"),
-  riskAnalysisId: integer("risk_analysis_id"),
+  organizationId: integer("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
+  areaId: integer("area_id").references(() => monitoredAreas.id, { onDelete: "set null" }),
+  riskAnalysisId: integer("risk_analysis_id").references(() => riskAnalyses.id, { onDelete: "set null" }),
   status: text("status").notNull().default("novo"), // novo | reconhecido | em_acompanhamento | resolvido | descartado
   reason: text("reason"),
   dataSource: text("data_source"),
   dataReferenceAt: timestamp("data_reference_at"),
-  assignedTo: integer("assigned_to"),
+  assignedTo: integer("assigned_to").references(() => users.id, { onDelete: "set null" }),
   recommendations: json("recommendations"),
   dedupKey: text("dedup_key"),
   occurrenceCount: integer("occurrence_count").notNull().default(1),
@@ -78,7 +78,7 @@ export const weatherData = pgTable("weather_data", {
 
 export const userStats = pgTable("user_stats", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   points: integer("points").default(0),
   level: integer("level").default(1),
   denunciasCount: integer("denuncias_count").default(0),
@@ -88,7 +88,7 @@ export const userStats = pgTable("user_stats", {
 
 export const denuncias = pgTable("denuncias", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id"),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
   titulo: text("titulo").notNull(),
   descricao: text("descricao").notNull(),
   categoria: text("categoria").notNull(),
@@ -102,7 +102,7 @@ export const denuncias = pgTable("denuncias", {
 
 export const achievements = pgTable("achievements", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   badgeId: text("badge_id").notNull(),
   badgeName: text("badge_name").notNull(),
   badgeDesc: text("badge_desc").notNull(),
@@ -122,11 +122,11 @@ export const monitoredAreas = pgTable("monitored_areas", {
   longitude: real("longitude"),
   areaHectares: real("area_hectares"),
   status: text("status").notNull().default("ativo"), // 'ativo', 'inativo', 'em análise'
-  createdBy: integer("created_by"),
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   // ARTEMIS AI (migration 0002)
-  organizationId: integer("organization_id"),
+  organizationId: integer("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   vegetationCategory: text("vegetation_category"),
   boundary: json("boundary"), // GeoJSON Polygon/MultiPolygon (validated server-side)
   notes: text("notes"),
@@ -135,7 +135,7 @@ export const monitoredAreas = pgTable("monitored_areas", {
 /** Análises de risco executadas */
 export const riskAnalyses = pgTable("risk_analyses", {
   id: serial("id").primaryKey(),
-  areaId: integer("area_id"),
+  areaId: integer("area_id").references(() => monitoredAreas.id, { onDelete: "set null" }),
   score: integer("score").notNull(),
   level: text("level").notNull(), // 'baixo' | 'moderado' | 'alto' | 'crítico'
   confidence: real("confidence"),
@@ -144,10 +144,10 @@ export const riskAnalyses = pgTable("risk_analyses", {
   recommendations: json("recommendations"),
   isSimulated: boolean("is_simulated").default(true),
   calculationVersion: text("calculation_version").default("1.0.0"),
-  createdBy: integer("created_by"),
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow(),
   // ARTEMIS AI (migration 0002)
-  organizationId: integer("organization_id"),
+  organizationId: integer("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   engineType: text("engine_type"),          // transparent-rule-engine | supervised-ml | ...-ts-fallback
   isExperimental: boolean("is_experimental").notNull().default(false),
   dataSources: json("data_sources"),        // [{ name, kind, referenceAt, url? }]
@@ -179,22 +179,23 @@ export const importBatches = pgTable("import_batches", {
   invalidRows: integer("invalid_rows").notNull().default(0),
   duplicateRows: integer("duplicate_rows").notNull().default(0),
   importedAt: timestamp("imported_at").defaultNow(),
-  importedBy: integer("imported_by"),
+  importedBy: integer("imported_by").references(() => users.id, { onDelete: "set null" }),
   status: text("status").notNull().default("concluído"),
   notes: text("notes"),
-  organizationId: integer("organization_id"),
+  organizationId: integer("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   rejectionReasons: json("rejection_reasons"),
   visibility: text("visibility").notNull().default("privado"), // privado | publico (migration 0003)
   publishedAt: timestamp("published_at"),
-  publishedBy: integer("published_by"),
+  publishedBy: integer("published_by").references(() => users.id, { onDelete: "set null" }),
 });
 
 /** Ocorrências de incêndio importadas */
 export const fireOccurrences = pgTable("fire_occurrences", {
   id: serial("id").primaryKey(),
-  importBatchId: integer("import_batch_id").notNull(),
+  importBatchId: integer("import_batch_id").notNull().references(() => importBatches.id, { onDelete: "cascade" }),
   occurrenceDate: text("occurrence_date"),
   occurrenceTime: text("occurrence_time"),
+  occurrenceAt: timestamp("occurrence_at", { withTimezone: true }),
   municipality: text("municipality"),
   state: text("state"),
   latitude: real("latitude"),
@@ -210,7 +211,8 @@ export const fireOccurrences = pgTable("fire_occurrences", {
   validationStatus: text("validation_status").notNull().default("válido"),
   rawData: json("raw_data"),
   createdAt: timestamp("created_at").defaultNow(),
-  organizationId: integer("organization_id"),
+  organizationId: integer("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
+  dedupKey: text("dedup_key"),
 });
 
 // ─── ARTEMIS AI: organizations, alert history, audit (migration 0002) ────────
@@ -228,8 +230,8 @@ export const organizations = pgTable("organizations", {
 
 export const organizationMembers = pgTable("organization_members", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").notNull(),
-  userId: integer("user_id").notNull(),
+  organizationId: integer("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   role: text("role").notNull().default("viewer"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => ({
@@ -241,18 +243,18 @@ export type AlertStatus = typeof ALERT_STATUSES[number];
 
 export const alertEvents = pgTable("alert_events", {
   id: serial("id").primaryKey(),
-  alertId: integer("alert_id").notNull(),
+  alertId: integer("alert_id").notNull().references(() => alerts.id, { onDelete: "cascade" }),
   fromStatus: text("from_status"),
   toStatus: text("to_status").notNull(),
   note: text("note"),
-  userId: integer("user_id"),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => ({ alertIdx: index("alert_events_alert_idx").on(t.alertId) }));
 
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id"),
-  userId: integer("user_id"),
+  organizationId: integer("organization_id").references(() => organizations.id, { onDelete: "set null" }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
   action: text("action").notNull(),
   entityType: text("entity_type"),
   entityId: text("entity_id"),
@@ -263,7 +265,7 @@ export const auditLogs = pgTable("audit_logs", {
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   tokenHash: text("token_hash").notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"),

@@ -1,0 +1,68 @@
+# ARTEMIS AI — ambiente de PRODUÇÃO (Hostinger VPS KVM 2)
+# Uso: docker compose -f docker-compose.prod.yml up -d
+# O PostgreSQL NÃO é exposto à internet; apenas a rede interna "artemis_internal".
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-artemis_ai}
+      POSTGRES_USER: ${PGUSER:-artemis_app}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-artemis_app} -d ${PGDATABASE:-artemis_ai}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - artemis_internal
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    # Nenhuma porta publicada — acesso somente pela rede interna.
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${PGUSER:-artemis_app}:${PGPASSWORD}@postgres:5432/${PGDATABASE:-artemis_ai}
+      SESSION_SECRET: ${SESSION_SECRET}
+      PYTHON_SERVICE_URL: http://python:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - artemis_internal
+      - artemis_web
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
+  python:
+    build:
+      context: ./python_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - artemis_internal
+
+volumes:
+  pgdata_prod:
+
+networks:
+  artemis_internal:
+    internal: true
+  artemis_web:
+    driver: bridge

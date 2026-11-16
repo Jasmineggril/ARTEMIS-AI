@@ -1,5 +1,5 @@
--- ARTEMIS AI — migration 0003
--- Explicit opt-in publication of import batches for the public lookup (Consulta Pública).
+﻿-- ARTEMIS AI â€” migration 0003
+-- Explicit opt-in publication of import batches for the public lookup (Consulta PÃºblica).
 -- Default is private: nothing becomes public without an admin action.
 
 ALTER TABLE "import_batches" ADD COLUMN IF NOT EXISTS "visibility" text DEFAULT 'privado' NOT NULL;
@@ -13,3 +13,4 @@ ALTER TABLE "import_batches" DROP CONSTRAINT IF EXISTS "import_batches_visibilit
 ALTER TABLE "import_batches" ADD CONSTRAINT "import_batches_visibility_ck" CHECK ("visibility" IN ('privado','publico'));
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "import_batches_public_idx" ON "import_batches" ("visibility") WHERE "visibility" = 'publico';
+

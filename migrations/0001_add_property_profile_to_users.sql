@@ -1,1 +1,1 @@
-ALTER TABLE "users" ADD COLUMN "property_profile" json;
+﻿ALTER TABLE "users" ADD COLUMN "property_profile" json;
