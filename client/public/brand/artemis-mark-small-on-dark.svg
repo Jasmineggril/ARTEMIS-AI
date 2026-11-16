@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ARTEMIS AI">
+  <defs>
+    <linearGradient id="sa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BBF7D0"/><stop offset="1" stop-color="#059669"/></linearGradient>
+    <linearGradient id="sl" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#16A34A"/><stop offset="1" stop-color="#BEF264"/></linearGradient>
+  </defs>
+  <path d="M27 5 H37 L60 61 H47 L32 25 L17 61 H4 Z" fill="url(#sa)"/>
+  <path d="M27 18 H37 L44 36 H20 Z" fill="#166534"/>
+  <path d="M2 52 C 18 46, 38 34, 56 14 C 46 32, 28 48, 6 57 C 2 58, 0 54, 2 52 Z" fill="#FFFFFF"/>
+  <path d="M33 62 C 31 49, 41 38, 60 33 C 59 49, 49 59, 33 62 Z" fill="url(#sl)"/>
+  <path d="M36 58 C 41 50, 47 44, 55 38" fill="none" stroke="#064E3B" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

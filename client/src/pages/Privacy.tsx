@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArtemisMark } from "@/components/ArtemisMark";
+import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
 import { PRODUCT_NAME, EMERGENCY_NOTICE } from "@shared/identity";
 
 /**
@@ -10,7 +10,7 @@ export default function Privacy() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="max-w-3xl mx-auto px-4 py-10 prose prose-slate dark:prose-invert prose-sm sm:prose-base">
-        <Link href="/" className="no-underline flex items-center gap-2 mb-6"><ArtemisMark className="w-8 h-8" /><strong>{PRODUCT_NAME}</strong></Link>
+        <Link href="/" className="no-underline flex items-center gap-2 mb-6"><ArtemisMark className="w-8 h-8" /><ArtemisWordmark /></Link>
         <h1>Política de Privacidade</h1>
         <p className="text-sm bg-amber-50 text-amber-900 border border-amber-200 rounded-lg p-3 not-prose">
           Minuta em validação jurídica. A plataforma está em fase de protótipo (validação controlada).

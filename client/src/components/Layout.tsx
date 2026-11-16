@@ -9,8 +9,8 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/Header";
 import { AccessibilityBar } from "@/components/AccessibilityBar";
-import { PRODUCT_NAME, PRODUCT_SUBTITLE } from "@shared/identity";
-import { ArtemisMark } from "@/components/ArtemisMark";
+import { PRODUCT_NAME, PRODUCT_SUBTITLE, SUBMISSION_MODE } from "@shared/identity";
+import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -71,7 +71,7 @@ export function Layout({ children }: LayoutProps) {
             >
               <ArtemisMark className="w-10 h-10 shrink-0" />
               <div>
-                <p className="font-display font-bold text-sm leading-none tracking-tight">{PRODUCT_NAME}</p>
+                <p className="text-sm leading-none">{SUBMISSION_MODE ? <span className="font-bold">{PRODUCT_NAME}</span> : <ArtemisWordmark />}</p>
                 <p className="text-xs text-muted-foreground mt-0.5 font-medium leading-snug">
                   {PRODUCT_SUBTITLE}
                 </p>

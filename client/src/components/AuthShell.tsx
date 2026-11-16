@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { PRODUCT_NAME, PRODUCT_TAGLINE, MODULE_PREDICTIVE, MODULE_MONITORING, SUBMISSION_MODE } from "@shared/identity";
-import { ArtemisMark } from "@/components/ArtemisMark";
+import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
 
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   const [, setLocation] = useLocation();
@@ -13,8 +13,8 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
           <ArrowLeft className="w-4 h-4" aria-hidden /> Voltar ao início
         </button>
         <div>
-          <ArtemisMark className="w-14 h-14 mb-6" inverted />
-          <h2 className="text-3xl font-bold font-display mb-3 text-white">{PRODUCT_NAME}</h2>
+          <ArtemisMark className="w-28 h-28 mb-6" inverted detail="full" />
+          <h2 className="text-3xl mb-3">{SUBMISSION_MODE ? <span className="font-bold text-white">{PRODUCT_NAME}</span> : <ArtemisWordmark inverted />}</h2>
           <p className="text-emerald-100 text-lg leading-relaxed mb-8">{PRODUCT_TAGLINE}</p>
           <ul className="space-y-3 text-sm text-emerald-50">
             <li><strong>{MODULE_PREDICTIVE}</strong> — índice explicável do risco de incêndio.</li>
@@ -33,7 +33,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-3 mb-8">
             <ArtemisMark className="w-10 h-10" />
-            {!SUBMISSION_MODE && <span className="font-display font-bold text-xl text-slate-900 dark:text-white">{PRODUCT_NAME}</span>}
+            {!SUBMISSION_MODE && <ArtemisWordmark className="text-xl" />}
           </div>
           <h1 className="text-2xl font-bold font-display text-slate-900 dark:text-white mb-1">{title}</h1>
           <p className="text-slate-600 dark:text-slate-300 text-sm mb-7">{subtitle}</p>

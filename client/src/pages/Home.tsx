@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RiskBadge, riskLevelColor } from "@/components/RiskBadge";
-import { ArtemisMark } from "@/components/ArtemisMark";
+import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
 import { HotspotConstellation, type GridCell, type StateAgg } from "@/components/home/HotspotConstellation";
 import { useAuthStatus, useLogout } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
@@ -48,7 +48,7 @@ function PublicHeader() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
         <Link href="/" className="flex items-center gap-2.5">
           <ArtemisMark className="w-9 h-9 shrink-0" inverted />
-          {!SUBMISSION_MODE && <span className="font-bold tracking-tight">{PRODUCT_NAME}</span>}
+          {!SUBMISSION_MODE && <ArtemisWordmark inverted />}
         </Link>
         <nav className="hidden lg:flex items-center gap-7 text-sm text-emerald-100/80" aria-label="Seções">
           <a href="/consulta-publica" className="hover:text-white font-semibold text-white">Consulta pública</a>
@@ -411,9 +411,9 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="bg-[#04120E] text-emerald-100/70 py-8">
+      <footer className="bg-[#011410] text-emerald-100/70 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-2"><ArtemisMark className="w-7 h-7" inverted />{!SUBMISSION_MODE && <span className="font-semibold text-white">{PRODUCT_NAME}</span>}</div>
+          {SUBMISSION_MODE ? <ArtemisMark className="w-9 h-9" inverted /> : <img src="/brand/artemis-logo-dark.webp" alt="ARTEMIS AI — Inteligência para antecipar riscos" className="h-16 w-auto" loading="lazy" />}
           <nav className="flex flex-wrap justify-center gap-5" aria-label="Rodapé">
             <Link href="/consulta-publica" className="hover:text-white">Consulta pública</Link>
             <Link href="/simulacao" className="hover:text-white">Simular risco</Link>

@@ -9,7 +9,7 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import { differenceInCalendarDays, format, subDays } from "date-fns";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Search, Share2, Phone, Leaf, ShieldAlert, Info, Flame } from "lucide-react";
-import { ArtemisMark } from "@/components/ArtemisMark";
+import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { BR_STATES } from "@shared/br-states";
@@ -136,7 +136,7 @@ export default function PublicLookup() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b bg-card">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <Link href="/" className="flex items-center gap-2 font-bold"><ArtemisMark className="w-8 h-8" />{PRODUCT_NAME}</Link>
+          <Link href="/" className="flex items-center gap-2"><ArtemisMark className="w-8 h-8" /><ArtemisWordmark /></Link>
           <nav className="flex items-center gap-3 text-sm">
             <a href="#prevencao" className="hidden sm:inline hover:underline">Prevenção</a>
             <Link href="/login" className="font-semibold text-primary hover:underline">Entrar</Link>
