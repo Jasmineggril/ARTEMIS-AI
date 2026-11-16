@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "@shared/schema";
 
@@ -30,14 +30,16 @@ const loadDotenv = () => {
 const getDatabaseUrl = (): string => {
   loadDotenv();
 
-  // Prefer Supabase URL when set — it persists across deployments
-  const supabaseUrl = process.env.SUPABASE_DATABASE_URL?.trim();
-  if (supabaseUrl && supabaseUrl.includes("://")) {
-    return supabaseUrl;
-  }
-
+  // Prefer the local/VPS PostgreSQL URL. SUPABASE_DATABASE_URL is kept only as
+  // an explicit fallback for legacy deployments and is never preferred silently.
   const url = process.env.DATABASE_URL?.trim() || "";
   if (url.includes("://")) return url;
+
+  const supabaseUrl = process.env.SUPABASE_DATABASE_URL?.trim();
+  if (supabaseUrl && supabaseUrl.includes("://")) {
+    console.warn("[db] DATABASE_URL ausente — usando SUPABASE_DATABASE_URL como fallback. Configure DATABASE_URL para a VPS.");
+    return supabaseUrl;
+  }
 
   const host = process.env.PGHOST || "localhost";
   const port = process.env.PGPORT || "5432";
@@ -77,4 +79,6 @@ const createFallbackDb = () => {
 };
 
 export const pool = databaseUrl ? new Pool(poolConfig) : undefined;
-export const db = databaseUrl ? drizzle(pool as pg.Pool, { schema }) : createFallbackDb();
+export const db: NodePgDatabase<typeof schema> = databaseUrl
+  ? drizzle(pool as pg.Pool, { schema })
+  : (createFallbackDb() as NodePgDatabase<typeof schema>);

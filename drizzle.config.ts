@@ -24,11 +24,18 @@ const loadDotenv = () => {
 
 loadDotenv();
 
-// Prefer Supabase URL — it persists across deployments
-const dbUrl = process.env.SUPABASE_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim() || "";
+// Prefer the local/VPS PostgreSQL URL. Supabase is only a fallback.
+const dbUrl =
+  process.env.DATABASE_URL?.trim() ||
+  process.env.SUPABASE_DATABASE_URL?.trim() ||
+  "";
+
+if (process.env.SUPABASE_DATABASE_URL && !process.env.DATABASE_URL) {
+  console.warn("[drizzle] DATABASE_URL ausente — usando SUPABASE_DATABASE_URL como fallback.");
+}
 
 if (!dbUrl) {
-  throw new Error("No database URL found. Set SUPABASE_DATABASE_URL or DATABASE_URL.");
+  throw new Error("No database URL found. Set DATABASE_URL (preferred) or SUPABASE_DATABASE_URL.");
 }
 
 export default defineConfig({
@@ -37,6 +44,6 @@ export default defineConfig({
   dialect: "postgresql",
   dbCredentials: {
     url: dbUrl,
-    ssl: dbUrl.includes("supabase.co") ? { rejectUnauthorized: false } : undefined,
+    ssl: dbUrl.includes("supabase.co") || process.env.PGSSLMODE === "require" ? { rejectUnauthorized: false } : undefined,
   },
 });

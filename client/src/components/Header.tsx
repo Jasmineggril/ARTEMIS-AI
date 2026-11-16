@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, HelpCircle } from "lucide-react";
 import { useState } from "react";
-import ceresLogo from "@assets/LOGO_CERES_AI_1782244864205.png";
+import { ArtemisMark } from "@/components/ArtemisMark";
 import { PRODUCT_NAME } from "@shared/identity";
 
 export function Header() {
@@ -22,11 +22,7 @@ export function Header() {
             data-testid="button-header-logo"
             aria-label="Voltar para página inicial"
           >
-            <img
-              src={ceresLogo}
-              alt={PRODUCT_NAME}
-              className="h-9 w-auto group-hover:scale-105 transition-transform"
-            />
+            <ArtemisMark className="w-9 h-9 shrink-0" />
           </button>
           <div className="flex gap-2">
             <Button
@@ -59,11 +55,7 @@ export function Header() {
           data-testid="button-header-logo"
           aria-label="Voltar para página inicial"
         >
-          <img
-            src={ceresLogo}
-            alt={PRODUCT_NAME}
-            className="h-9 w-auto group-hover:scale-105 transition-transform"
-          />
+          <ArtemisMark className="w-9 h-9 shrink-0" />
         </button>
 
         <div className="flex items-center gap-2">

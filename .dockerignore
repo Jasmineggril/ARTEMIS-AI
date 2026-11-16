@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+archive
+attached_assets/*.txt
+docs/trl4/final/pdfs
+backups
+**/__pycache__
+**/*.pyc
+.env
+.env.*
+!.env.example

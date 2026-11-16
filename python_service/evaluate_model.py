@@ -1,5 +1,5 @@
 """
-CERES AI — Avaliação do Modelo Treinado
+ARTEMIS AI — Avaliação do Modelo Treinado
 
 Carrega o modelo salvo em models/risk_classifier.joblib e re-avalia
 no conjunto de teste gerado com a mesma semente aleatória do treinamento.
@@ -48,7 +48,7 @@ def load_dataset():
 
 def evaluate():
     print("=" * 65)
-    print("CERES AI — Avaliação do Classificador de Risco de Incêndio")
+    print("ARTEMIS AI — Avaliação do Classificador de Risco de Incêndio")
     print("Dataset: SINTÉTICO | Não representa validação operacional real")
     print("=" * 65)
 

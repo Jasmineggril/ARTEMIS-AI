@@ -115,6 +115,6 @@ export function riskLevelDescription(level: RiskLevel): string {
     baixo:    "Condições favoráveis — risco controlado com monitoramento periódico.",
     moderado: "Atenção recomendada — condições podem evoluir.",
     alto:     "Risco significativo — ação preventiva urgente necessária.",
-    crítico:  "Perigo imediato — acionar protocolos de emergência.",
+    crítico:  "Condições críticas — revisar imediatamente os protocolos preventivos e de resposta da organização.",
   }[level] ?? "";
 }

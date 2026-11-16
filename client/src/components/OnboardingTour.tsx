@@ -8,6 +8,7 @@ import {
   shouldShowWelcome,
 } from "@/hooks/use-onboarding";
 import { WelcomeModal } from "@/components/WelcomeModal";
+import { useAuthStatus } from "@/hooks/use-auth";
 
 // ─── Tour step definitions ────────────────────────────────────────────────────
 
@@ -121,8 +122,11 @@ function computeTooltipStyle(rect: Rect | null): React.CSSProperties {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+const PUBLIC_ROUTES = ["/", "/login", "/signup", "/reset-password", "/privacidade", "/simulacao", "/consulta-publica", "/florestai"];
+
 export function OnboardingTour() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { data: user } = useAuthStatus();
   const [showWelcome, setShowWelcome] = useState(false);
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
@@ -132,13 +136,15 @@ export function OnboardingTour() {
   const cardRef = useRef<HTMLDivElement>(null);
 
   // ── Initial check ──────────────────────────────────────────────────────────
+  // Only for authenticated users inside the app — never over public or auth pages.
   useEffect(() => {
+    if (!user || PUBLIC_ROUTES.includes(location)) return;
     const status = getOnboardingStatus();
     if (shouldShowWelcome() && !status.neverShow) {
       setShowWelcome(true);
       setOnboardingStatus({ started: true });
     }
-  }, []);
+  }, [user, location]);
 
   // ── Resolve element rect each step ────────────────────────────────────────
   const resolveStep = useCallback((stepIdx: number) => {

@@ -1,0 +1,30 @@
+# ARTEMIS AI — ambiente de DESENVOLVIMENTO (PostgreSQL local)
+# Uso: docker compose -f docker-compose.dev.yml up -d
+# O PostgreSQL fica exposto apenas em 127.0.0.1 (localhost da máquina de dev).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-artemis_ai_dev}
+      POSTGRES_USER: ${PGUSER:-artemis_dev}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-dev_only_change_me}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-artemis_dev} -d ${PGDATABASE:-artemis_ai_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - artemis_dev
+
+volumes:
+  pgdata_dev:
+
+networks:
+  artemis_dev:
+    driver: bridge

@@ -1,516 +1,460 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  Flame, Info, AlertTriangle, CheckCircle2, Printer, Thermometer, MapPin, Cpu, FlaskConical,
+  Database, History, Bell, CloudSun, ShieldAlert,
+} from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { RiskBadge, riskLevelColor, riskLevelDescription } from "@/components/RiskBadge";
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { AnalysisTutorial } from "@/components/AnalysisTutorial";
-import {
-  DEMO_SCENARIOS,
-  type RiskInput, type RiskLevel
-} from "@shared/risk-engine";
-import { SIMULATED_DATA_LABEL, DECISION_SUPPORT_DISCLAIMER } from "@shared/identity";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Flame, Info, AlertTriangle, CheckCircle2, Printer,
-  Thermometer, Droplets, Wind, Trees, MapPin, Clock,
-  Cpu, FlaskConical,
-} from "lucide-react";
+import { useAuthStatus, hasRole } from "@/hooks/use-auth";
+import { api, ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { DEMO_SCENARIOS, type RiskLevel } from "@shared/risk-engine";
+import { DECISION_SUPPORT_DISCLAIMER } from "@shared/identity";
+import type { MonitoredArea, RiskAnalysis as StoredAnalysis } from "@shared/schema";
 
-const VEG_LABELS: Record<number, string> = {
-  0: "Muito seca",
-  1: "Seca",
-  2: "Moderada",
-  3: "Úmida",
+const VEG = [
+  { v: "very_dry", label: "Muito seca" }, { v: "dry", label: "Seca" },
+  { v: "moderate", label: "Moderada" }, { v: "humid", label: "Úmida" },
+] as const;
+const VEG_FROM_NUM = ["very_dry", "dry", "moderate", "humid"] as const;
+const QUALITY = [
+  { v: "", label: "Derivar automaticamente" }, { v: "poor", label: "Ruim" }, { v: "regular", label: "Regular" },
+  { v: "good", label: "Boa" }, { v: "excellent", label: "Excelente" },
+] as const;
+const FIELD_LABEL: Record<string, string> = {
+  temperature: "Temperatura", humidity: "Umidade relativa", windSpeed: "Vento", recentRainfall: "Precipitação 72 h",
+  historicalOccurrences: "Ocorrências históricas", vegetationCondition: "Vegetação", nearbyHotspot: "Foco próximo",
 };
-const VEG_VALUES: Record<number, string> = {
-  0: "very_dry", 1: "dry", 2: "moderate", 3: "humid",
-};
-const QUALITY_LABELS: Record<number, string> = {
-  0: "Ruim", 1: "Regular", 2: "Boa", 3: "Excelente",
-};
-const QUALITY_VALUES: Record<number, string> = {
-  0: "poor", 1: "regular", 2: "good", 3: "excellent",
-};
-
-const OP_TYPES = [
-  "Agroindústria", "Empresa florestal", "Energia", "Mineração",
-  "Logística / ativos territoriais", "Outro",
-];
-
-interface FormState {
-  areaName: string;
-  operationType: string;
-  municipality: string;
-  state: string;
-  latitude: string;
-  longitude: string;
-  temperature: string;
-  humidity: string;
-  windSpeed: string;
-  recentRainfall: string;
-  vegetationCondition: number;
-  historicalOccurrences: string;
-  nearbyHotspot: boolean;
-  hotspotDistance: string;
-  dataQuality: number;
-}
-
-const DEFAULT_FORM: FormState = {
-  areaName: "", operationType: "", municipality: "", state: "",
-  latitude: "", longitude: "",
-  temperature: "", humidity: "", windSpeed: "", recentRainfall: "",
-  vegetationCondition: 2, historicalOccurrences: "0",
-  nearbyHotspot: false, hotspotDistance: "0", dataQuality: 2,
+const ORIGIN_LABEL: Record<string, string> = {
+  manual: "informado pelo usuário", "open-meteo": "Open-Meteo (modelo numérico)",
+  "base-historica-organizacao": "ocorrências importadas (raio 10 km)",
 };
 
-// Result type that mirrors the Python API response
-interface AnalysisResult {
+interface Factor { name: string; contribution: number; description: string; weight: string; value: string }
+interface Recommendation { priority: string; action: string; rationale: string }
+
+/** Normalised view model for both stored analyses and public simulations. */
+interface ResultView {
+  mode: "area" | "simulation";
+  id?: number;
   score: number;
   level: RiskLevel;
-  confidence: number;
-  factors: Array<{
-    name: string;
-    contribution: number;
-    description: string;
-    weight: string;
-    value: string;
-  }>;
-  recommendations: Array<{
-    priority: "imediata" | "urgente" | "preventiva" | "monitoramento";
-    action: string;
-    rationale: string;
-  }>;
-  model_type: string;
-  model_version: string;
-  dataset_type: string;
-  is_simulated: boolean;
-  calculated_at: string;
+  factors: Factor[];
+  recommendations: Recommendation[];
+  engineType: string;
+  version: string;
+  isExperimental: boolean;
+  at: string;
+  areaName?: string;
+  dataSources?: { key: string; name: string; referenceAt?: string; licence?: string }[];
+  provenance?: { field: string; origin: string; referenceAt?: string }[];
+  qualityLabel?: string;
+  limitations?: string[];
+  alert?: { id: number; created: boolean } | null;
 }
 
-function modelTypeLabel(modelType: string): string {
-  if (modelType === "supervised-ml") return "Modelo supervisionado experimental (Scikit-learn)";
-  if (modelType === "transparent-rule-engine-ts-fallback") return "Motor demonstrativo baseado em regras (TypeScript)";
-  return "Motor demonstrativo baseado em regras";
+interface FormState {
+  temperature: string; humidity: string; windSpeed: string; recentRainfall: string;
+  vegetationCondition: string; nearbyHotspot: boolean; hotspotDistance: string;
+  historicalOccurrences: string; dataQuality: string; useLiveWeather: boolean; notes: string;
+}
+const DEFAULT_FORM: FormState = {
+  temperature: "", humidity: "", windSpeed: "", recentRainfall: "", vegetationCondition: "moderate",
+  nearbyHotspot: false, hotspotDistance: "", historicalOccurrences: "", dataQuality: "", useLiveWeather: true, notes: "",
+};
+
+function engineLabel(t: string) {
+  if (t === "supervised-ml") return "Modelo supervisionado EXPERIMENTAL (dataset sintético)";
+  if (t.endsWith("ts-fallback")) return "Motor de regras transparente (TypeScript, fallback)";
+  if (t.startsWith("transparent-rule-engine")) return "Motor de regras transparente";
+  return t;
+}
+
+function fromStored(a: StoredAnalysis & { alert?: ResultView["alert"] }, areaName?: string): ResultView {
+  const dq = (a.dataQuality ?? {}) as any;
+  return {
+    mode: "area", id: a.id, score: a.score, level: a.level as RiskLevel,
+    factors: (a.factors as Factor[]) ?? [], recommendations: (a.recommendations as Recommendation[]) ?? [],
+    engineType: a.engineType ?? "desconhecido", version: a.calculationVersion ?? "", isExperimental: a.isExperimental,
+    at: String(a.createdAt), areaName, dataSources: (a.dataSources as any[]) ?? [], provenance: dq.provenance ?? [],
+    qualityLabel: dq.level, limitations: (a.limitations as string[]) ?? [], alert: a.alert,
+  };
 }
 
 function ScoreGauge({ score, level }: { score: number; level: RiskLevel }) {
-  const r = 52;
-  const circ = 2 * Math.PI * r;
-  const dash = (score / 100) * circ;
-  const color = riskLevelColor(level);
+  const r = 52, circ = 2 * Math.PI * r, color = riskLevelColor(level);
   return (
     <div className="flex flex-col items-center">
-      <svg width="140" height="140" viewBox="0 0 140 140" aria-label={`Score: ${score}/100`}>
-        <circle cx="70" cy="70" r={r} fill="none" stroke="#e5e7eb" strokeWidth="14" />
-        <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="14"
-          strokeDasharray={`${dash} ${circ}`}
-          strokeDashoffset={circ / 4}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dasharray 0.8s ease" }}
-        />
+      <svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label={`Índice de risco ${score} de 100`}>
+        <circle cx="70" cy="70" r={r} fill="none" className="stroke-muted" strokeWidth="14" />
+        <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="14" strokeDasharray={`${(score / 100) * circ} ${circ}`}
+          strokeDashoffset={circ / 4} strokeLinecap="round" />
         <text x="70" y="64" textAnchor="middle" fontSize="28" fontWeight="bold" fill={color}>{score}</text>
-        <text x="70" y="82" textAnchor="middle" fontSize="11" fill="#6b7280">/100</text>
+        <text x="70" y="82" textAnchor="middle" fontSize="11" className="fill-muted-foreground">/100</text>
       </svg>
-      <RiskBadge level={level} score={score} size="md" className="mt-1" />
+      <RiskBadge level={level} score={score} size="md" showIcon className="mt-1" />
     </div>
   );
 }
 
-export default function RiskAnalysis() {
-  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [errors, setErrors] = useState<string[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showAnalysisTutorial, setShowAnalysisTutorial] = useState(false);
-  const { toast } = useToast();
+const priorityColor: Record<string, string> = {
+  imediata: "text-red-800 bg-red-50 border-red-200", urgente: "text-orange-800 bg-orange-50 border-orange-200",
+  preventiva: "text-amber-800 bg-amber-50 border-amber-200", monitoramento: "text-sky-800 bg-sky-50 border-sky-200",
+};
 
-  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm(f => ({ ...f, [key]: value }));
-  }
+const inputCls = "w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring";
+
+function NumberField({ id, label, value, onChange, placeholder, hint }: { id: string; label: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string }) {
+  return (
+    <div>
+      <label htmlFor={id} className="text-xs font-medium text-muted-foreground mb-1 block">{label}</label>
+      <input id={id} type="number" inputMode="decimal" step="any" className={inputCls} value={value} onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder} aria-describedby={hint ? `${id}-hint` : undefined} />
+      {hint && <p id={`${id}-hint`} className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+export default function RiskAnalysisPage() {
+  const { data: user, isLoading: authLoading } = useAuthStatus();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const initialArea = Number(new URLSearchParams(window.location.search).get("area")) || null;
+
+  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [areaId, setAreaId] = useState<number | null>(initialArea);
+  const [result, setResult] = useState<ResultView | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [tutorial, setTutorial] = useState(false);
+  const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const canAnalyze = hasRole(user, "analyst");
+  const areaMode = !!user && canAnalyze;
+
+  const { data: areas = [] } = useQuery<MonitoredArea[]>({
+    queryKey: ["/api/areas"], queryFn: () => api("GET", "/api/areas"), enabled: areaMode,
+  });
+  useEffect(() => {
+    if (areaMode && !areaId && areas.length > 0) setAreaId(areas[0].id);
+  }, [areaMode, areas, areaId]);
+  const area = useMemo(() => areas.find((a) => a.id === areaId) ?? null, [areas, areaId]);
+
+  const { data: history = [] } = useQuery<StoredAnalysis[]>({
+    queryKey: ["/api/areas", areaId, "analyses"],
+    queryFn: () => api("GET", `/api/areas/${areaId}/analyses?limit=20`),
+    enabled: areaMode && !!areaId,
+  });
 
   function applyScenario(key: string) {
     const s = DEMO_SCENARIOS[key];
     if (!s) return;
     const i = s.input;
-    setForm(f => ({
-      ...f,
-      temperature: String(i.temperature),
-      humidity: String(i.humidity),
-      windSpeed: String(i.windSpeed),
-      recentRainfall: String(i.recentRainfall),
-      vegetationCondition: i.vegetationCondition,
-      nearbyHotspot: i.nearbyHotspot,
-      hotspotDistance: String(i.hotspotDistance),
-      historicalOccurrences: String(i.historicalOccurrences),
-      dataQuality: i.dataQuality,
-      areaName: f.areaName || `Área Demo — ${s.label}`,
+    setForm((f) => ({
+      ...f, temperature: String(i.temperature), humidity: String(i.humidity), windSpeed: String(i.windSpeed),
+      recentRainfall: String(i.recentRainfall), vegetationCondition: VEG_FROM_NUM[i.vegetationCondition],
+      nearbyHotspot: i.nearbyHotspot, hotspotDistance: String(i.hotspotDistance),
+      historicalOccurrences: String(i.historicalOccurrences), useLiveWeather: false,
     }));
-    toast({ title: `Cenário "${s.label}" carregado`, description: "Preencha os demais campos e clique em Analisar." });
+    toast({ title: `Cenário demonstrativo "${s.label}" carregado`, description: "Valores fictícios para teste — não representam medições." });
   }
 
-  function buildApiPayload(): Record<string, unknown> | null {
-    const temp = parseFloat(form.temperature);
-    const hum  = parseFloat(form.humidity);
-    const wind = parseFloat(form.windSpeed);
-    const rain = parseFloat(form.recentRainfall);
-    const hist = parseInt(form.historicalOccurrences, 10);
-    const dist = parseFloat(form.hotspotDistance);
+  const num = (v: string) => (v.trim() === "" ? undefined : Number(v.replace(",", ".")));
 
-    const errs: string[] = [];
-    if (isNaN(temp))                    errs.push("Temperatura é obrigatória.");
-    if (isNaN(hum) || hum < 0 || hum > 100) errs.push("Umidade deve estar entre 0 e 100.");
-    if (isNaN(wind) || wind < 0)        errs.push("Velocidade do vento inválida.");
-    if (isNaN(rain) || rain < 0)        errs.push("Precipitação inválida.");
-
-    if (errs.length > 0) { setErrors(errs); return null; }
-    setErrors([]);
-
-    return {
-      temperature: temp,
-      humidity: hum,
-      wind_speed: wind,
-      recent_rainfall: rain,
-      vegetation_condition: VEG_VALUES[form.vegetationCondition] ?? "moderate",
-      nearby_hotspot: form.nearbyHotspot,
-      hotspot_distance: form.nearbyHotspot && !isNaN(dist) ? dist : null,
-      historical_occurrences: isNaN(hist) ? 0 : hist,
-      data_quality: QUALITY_VALUES[form.dataQuality] ?? "good",
+  async function analyze() {
+    const values = {
+      temperature: num(form.temperature), humidity: num(form.humidity), windSpeed: num(form.windSpeed),
+      recentRainfall: num(form.recentRainfall), hotspotDistance: num(form.hotspotDistance),
+      historicalOccurrences: num(form.historicalOccurrences),
     };
-  }
+    const errs: string[] = [];
+    Object.entries(values).forEach(([k, v]) => { if (v !== undefined && Number.isNaN(v)) errs.push(`${FIELD_LABEL[k] ?? k}: valor inválido.`); });
+    if (values.humidity !== undefined && (values.humidity < 0 || values.humidity > 100)) errs.push("Umidade deve estar entre 0 e 100%.");
+    const meteoMissing = [values.temperature, values.humidity, values.windSpeed, values.recentRainfall].some((v) => v === undefined);
+    if (meteoMissing && !(areaMode && form.useLiveWeather)) errs.push("Informe temperatura, umidade, vento e precipitação (ou ative os dados meteorológicos automáticos).");
+    if (areaMode && !areaId) errs.push("Selecione uma área.");
+    setErrors(errs);
+    if (errs.length) return;
 
-  async function handleAnalyze() {
-    const payload = buildApiPayload();
-    if (!payload) return;
-    setIsAnalyzing(true);
+    setBusy(true);
     try {
-      const res = await fetch("/api/python-risk-analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message ?? `Erro ${res.status}`);
+      if (areaMode) {
+        const body = {
+          useLiveWeather: form.useLiveWeather,
+          notes: form.notes.trim() || undefined,
+          inputs: Object.fromEntries(Object.entries({
+            ...values,
+            hotspotDistance: form.nearbyHotspot ? values.hotspotDistance : undefined,
+            vegetationCondition: form.vegetationCondition,
+            nearbyHotspot: form.nearbyHotspot,
+            dataQuality: form.dataQuality || undefined,
+          }).filter(([, v]) => v !== undefined)),
+        };
+        const stored = await api<StoredAnalysis & { alert: ResultView["alert"] }>("POST", `/api/areas/${areaId}/analyses`, body);
+        setResult(fromStored(stored, area?.name));
+        qc.invalidateQueries({ queryKey: ["/api/areas"] });
+        qc.invalidateQueries({ queryKey: ["/api/alerts"] });
+        qc.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+        if (stored.alert) {
+          toast({ title: stored.alert.created ? "Alerta emitido" : "Alerta existente atualizado", description: `Alerta #${stored.alert.id}` });
+        }
+      } else {
+        const r = await api<any>("POST", "/api/python-risk-analysis", {
+          temperature: values.temperature, humidity: values.humidity, wind_speed: values.windSpeed,
+          recent_rainfall: values.recentRainfall, vegetation_condition: form.vegetationCondition,
+          nearby_hotspot: form.nearbyHotspot, hotspot_distance: form.nearbyHotspot ? values.hotspotDistance ?? null : null,
+          historical_occurrences: values.historicalOccurrences ?? 0, data_quality: form.dataQuality || "regular",
+        });
+        setResult({
+          mode: "simulation", score: r.score, level: (r.level === "critico" ? "crítico" : r.level) as RiskLevel,
+          factors: r.factors ?? [], recommendations: r.recommendations ?? [], engineType: r.model_type,
+          version: r.model_version, isExperimental: Boolean(r.is_experimental), at: r.calculated_at,
+        });
       }
-      const data: AnalysisResult = await res.json();
-      setResult(data);
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    } catch (e: any) {
-      toast({ title: "Erro na análise", description: e.message, variant: "destructive" });
+      setTimeout(() => document.getElementById("result")?.scrollIntoView({ behavior: "smooth" }), 50);
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : "Falha na análise.";
+      setErrors([msg]);
     } finally {
-      setIsAnalyzing(false);
+      setBusy(false);
     }
   }
 
-  const priorityColor: Record<string, string> = {
-    imediata: "text-red-700 bg-red-50 border-red-200",
-    urgente: "text-orange-700 bg-orange-50 border-orange-200",
-    preventiva: "text-amber-700 bg-amber-50 border-amber-200",
-    monitoramento: "text-blue-700 bg-blue-50 border-blue-200",
-  };
+  if (authLoading) return <Layout><p className="text-muted-foreground">Carregando...</p></Layout>;
 
   return (
     <Layout>
-      {showAnalysisTutorial && <AnalysisTutorial onClose={() => setShowAnalysisTutorial(false)} />}
-
-      <header className="mb-8 flex items-start justify-between gap-4">
+      {tutorial && <AnalysisTutorial onClose={() => setTutorial(false)} />}
+      <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
-            <Flame className="w-8 h-8 text-primary" />
-            Análise Preditiva de Risco
-          </h1>
-          <p className="text-muted-foreground mt-2 flex items-center gap-1.5">
-            <Cpu className="w-3.5 h-3.5 shrink-0" />
-            {result
-              ? modelTypeLabel(result.model_type)
-              : "Motor de análise Python + Scikit-learn"}
-            {result?.dataset_type === "synthetic" && (
-              <span className="ml-1 text-xs bg-violet-50 text-violet-700 border border-violet-200 px-1.5 py-0.5 rounded-full">
-                dataset sintético
-              </span>
-            )}
+          <h1 className="text-3xl font-bold font-display flex items-center gap-2"><Flame className="w-8 h-8 text-primary" aria-hidden />Análise Preditiva de Risco</h1>
+          <p className="text-muted-foreground mt-1">
+            ARTEMIS AI · {areaMode ? "análise armazenada e auditável da área selecionada" : "simulação pública — o resultado não é armazenado"}
           </p>
         </div>
-        <button
-          onClick={() => setShowAnalysisTutorial(true)}
-          className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border/60 text-sm text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-colors"
-        >
-          <Info className="w-4 h-4" />
-          Como realizar uma análise?
+        <button onClick={() => setTutorial(true)} className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm text-muted-foreground hover:bg-secondary/50">
+          <Info className="w-4 h-4" aria-hidden /> Como funciona?
         </button>
       </header>
 
-      {/* Cenários demonstrativos */}
-      <div className="mb-6">
-        <p className="text-sm font-semibold text-muted-foreground mb-2">Carregar cenário demonstrativo:</p>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(DEMO_SCENARIOS).map(([key, s]) => (
-            <Button key={key} variant="outline" size="sm" onClick={() => applyScenario(key)}>
-              {s.label}
-            </Button>
-          ))}
+      {!user && (
+        <div className="mb-6 rounded-xl border border-sky-200 bg-sky-50 text-sky-900 p-4 text-sm">
+          Você está no modo de <strong>simulação</strong>. Para analisar e acompanhar áreas reais da sua organização, <Link href="/login" className="underline font-semibold">entre</Link> ou <Link href="/signup" className="underline font-semibold">crie uma conta</Link>.
         </div>
-      </div>
+      )}
+      {user && !canAnalyze && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 p-4 text-sm">
+          Seu papel na organização é de leitura. Peça a um administrador o papel de analista para executar análises de áreas. Simulações continuam disponíveis.
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* ── Formulário ────────────────────────────────────────────────── */}
         <div className="space-y-6">
-          {/* Identificação */}
-          <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4" data-tour="risk-form">
-            <h2 className="font-semibold text-foreground flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary" /> Identificação da área
+          {areaMode && (
+            <section className="bg-card border rounded-2xl p-6 space-y-3" aria-labelledby="sec-area">
+              <h2 id="sec-area" className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" aria-hidden />Área avaliada</h2>
+              {areas.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma área cadastrada. <Link href="/areas" className="underline">Cadastre uma área</Link> para analisar.</p>
+              ) : (
+                <>
+                  <label htmlFor="area" className="sr-only">Área</label>
+                  <select id="area" className={inputCls} value={areaId ?? ""} onChange={(e) => { setAreaId(Number(e.target.value)); setResult(null); }}>
+                    {areas.map((a) => <option key={a.id} value={a.id}>{a.name} — {a.municipality}/{a.state}</option>)}
+                  </select>
+                  {area && (
+                    <p className="text-xs text-muted-foreground">
+                      {area.latitude != null ? `Coordenadas ${area.latitude.toFixed(4)}, ${area.longitude!.toFixed(4)}` : "Área sem coordenadas — dados meteorológicos automáticos indisponíveis."}
+                      {area.areaHectares != null && ` · ${area.areaHectares.toLocaleString("pt-BR")} ha`}
+                    </p>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+
+          <section className="bg-card border rounded-2xl p-6 space-y-4" aria-labelledby="sec-data">
+            <h2 id="sec-data" className="font-semibold flex items-center gap-2">
+              <Thermometer className="w-4 h-4 text-primary" aria-hidden /> Dados ambientais
+              <HelpTooltip text="Valores informados manualmente têm prioridade. Campos meteorológicos vazios podem ser preenchidos pelo Open-Meteo, quando ativado. Nada é preenchido com valores padrão." />
             </h2>
+            {areaMode && (
+              <label className="flex items-start gap-2 text-sm">
+                <input type="checkbox" className="mt-1" checked={form.useLiveWeather} onChange={(e) => set("useLiveWeather", e.target.checked)} />
+                <span><CloudSun className="inline w-4 h-4 mr-1" aria-hidden />Preencher campos meteorológicos vazios com dados do Open-Meteo para as coordenadas da área
+                  <span className="block text-xs text-muted-foreground">Estimativa de modelo numérico, não medição local. Se a fonte falhar, a análise não é executada com valores inventados.</span></span>
+              </label>
+            )}
             <div className="grid sm:grid-cols-2 gap-3">
+              <NumberField id="t" label="Temperatura do ar (°C)" value={form.temperature} onChange={(v) => set("temperature", v)} placeholder={areaMode && form.useLiveWeather ? "automático" : "Ex.: 36"} />
+              <NumberField id="h" label="Umidade relativa (%)" value={form.humidity} onChange={(v) => set("humidity", v)} placeholder={areaMode && form.useLiveWeather ? "automático" : "Ex.: 20"} />
+              <NumberField id="w" label="Velocidade do vento (km/h)" value={form.windSpeed} onChange={(v) => set("windSpeed", v)} placeholder={areaMode && form.useLiveWeather ? "automático" : "Ex.: 25"} />
+              <NumberField id="r" label="Precipitação nas últimas 72 h (mm)" value={form.recentRainfall} onChange={(v) => set("recentRainfall", v)} placeholder={areaMode && form.useLiveWeather ? "automático" : "Ex.: 0"} />
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Nome da área</label>
-                <input className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.areaName} onChange={e => setField("areaName", e.target.value)}
-                  placeholder="Ex.: Fazenda Santa Rosa" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Tipo de operação</label>
-                <select className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.operationType} onChange={e => setField("operationType", e.target.value)}>
-                  <option value="">Selecionar...</option>
-                  {OP_TYPES.map(o => <option key={o}>{o}</option>)}
+                <label htmlFor="veg" className="text-xs font-medium text-muted-foreground mb-1 block">Condição da vegetação</label>
+                <select id="veg" className={inputCls} value={form.vegetationCondition} onChange={(e) => set("vegetationCondition", e.target.value)}>
+                  {VEG.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Município</label>
-                <input className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.municipality} onChange={e => setField("municipality", e.target.value)}
-                  placeholder="Ex.: Alto Paraíso de Goiás" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Estado</label>
-                <input className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.state} onChange={e => setField("state", e.target.value)}
-                  placeholder="Ex.: GO" maxLength={2} />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Latitude</label>
-                <input type="number" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.latitude} onChange={e => setField("latitude", e.target.value)}
-                  placeholder="-14.123" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Longitude</label>
-                <input type="number" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.longitude} onChange={e => setField("longitude", e.target.value)}
-                  placeholder="-47.512" />
-              </div>
+              <NumberField id="hist" label="Ocorrências históricas na área" value={form.historicalOccurrences} onChange={(v) => set("historicalOccurrences", v)}
+                hint={areaMode ? "Vazio = contar ocorrências importadas num raio de 10 km." : undefined} />
             </div>
-          </div>
-
-          {/* Dados ambientais */}
-          <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">
-            <h2 className="font-semibold text-foreground flex items-center gap-2">
-              <Thermometer className="w-4 h-4 text-primary" /> Dados ambientais <span className="text-xs text-red-500">*obrigatórios</span>
-              <HelpTooltip text="Preencha com dados reais ou use um cenário demonstrativo. Temperatura, umidade, vento e precipitação são obrigatórios." />
-            </h2>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Temperatura (°C) *</label>
-                <input type="number" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.temperature} onChange={e => setField("temperature", e.target.value)}
-                  placeholder="Ex.: 38" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Umidade relativa (%) *</label>
-                <input type="number" min="0" max="100" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.humidity} onChange={e => setField("humidity", e.target.value)}
-                  placeholder="Ex.: 25" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Velocidade do vento (km/h) *</label>
-                <input type="number" min="0" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.windSpeed} onChange={e => setField("windSpeed", e.target.value)}
-                  placeholder="Ex.: 30" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Precipitação últimas 72h (mm) *</label>
-                <input type="number" min="0" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.recentRainfall} onChange={e => setField("recentRainfall", e.target.value)}
-                  placeholder="Ex.: 0" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Condição da vegetação</label>
-                <select className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.vegetationCondition}
-                  onChange={e => setField("vegetationCondition", Number(e.target.value) as 0|1|2|3)}>
-                  {[0,1,2,3].map(v => <option key={v} value={v}>{VEG_LABELS[v]}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Ocorrências históricas</label>
-                <input type="number" min="0" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={form.historicalOccurrences} onChange={e => setField("historicalOccurrences", e.target.value)}
-                  placeholder="Ex.: 2" />
-              </div>
-            </div>
-
-            {/* Foco próximo */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                <input type="checkbox" checked={form.nearbyHotspot}
-                  onChange={e => setField("nearbyHotspot", e.target.checked)}
-                  className="rounded" />
-                Existe foco de incêndio próximo à área
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" checked={form.nearbyHotspot} onChange={(e) => set("nearbyHotspot", e.target.checked)} />
+                Há foco de calor ou incêndio conhecido próximo à área
               </label>
               {form.nearbyHotspot && (
-                <div className="mt-2">
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Distância estimada do foco (km)</label>
-                  <input type="number" min="0" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    value={form.hotspotDistance} onChange={e => setField("hotspotDistance", e.target.value)}
-                    placeholder="Ex.: 8" />
-                </div>
+                <div className="mt-2"><NumberField id="dist" label="Distância estimada (km)" value={form.hotspotDistance} onChange={(v) => set("hotspotDistance", v)} /></div>
               )}
             </div>
-
-            {/* Qualidade dos dados */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Qualidade da fonte de dados</label>
-              <select className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                value={form.dataQuality}
-                onChange={e => setField("dataQuality", Number(e.target.value) as 0|1|2|3)}>
-                {[0,1,2,3].map(v => <option key={v} value={v}>{QUALITY_LABELS[v]}</option>)}
+              <label htmlFor="q" className="text-xs font-medium text-muted-foreground mb-1 block">Qualidade declarada dos dados</label>
+              <select id="q" className={inputCls} value={form.dataQuality} onChange={(e) => set("dataQuality", e.target.value)}>
+                {QUALITY.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
               </select>
             </div>
-          </div>
+            {areaMode && (
+              <div>
+                <label htmlFor="notes" className="text-xs font-medium text-muted-foreground mb-1 block">Observações (opcional)</label>
+                <textarea id="notes" className={`${inputCls} h-16`} value={form.notes} onChange={(e) => set("notes", e.target.value)} maxLength={2000} />
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Cenários demonstrativos (valores fictícios para teste):</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(DEMO_SCENARIOS).map(([k, s]) => <Button key={k} type="button" variant="outline" size="sm" onClick={() => applyScenario(k)}>{s.label}</Button>)}
+              </div>
+            </div>
+          </section>
 
-          {/* Errors */}
           {errors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <p className="text-sm font-semibold text-red-700 mb-1">Corrija os erros antes de analisar:</p>
-              <ul className="list-disc list-inside space-y-1">
-                {errors.map((e, i) => <li key={i} className="text-sm text-red-600">{e}</li>)}
-              </ul>
+            <div role="alert" className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <ul className="list-disc list-inside space-y-1 text-sm text-red-800">{errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
             </div>
           )}
 
-          <Button onClick={handleAnalyze} disabled={isAnalyzing} size="lg" className="w-full font-bold">
-            {isAnalyzing ? (
-              <span className="flex items-center gap-2"><span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />Analisando...</span>
-            ) : (
-              <span className="flex items-center gap-2"><Flame className="w-5 h-5" />Analisar risco</span>
-            )}
+          <Button onClick={analyze} disabled={busy || (areaMode && areas.length === 0)} size="lg" className="w-full font-bold" data-testid="button-analyze">
+            {busy ? "Analisando..." : <><Flame className="w-5 h-5 mr-2" aria-hidden />{areaMode ? "Analisar e registrar" : "Simular risco"}</>}
           </Button>
-
-          <p className="text-xs text-muted-foreground text-center flex items-start gap-1">
-            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            {DECISION_SUPPORT_DISCLAIMER}
-          </p>
+          <p className="text-xs text-muted-foreground flex items-start gap-1"><Info className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden />{DECISION_SUPPORT_DISCLAIMER}</p>
         </div>
 
-        {/* ── Resultado ─────────────────────────────────────────────────── */}
-        {result ? (
-          <div className="space-y-5" id="result">
-            {/* Score */}
-            <div className="bg-card border border-border/50 rounded-2xl p-6" data-tour="risk-result">
-              <div className="flex flex-col items-center gap-4 mb-5">
-                <ScoreGauge score={result.score} level={result.level} />
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">{riskLevelDescription(result.level)}</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    Confiança: {Math.round(result.confidence * 100)}% · v{result.model_version} ·{" "}
-                    {format(new Date(result.calculated_at), "d 'de' MMM yyyy 'às' HH:mm", { locale: ptBR })}
-                  </p>
-                  {/* Model type badge */}
-                  <span className={cn(
-                    "inline-flex items-center gap-1 mt-2 text-xs px-2 py-0.5 rounded-full border font-medium",
-                    result.model_type === "supervised-ml"
-                      ? "bg-violet-50 text-violet-700 border-violet-200"
-                      : "bg-slate-50 text-slate-600 border-slate-200"
-                  )}>
-                    {result.model_type === "supervised-ml"
-                      ? <><FlaskConical className="w-3 h-3" /> Modelo supervisionado experimental</>
-                      : <><Cpu className="w-3 h-3" /> Motor demonstrativo baseado em regras</>
-                    }
-                  </span>
-                  {result.is_simulated && (
-                    <span className="inline-block mt-1 ml-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
-                      {SIMULATED_DATA_LABEL}
+        <div className="space-y-5" id="result" aria-live="polite">
+          {result ? (
+            <>
+              <section className="bg-card border rounded-2xl p-6">
+                <div className="flex flex-col items-center gap-3">
+                  <ScoreGauge score={result.score} level={result.level} />
+                  <p className="text-sm text-muted-foreground text-center">{riskLevelDescription(result.level)}</p>
+                  <dl className="text-xs text-muted-foreground grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 w-full max-w-sm">
+                    {result.id && (<><dt>Análise</dt><dd>#{result.id}{result.areaName ? ` · ${result.areaName}` : ""}</dd></>)}
+                    <dt>Processada em</dt><dd>{format(new Date(result.at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</dd>
+                    <dt>Motor</dt><dd>{engineLabel(result.engineType)}</dd>
+                    <dt>Versão</dt><dd className="break-all">{result.version}</dd>
+                    {result.qualityLabel && (<><dt>Qualidade</dt><dd>{result.qualityLabel}</dd></>)}
+                  </dl>
+                  {result.mode === "simulation" && (
+                    <span className="text-xs bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded-full">Simulação — não armazenada</span>
+                  )}
+                  {result.isExperimental && (
+                    <span className="text-xs bg-violet-50 text-violet-800 border border-violet-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <FlaskConical className="w-3 h-3" aria-hidden />Resultado experimental — modelo treinado com dados sintéticos
                     </span>
                   )}
+                  {result.alert && (
+                    <Link href="/alerts" className="text-sm font-medium flex items-center gap-1 text-orange-800 underline">
+                      <Bell className="w-4 h-4" aria-hidden />{result.alert.created ? "Alerta emitido" : "Alerta aberto atualizado"} (#{result.alert.id})
+                    </Link>
+                  )}
                 </div>
-              </div>
+                <Button variant="outline" size="sm" onClick={() => window.print()} className="w-full mt-4"><Printer className="w-4 h-4 mr-2" aria-hidden />Imprimir / salvar em PDF</Button>
+              </section>
 
-              <Button variant="outline" size="sm" onClick={() => window.print()} className="w-full">
-                <Printer className="w-4 h-4 mr-2" /> Imprimir relatório
-              </Button>
+              <section className="bg-card border rounded-2xl p-6" aria-labelledby="sec-factors">
+                <h3 id="sec-factors" className="font-semibold mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-600" aria-hidden />Fatores que influenciaram o índice</h3>
+                <ul className="space-y-2">
+                  {result.factors.map((f, i) => (
+                    <li key={i} className="flex items-start gap-3 p-3 bg-muted/30 rounded-xl">
+                      <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded shrink-0", f.contribution > 0 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800")}>
+                        {f.contribution > 0 ? `+${f.contribution}` : f.contribution} pts
+                      </span>
+                      <div className="min-w-0"><p className="text-sm font-semibold">{f.name} <span className="text-muted-foreground font-normal">— {f.value}</span></p>
+                        <p className="text-xs text-muted-foreground">{f.description}</p></div>
+                    </li>
+                  ))}
+                  {result.factors.length === 0 && <li className="text-sm text-muted-foreground">Nenhum fator elevou o índice.</li>}
+                </ul>
+              </section>
+
+              {result.mode === "area" && (
+                <section className="bg-card border rounded-2xl p-6" aria-labelledby="sec-src">
+                  <h3 id="sec-src" className="font-semibold mb-3 flex items-center gap-2"><Database className="w-4 h-4 text-primary" aria-hidden />Fontes e procedência dos dados</h3>
+                  <ul className="text-sm space-y-1 mb-3">
+                    {result.dataSources?.map((s) => (
+                      <li key={s.key}>• {s.name}{s.referenceAt && ` — referência ${format(new Date(s.referenceAt), "dd/MM/yyyy HH:mm")} UTC`}{s.licence && <span className="text-xs text-muted-foreground"> ({s.licence})</span>}</li>
+                    ))}
+                  </ul>
+                  <table className="w-full text-xs"><caption className="sr-only">Procedência por variável</caption>
+                    <thead><tr className="text-left text-muted-foreground"><th className="py-1">Variável</th><th>Origem</th></tr></thead>
+                    <tbody>{result.provenance?.map((p) => <tr key={p.field} className="border-t"><td className="py-1">{FIELD_LABEL[p.field] ?? p.field}</td><td>{ORIGIN_LABEL[p.origin] ?? p.origin}</td></tr>)}</tbody>
+                  </table>
+                </section>
+              )}
+
+              <section className="bg-card border rounded-2xl p-6" aria-labelledby="sec-rec">
+                <h3 id="sec-rec" className="font-semibold mb-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-700" aria-hidden />Recomendações preventivas</h3>
+                <ul className="space-y-2">
+                  {result.recommendations.map((r, i) => (
+                    <li key={i} className={cn("p-3 rounded-xl border text-sm", priorityColor[r.priority] ?? "bg-muted/30")}>
+                      <p className="font-semibold"><span className="capitalize">{r.priority}</span>: {r.action}</p>
+                      <p className="text-xs opacity-90">{r.rationale}</p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="bg-amber-50 text-amber-950 border border-amber-200 rounded-2xl p-5" aria-labelledby="sec-lim">
+                <h3 id="sec-lim" className="font-semibold mb-2 flex items-center gap-2"><ShieldAlert className="w-4 h-4" aria-hidden />Limitações e incertezas</h3>
+                <ul className="list-disc list-inside text-xs space-y-1">
+                  {(result.limitations ?? [
+                    "Simulação com valores informados pelo usuário, não verificados.",
+                    "Limiares do motor de regras ainda não calibrados com dados reais de incêndio.",
+                    DECISION_SUPPORT_DISCLAIMER,
+                  ]).map((l, i) => <li key={i}>{l}</li>)}
+                </ul>
+              </section>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center min-h-[300px] text-center bg-muted/20 border border-dashed rounded-2xl p-10">
+              <Flame className="w-12 h-12 text-muted-foreground/30 mb-4" aria-hidden />
+              <p className="font-semibold text-muted-foreground">O resultado aparecerá aqui</p>
             </div>
+          )}
 
-            {/* Fatores */}
-            <div className="bg-card border border-border/50 rounded-2xl p-6" data-tour="risk-factors">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600" /> Fatores que influenciaram o risco
-                <HelpTooltip text="Esta seção explica quais fatores aumentaram ou reduziram a pontuação, tornando o resultado mais transparente." />
-              </h3>
-              <div className="space-y-3">
-                {result.factors.map((f, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 bg-muted/30 rounded-xl">
-                    <div className={cn(
-                      "text-xs font-bold px-1.5 py-0.5 rounded shrink-0 mt-0.5",
-                      f.contribution > 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                    )}>
-                      {f.contribution > 0 ? `+${f.contribution}` : f.contribution}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{f.name} <span className="text-muted-foreground font-normal">— {f.value}</span></p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{f.description}</p>
-                    </div>
-                    <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0",
-                      f.weight === "alto" ? "bg-red-50 text-red-600" :
-                      f.weight === "médio" ? "bg-amber-50 text-amber-600" : "bg-slate-50 text-slate-600"
-                    )}>{f.weight}</span>
-                  </div>
+          {areaMode && history.length > 0 && (
+            <section className="bg-card border rounded-2xl p-6" aria-labelledby="sec-hist">
+              <h3 id="sec-hist" className="font-semibold mb-3 flex items-center gap-2"><History className="w-4 h-4 text-primary" aria-hidden />Histórico da área</h3>
+              <ul className="divide-y text-sm">
+                {history.map((h) => (
+                  <li key={h.id}>
+                    <button className="w-full flex items-center justify-between gap-2 py-2 text-left hover:bg-muted/30 rounded" onClick={() => setResult(fromStored(h, area?.name))}>
+                      <span>#{h.id} · {format(new Date(String(h.createdAt)), "dd/MM/yyyy HH:mm", { locale: ptBR })}{h.isExperimental && " · experimental"}</span>
+                      <RiskBadge level={h.level as RiskLevel} score={h.score} size="sm" />
+                    </button>
+                  </li>
                 ))}
-                {result.factors.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Nenhum fator de risco significativo identificado.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Recomendações */}
-            <div className="bg-card border border-border/50 rounded-2xl p-6">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-600" /> Recomendações preventivas
-              </h3>
-              <div className="space-y-3">
-                {result.recommendations.map((r, i) => (
-                  <div key={i} className={cn("p-3 rounded-xl border text-sm", priorityColor[r.priority] ?? "text-slate-700 bg-slate-50 border-slate-200")}>
-                    <p className="font-semibold capitalize mb-1">{r.priority}: {r.action}</p>
-                    <p className="text-xs opacity-80">{r.rationale}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Aviso ML experimental */}
-            {result.model_type === "supervised-ml" && (
-              <div className="flex items-start gap-2 text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded-xl p-3">
-                <FlaskConical className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                Resultado produzido por modelo supervisionado experimental treinado com dataset sintético.
-                Métricas iniciais demonstram viabilidade técnica em ambiente controlado.
-                Validação com dados reais prevista durante a Prova de Valor.
-              </div>
-            )}
-
-            <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-xl p-3">
-              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              {DECISION_SUPPORT_DISCLAIMER}
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center bg-muted/20 border border-dashed border-border rounded-2xl p-12">
-            <Flame className="w-12 h-12 text-muted-foreground/30 mb-4" />
-            <p className="font-semibold text-muted-foreground">Resultado aparecerá aqui</p>
-            <p className="text-sm text-muted-foreground/60 mt-2">Preencha os dados ao lado e clique em "Analisar risco"</p>
-          </div>
-        )}
+              </ul>
+            </section>
+          )}
+        </div>
       </div>
     </Layout>
   );
