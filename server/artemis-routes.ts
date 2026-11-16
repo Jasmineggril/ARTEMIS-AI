@@ -551,6 +551,138 @@ export function registerArtemisRoutes(app: Express) {
     res.send("﻿" + csv);
   }));
 
+  // ── Report per area and period (JSON, printable in the UI) ─────────────────
+  const periodSchema = z.object({
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  });
+  function periodBounds(q: z.infer<typeof periodSchema>) {
+    const to = q.to ? new Date(`${q.to}T23:59:59.999Z`) : new Date();
+    const from = q.from ? new Date(`${q.from}T00:00:00.000Z`) : new Date(to.getTime() - 90 * 86_400_000);
+    if (from > to) throw new z.ZodError([{ code: "custom", path: ["from"], message: "Data inicial posterior à final." }]);
+    return { from, to };
+  }
+
+  app.get("/api/reports/areas/:id", requireOrg(), handle(async (req, res) => {
+    const area = await loadArea(req.ctx.organizationId, idParam(req.params.id));
+    if (!area) return res.status(404).json({ message: "Área não encontrada." });
+    const { from, to } = periodBounds(periodSchema.parse(req.query));
+    const orgId = req.ctx.organizationId;
+
+    const analyses = await db
+      .select()
+      .from(riskAnalyses)
+      .where(and(eq(riskAnalyses.organizationId, orgId), eq(riskAnalyses.areaId, area.id),
+        gte(riskAnalyses.createdAt, from), lte(riskAnalyses.createdAt, to)))
+      .orderBy(desc(riskAnalyses.createdAt));
+    const areaAlerts = await db
+      .select()
+      .from(alerts)
+      .where(and(eq(alerts.organizationId, orgId), eq(alerts.areaId, area.id),
+        gte(alerts.createdAt, from), lte(alerts.createdAt, to)))
+      .orderBy(desc(alerts.createdAt));
+
+    const distribution: Record<string, number> = { baixo: 0, moderado: 0, alto: 0, "crítico": 0 };
+    const sources = new Map<string, { name: string; count: number }>();
+    const engines = new Map<string, number>();
+    const limitations = new Set<string>();
+    const quality: Record<string, number> = {};
+    for (const a of analyses) {
+      distribution[a.level] = (distribution[a.level] ?? 0) + 1;
+      for (const s of (a.dataSources as any[]) ?? []) {
+        const cur = sources.get(s.key) ?? { name: s.name, count: 0 };
+        cur.count++;
+        sources.set(s.key, cur);
+      }
+      const eng = `${a.engineType ?? "?"} · ${a.calculationVersion ?? "?"}`;
+      engines.set(eng, (engines.get(eng) ?? 0) + 1);
+      ((a.limitations as string[]) ?? []).forEach((l) => limitations.add(l));
+      const ql = (a.dataQuality as any)?.level ?? "não informada";
+      quality[ql] = (quality[ql] ?? 0) + 1;
+    }
+    const scores = analyses.map((a) => a.score);
+    await audit(req, "report.viewed", { type: "area", id: area.id }, { from: from.toISOString(), to: to.toISOString() });
+    res.json({
+      generatedAt: new Date().toISOString(),
+      systemVersion: ENGINE_VERSION_LABEL,
+      period: { from: from.toISOString(), to: to.toISOString() },
+      area,
+      summary: {
+        analyses: analyses.length,
+        experimental: analyses.filter((a) => a.isExperimental).length,
+        scoreMin: scores.length ? Math.min(...scores) : null,
+        scoreMax: scores.length ? Math.max(...scores) : null,
+        scoreAvg: scores.length ? Math.round(scores.reduce((s, v) => s + v, 0) / scores.length) : null,
+        distribution,
+        qualityLevels: quality,
+      },
+      sources: Array.from(sources, ([key, v]) => ({ key, ...v })),
+      engines: Array.from(engines, ([engine, count]) => ({ engine, count })),
+      analyses: analyses.map((a) => ({
+        id: a.id, createdAt: a.createdAt, score: a.score, level: a.level, engineType: a.engineType,
+        isExperimental: a.isExperimental,
+        topFactors: ((a.factors as any[]) ?? []).filter((f) => f.contribution > 0)
+          .sort((x, y) => y.contribution - x.contribution).slice(0, 3).map((f) => `${f.name} (${f.value})`),
+      })),
+      alerts: areaAlerts.map((a) => ({
+        id: a.id, createdAt: a.createdAt, severity: a.severity, status: a.status, occurrenceCount: a.occurrenceCount,
+        recommendations: a.recommendations,
+      })),
+      limitations: Array.from(limitations),
+    });
+  }));
+
+  // ── Organization-wide indicators (Inteligência Operacional) ────────────────
+  app.get("/api/insights", requireOrg(), handle(async (req, res) => {
+    const { from, to } = periodBounds(periodSchema.parse(req.query));
+    const orgId = req.ctx.organizationId;
+    const inPeriod = and(eq(riskAnalyses.organizationId, orgId), gte(riskAnalyses.createdAt, from), lte(riskAnalyses.createdAt, to));
+
+    const weekly = await db
+      .select({
+        week: sql<string>`to_char(date_trunc('week', ${riskAnalyses.createdAt}), 'YYYY-MM-DD')`,
+        level: riskAnalyses.level,
+        n: sql<number>`count(*)::int`,
+      })
+      .from(riskAnalyses).where(inPeriod).groupBy(sql`1`, riskAnalyses.level).orderBy(sql`1`);
+    const factorRows = await db.select({ factors: riskAnalyses.factors }).from(riskAnalyses).where(inPeriod);
+    const factorCount = new Map<string, number>();
+    for (const r of factorRows) {
+      for (const f of (r.factors as any[]) ?? []) {
+        if (f?.contribution > 0) factorCount.set(f.name, (factorCount.get(f.name) ?? 0) + 1);
+      }
+    }
+    const alertStatus = await db
+      .select({ status: alerts.status, n: sql<number>`count(*)::int` })
+      .from(alerts)
+      .where(and(eq(alerts.organizationId, orgId), gte(alerts.createdAt, from), lte(alerts.createdAt, to)))
+      .groupBy(alerts.status);
+    const occMonthly = await db
+      .select({ month: sql<string>`substr(${fireOccurrences.occurrenceDate}, 1, 7)`, n: sql<number>`count(*)::int` })
+      .from(fireOccurrences)
+      .where(and(eq(fireOccurrences.organizationId, orgId), isNotNull(fireOccurrences.occurrenceDate)))
+      .groupBy(sql`1`).orderBy(sql`1`);
+
+    const weeks = new Map<string, Record<string, number>>();
+    for (const w of weekly) {
+      const row = weeks.get(w.week) ?? { baixo: 0, moderado: 0, alto: 0, "crítico": 0 };
+      row[w.level] = w.n;
+      weeks.set(w.week, row);
+    }
+    res.json({
+      generatedAt: new Date().toISOString(),
+      period: { from: from.toISOString(), to: to.toISOString() },
+      analysesByWeek: { source: "Análises armazenadas da organização", points: Array.from(weeks, ([week, v]) => ({ week, ...v })) },
+      frequentFactors: {
+        source: "Fatores que elevaram o índice nas análises do período",
+        items: Array.from(factorCount, ([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 8),
+        totalAnalyses: factorRows.length,
+      },
+      alertsByStatus: { source: "Alertas emitidos no período", items: alertStatus },
+      occurrencesByMonth: { source: "Ocorrências importadas (todas as datas; não é integração oficial com o Sisfogo)", points: occMonthly },
+    });
+  }));
+
   // ── Audit log ──────────────────────────────────────────────────────────────
   app.get("/api/audit-logs", requireOrg("admin"), handle(async (req, res) => {
     const rows = await db

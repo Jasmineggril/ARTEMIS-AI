@@ -161,6 +161,21 @@ export function registerAuthRoutes(app: Express) {
           .where(and(eq(organizationMembers.userId, user.id), eq(organizationMembers.organizationId, req.session.organizationId)));
         organization = row ?? null;
       }
+      if (!organization) {
+        // Active organization missing or membership revoked: move the session
+        // to another organization the user still belongs to (if any).
+        const next = await firstMembership(user.id);
+        req.session.organizationId = next?.organizationId;
+        await save(req);
+        if (next) {
+          const [row] = await db
+            .select({ id: organizations.id, name: organizations.name, type: organizations.type, role: organizationMembers.role })
+            .from(organizationMembers)
+            .innerJoin(organizations, eq(organizations.id, organizationMembers.organizationId))
+            .where(and(eq(organizationMembers.userId, user.id), eq(organizationMembers.organizationId, next.organizationId)));
+          organization = row ?? null;
+        }
+      }
       res.json({ userId: user.id, email: user.email, name: user.name, platformRole: user.platformRole, organization });
     } catch (err) {
       next(err);

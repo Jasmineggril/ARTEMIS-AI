@@ -358,6 +358,11 @@ test("roles: a viewer member can read but not create areas or change alerts", as
   // admin cannot be granted owner by non-owner; alice (owner) removes bob
   assert.equal((await alice.del(`/api/organization/members/${(await alice.get("/api/organization/members")).body.find((m: any) => m.email === "bob@test.dev").userId}`)).status, 204);
   assert.equal((await bob.get("/api/areas")).status, 403, "membership re-checked on every request");
+  // the session recovers to an organization he still belongs to
+  const st = await bob.get("/api/auth/status");
+  assert.notEqual(st.body.organization.id, aliceOrgId);
+  assert.equal(st.body.organization.role, "owner");
+  assert.equal((await bob.get("/api/areas")).status, 200);
 });
 
 // ── Dashboard, reports, audit ────────────────────────────────────────────────
@@ -382,6 +387,45 @@ test("CSV report export works and neutralises formula injection", async () => {
   assert.equal(lines.length, 1 + 4);
   assert.ok(!/,=HYPERLINK/.test(String(r.body)));
   assert.match(String(r.body), /'=HYPERLINK/);
+});
+
+test("area report aggregates the period with sources, alerts and limitations", async () => {
+  const r = await alice.get(`/api/reports/areas/${areaId}`);
+  assert.equal(r.status, 200);
+  assert.equal(r.body.area.id, areaId);
+  assert.equal(r.body.summary.analyses, 4);
+  assert.equal(r.body.summary.distribution["crítico"], 3);
+  assert.equal(r.body.summary.distribution.baixo, 1);
+  assert.equal(r.body.summary.scoreMax <= 100 && r.body.summary.scoreMin >= 0, true);
+  assert.ok(r.body.sources.some((s: any) => s.key === "manual"));
+  assert.ok(r.body.sources.some((s: any) => s.key === "fire_occurrences"));
+  // first alert was resolved in the lifecycle test, so the later critical analysis opened a new one
+  assert.equal(r.body.alerts.length, 2);
+  assert.deepEqual(r.body.alerts.map((a: any) => a.status).sort(), ["novo", "resolvido"]);
+  assert.ok(r.body.limitations.some((l: string) => /não substitui/i.test(l)));
+  assert.ok(r.body.systemVersion);
+  // empty past period
+  const past = await alice.get(`/api/reports/areas/${areaId}?from=2020-01-01&to=2020-01-31`);
+  assert.equal(past.body.summary.analyses, 0);
+  assert.equal(past.body.summary.scoreAvg, null);
+  // invalid period
+  assert.equal((await alice.get(`/api/reports/areas/${areaId}?from=2026-02-01&to=2026-01-01`)).status, 400);
+  // other organization
+  assert.equal((await bob.get(`/api/reports/areas/${areaId}`)).status, 404);
+});
+
+test("insights aggregate only the caller's organization", async () => {
+  const r = await alice.get("/api/insights");
+  assert.equal(r.status, 200);
+  const weekTotal = r.body.analysesByWeek.points.reduce((s: number, p: any) => s + p.baixo + p.moderado + p.alto + p["crítico"], 0);
+  assert.equal(weekTotal, 4);
+  assert.equal(r.body.frequentFactors.totalAnalyses, 4);
+  assert.ok(r.body.frequentFactors.items.length > 0);
+  assert.deepEqual(r.body.occurrencesByMonth.points, [{ month: "2025-08", n: 2 }]);
+  const b = await bob.get("/api/insights");
+  assert.equal(b.status, 200);
+  assert.equal(b.body.frequentFactors.totalAnalyses, 0);
+  assert.equal(b.body.occurrencesByMonth.points.length, 0);
 });
 
 test("critical operations are written to the audit log", async () => {

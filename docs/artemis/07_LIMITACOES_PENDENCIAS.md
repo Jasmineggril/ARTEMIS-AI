@@ -16,7 +16,6 @@
 | Fase | Pendência | Dependência |
 |---|---|---|
 | 2 | E-mail de redefinição de senha e de alertas, com limite de frequência e registro de entrega | Provedor SMTP / conta |
-| 2 | Páginas **Relatórios** e **Inteligência Operacional** ainda com dados demonstrativos | — |
 | 2 | Relatório PDF gerado no servidor | — |
 | 2 | Sensores/leituras e `weather_data` sem escopo de organização (restritos a `platform_admin` na escrita) | Decidir se sensores IoT permanecem no escopo |
 | 2 | Painel de administração da plataforma (`/admin`) ainda é a tela legada de sensores | — |

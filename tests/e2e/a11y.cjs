@@ -7,7 +7,7 @@ const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:5000';
   await p.fill('#email', process.env.E2E_DEMO_EMAIL ?? 'demo@artemis.local'); await p.fill('#password', process.env.E2E_DEMO_PASSWORD ?? '');
   await p.click('[data-testid=button-submit-login]'); await p.waitForURL('**/dashboard');
   await p.evaluate(() => localStorage.setItem('platform_onboarding_status', JSON.stringify({ neverShow: true, started: true, completed: true })));
-  const pages = ['/login', '/signup', '/privacidade', '/dashboard', '/areas', '/risk-analysis', '/alerts', '/maps', '/organization'];
+  const pages = ['/login', '/signup', '/privacidade', '/dashboard', '/areas', '/risk-analysis', '/alerts', '/maps', '/organization', '/reports', '/insights'];
   for (const path of pages) {
     const pg = path === '/login' || path === '/signup' ? await (await b.newContext()).newPage() : p;
     await pg.goto(BASE + path); await pg.waitForTimeout(1200);

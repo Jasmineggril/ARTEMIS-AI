@@ -51,6 +51,7 @@ Esquema da área: `name` (2–160), `operationType` (`propriedade_rural`, `agroi
 | POST | `/api/areas/:id/analyses` | analyst | Limite 30/min |
 | GET | `/api/areas/:id/analyses?limit=` | viewer | Mais recentes primeiro |
 | GET | `/api/analyses/:id` | viewer | |
+| GET | `/api/reports/areas/:id?from=&to=` | viewer | Relatório agregado do período (padrão: últimos 90 dias) |
 | GET | `/api/reports/areas/:id/analyses.csv` | analyst | CSV UTF-8 com BOM; células que começam com `= + - @` são prefixadas com `'` |
 
 Requisição:
@@ -99,6 +100,7 @@ Transições: `novo → reconhecido | em_acompanhamento | resolvido | descartado
 | Método | Rota | Papel | Observações |
 |---|---|---|---|
 | GET | `/api/dashboard/summary` | viewer | Cada bloco traz `source` e `lastUpdate` |
+| GET | `/api/insights?from=&to=` | viewer | Análises por semana e nível, fatores frequentes, alertas por status, ocorrências por mês |
 | GET | `/api/connectors` | público | Situação real de cada fonte |
 | GET | `/api/health` | público | `{ status, database, riskEngine }` — sem dados |
 

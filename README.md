@@ -23,7 +23,7 @@ Plataforma brasileira de inteligência ambiental para prevenção de incêndios,
 | Alertas com ciclo de vida, histórico e deduplicação | Implementado e testado |
 | Importação CSV/XLS/XLSX com revalidação no servidor | Implementado e testado |
 | Mapa com áreas, polígonos e ocorrências filtráveis | Parcial |
-| Painel com indicadores da organização (fonte e data em cada bloco) | Implementado |
+| Painel, relatório por área/período e indicadores agregados (fonte e data em cada bloco) | Implementado e testado |
 | Exportação CSV | Implementado e testado |
 | Docker Compose (Caddy + API + motor + PostgreSQL), backup cifrado | Backup/restauração testados; imagens não construídas aqui |
 
@@ -82,10 +82,10 @@ DEMO_SEED_PASSWORD='escolhaUmaSenha1' npm run db:seed-demo
 | `npm run check` | TypeScript (0 erros) |
 | `npm test` | Motor de risco TS (34) + hash de senha (10) |
 | `npm run test:unit` | Conector, procedência, alertas, segurança, CSV, GeoJSON, importação (14) |
-| `TEST_DATABASE_URL=... npm run test:integration` | API completa contra PostgreSQL real, incl. isolamento entre organizações (27). **Apaga o banco de teste**; o nome precisa conter `test`. Com `TEST_PYTHON_URL` usa o FastAPI real. |
+| `TEST_DATABASE_URL=... npm run test:integration` | API completa contra PostgreSQL real, incl. isolamento entre organizações (29). **Apaga o banco de teste**; o nome precisa conter `test`. Com `TEST_PYTHON_URL` usa o FastAPI real. |
 | `npm run test:python` | Serviço FastAPI (109) |
-| `E2E_BASE_URL=... npm run test:e2e` | Fluxos no navegador, desktop e celular (9) |
-| `E2E_BASE_URL=... E2E_DEMO_PASSWORD=... npm run test:a11y` | axe-core WCAG A/AA em 9 telas |
+| `E2E_BASE_URL=... npm run test:e2e` | Fluxos no navegador, desktop e celular (11) |
+| `E2E_BASE_URL=... E2E_DEMO_PASSWORD=... npm run test:a11y` | axe-core WCAG A/AA em 11 telas |
 
 ## Tecnologias
 

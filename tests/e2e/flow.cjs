@@ -73,11 +73,23 @@ const shot = (p, n) => p.screenshot({ path: `${process.env.E2E_OUT ?? '/tmp'}/${
     await page.waitForTimeout(1500);
     await shot(page, '4-map');
   });
+  await step('report shows stored analyses', async () => {
+    await page.goto(BASE + '/reports');
+    await page.getByRole('heading', { name: 'Histórico das análises' }).waitFor();
+    await page.getByRole('heading', { name: 'Limitações metodológicas' }).waitFor();
+    await shot(page, '6-report');
+  });
+  await step('insights charts render from data', async () => {
+    await page.goto(BASE + '/insights');
+    await page.getByText('Análises por semana e nível de risco').waitFor();
+    await page.locator('.recharts-rectangle').first().waitFor();
+    await shot(page, '7-insights');
+  });
   await step('mobile layout (no horizontal scroll)', async () => {
     const m = await browser.newContext({ ...devices['iPhone 13'] });
     await m.addCookies(await ctx.cookies());
     const mp = await m.newPage();
-    for (const path of ['/dashboard', '/areas', '/risk-analysis', '/alerts']) {
+    for (const path of ['/dashboard', '/areas', '/risk-analysis', '/alerts', '/reports', '/insights']) {
       await mp.goto(BASE + path); await mp.waitForTimeout(800);
       const over = await mp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       if (over > 2) throw new Error(`${path} overflows by ${over}px`);
