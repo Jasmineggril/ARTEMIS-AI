@@ -621,6 +621,18 @@ test("public hotspot API: separate from imported records, explicit caveats, boun
   assert.ok(!JSON.stringify(occ.body).includes("NOAA"));
 });
 
+test("public hotspot grid aggregates detections for overview maps", async () => {
+  const g = await anon.get("/api/public/hotspots/grid");
+  assert.equal(g.status, 200);
+  assert.equal(g.body.total, 12, "grid total equals the stored detections in range");
+  assert.ok(g.body.cells.length >= 1 && g.body.cells.length <= 12);
+  assert.ok(g.body.cells.every((c: any) => c.n >= 1 && Math.abs(c.lat) <= 90));
+  assert.equal(g.body.states.reduce((a: number, s: any) => a + s.n, 0) <= 12, true);
+  assert.equal(g.body.states[0].state !== undefined, true);
+  assert.ok(g.body.lastSyncAt);
+  assert.equal((await anon.get("/api/public/hotspots/grid?cell=0")).status, 400);
+});
+
 test("analysis infers nearby hotspot from fresh INPE data and records full traceability", async () => {
   const { nearbyHotspot, hotspotDistance, ...rest } = CRITICAL_INPUTS;
   const r = await alice.post(`/api/areas/${areaId}/analyses`, { inputs: rest });

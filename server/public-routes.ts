@@ -119,6 +119,38 @@ export function registerPublicRoutes(app: Express) {
     res.json({ truncated: rows.length > LIMIT, points: rows.slice(0, LIMIT), period: { from: f.from, to: f.to }, notice: HOTSPOT_NOTICE });
   }));
 
+  // Aggregated grid for overview maps (~25 km cells by default). Small, cacheable payload.
+  app.get("/api/public/hotspots/grid", limiter, handle(async (req, res) => {
+    const f = hotspotFilterSchema.parse(req.query);
+    const { cell } = z.object({ cell: z.coerce.number().min(0.05).max(2).default(0.25) }).parse({ cell: req.query.cell });
+    const c = and(...hotspotConditions(f));
+    const cells = await db
+      .select({
+        lat: sql<number>`(floor(${satelliteHotspots.latitude} / ${cell}::float8) * ${cell}::float8 + ${cell}::float8 / 2)::float8`,
+        lng: sql<number>`(floor(${satelliteHotspots.longitude} / ${cell}::float8) * ${cell}::float8 + ${cell}::float8 / 2)::float8`,
+        n: sql<number>`count(*)::int`,
+      })
+      .from(satelliteHotspots).where(c).groupBy(sql`1`, sql`2`);
+    const states = await db
+      .select({
+        state: satelliteHotspots.state, n: sql<number>`count(*)::int`,
+        lat: sql<number>`avg(${satelliteHotspots.latitude})::float8`, lng: sql<number>`avg(${satelliteHotspots.longitude})::float8`,
+      })
+      .from(satelliteHotspots).where(and(c, sql`${satelliteHotspots.state} is not null`))
+      .groupBy(satelliteHotspots.state).orderBy(desc(sql`2`));
+    const [{ municipalities }] = await db
+      .select({ municipalities: sql<number>`count(distinct ${satelliteHotspots.municipalityIbgeCode})::int` })
+      .from(satelliteHotspots).where(c);
+    const [last] = await db.select({ at: sql<string | null>`max(${sourceSyncRuns.finishedAt})` })
+      .from(sourceSyncRuns).innerJoin(dataSources, eq(dataSources.id, sourceSyncRuns.sourceId))
+      .where(and(eq(dataSources.key, "inpe-queimadas"), eq(sourceSyncRuns.status, "sucesso")));
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.json({
+      period: { from: f.from, to: f.to }, cell, total: cells.reduce((a, x) => a + x.n, 0),
+      municipalities, cells, states, lastSyncAt: last?.at ?? null, notice: HOTSPOT_NOTICE,
+    });
+  }));
+
   app.get("/api/public/hotspots/summary", limiter, handle(async (req, res) => {
     const f = hotspotFilterSchema.parse(req.query);
     const c = and(...hotspotConditions(f));
