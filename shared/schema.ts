@@ -272,6 +272,20 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// ─── Sisfogo sync runs ───────────────────────────────────────────────────────
+export const sourceSyncRuns = pgTable("source_sync_runs", {
+  id: serial("id").primaryKey(),
+  sourceKey: text("source_key").notNull(),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  finishedAt: timestamp("finished_at"),
+  status: text("status").notNull().default("running"), // running | success | partial | failed
+  recordsFetched: integer("records_fetched").notNull().default(0),
+  recordsInserted: integer("records_inserted").notNull().default(0),
+  recordsSkipped: integer("records_skipped").notNull().default(0),
+  errorMessage: text("error_message"),
+  metadata: json("metadata"),
+});
+
 // ─── Insert schemas ───────────────────────────────────────────────────────────
 
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, role: true });
@@ -322,3 +336,4 @@ export type ImportBatch = typeof importBatches.$inferSelect;
 export type InsertImportBatch = z.infer<typeof insertImportBatchSchema>;
 export type FireOccurrence = typeof fireOccurrences.$inferSelect;
 export type InsertFireOccurrence = z.infer<typeof insertFireOccurrenceSchema>;
+export type SourceSyncRun = typeof sourceSyncRuns.$inferSelect;

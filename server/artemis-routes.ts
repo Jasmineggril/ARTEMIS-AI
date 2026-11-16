@@ -14,7 +14,7 @@ import {
   organizations, organizationMembers, users, ALERT_STATUSES, ORG_ROLES,
   type MonitoredArea, type Alert,
 } from "@shared/schema";
-import { requireOrg, idParam, roleAtLeast, rateLimit } from "./security";
+import { requireOrg, idParam, roleAtLeast, rateLimit, requireAuth } from "./security";
 import { audit } from "./services/audit";
 import {
   analysisRequestSchema, resolveInputs, runEngine, buildLimitations, buildDataSources,
@@ -23,6 +23,9 @@ import {
 import { upsertAlertFromAnalysis, transitionAlert, TransitionError, shouldAlert, allowedTransitions, OPEN_STATUSES } from "./services/alert-service";
 import { fetchRiskWeather, ConnectorError, OPEN_METEO_SOURCE } from "./connectors/open-meteo";
 import { BR_STATES } from "@shared/br-states";
+import { syncSisfogo } from "./services/sisfogo-sync";
+import { sourceSyncRuns } from "@shared/schema";
+import { SISFOGO_SOURCE } from "./connectors/sisfogo";
 
 const ENGINE_VERSION_LABEL = "artemis-api-1.0.0";
 
@@ -701,10 +704,33 @@ export function registerArtemisRoutes(app: Express) {
     res.json([
       { ...OPEN_METEO_SOURCE, status: "implementado", note: "Usado sob demanda na análise de risco. Sem armazenamento contínuo." },
       { key: "inpe-queimadas", name: "INPE — Programa Queimadas (focos de calor)", url: "https://terrabrasilis.dpi.inpe.br/queimadas/portal/", status: "não integrado", note: "Pendente: avaliar formato, licença e condições de acesso. Focos de calor não equivalem a incêndios confirmados." },
-      { key: "sisfogo", name: "Sisfogo (Ibama/Prevfogo)", url: "https://sisfogo.ibama.gov.br/", status: "importação manual", note: "Apenas importação de arquivos autorizados (CSV/XLS/XLSX). Não há integração oficial por API." },
+      { ...SISFOGO_SOURCE, status: "implementado", note: "API pública oficial (ROIs finalizados). Sincronização via POST /api/sync/sisfogo." },
       { key: "ibge", name: "IBGE — malhas territoriais e municípios", url: "https://servicodados.ibge.gov.br/api/docs", status: "não integrado", note: "Pendente." },
       { key: "file-import", name: "Importação de arquivos da organização", status: "implementado", note: "CSV, XLS e XLSX com validação e relatório por lote." },
     ]);
+  });
+
+  // ── Sisfogo sync (official public API) ─────────────────────────────────────
+  app.post("/api/sync/sisfogo", requireAuth, async (req, res, next) => {
+    try {
+      const [u] = await db.select({ role: users.role }).from(users).where(eq(users.id, req.session!.userId!));
+      if (u?.role !== "platform_admin") return res.status(403).json({ message: "Acesso restrito à administração da plataforma." });
+    } catch (e) { return next(e); }
+    try {
+      const summary = await syncSisfogo();
+      res.json(summary);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get("/api/source-sync-runs", requireAuth, async (_req, res, next) => {
+    try {
+      const rows = await db.select().from(sourceSyncRuns).orderBy(desc(sourceSyncRuns.startedAt)).limit(100);
+      res.json(rows);
+    } catch (err) {
+      next(err);
+    }
   });
 }
 

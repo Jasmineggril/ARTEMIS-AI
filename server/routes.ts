@@ -19,7 +19,7 @@ import crypto from "node:crypto";
 const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL ?? "http://127.0.0.1:8000";
 
 /** Platform-level administrator (users.role = 'platform_admin'). */
-async function requirePlatformAdmin(req: Request, res: Response, next: NextFunction) {
+export async function requirePlatformAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.session?.userId) return res.status(401).json({ message: "Autenticação necessária." });
   const [u] = await db.select({ role: users.role }).from(users).where(eq(users.id, req.session.userId));
   if (u?.role !== "platform_admin") return res.status(403).json({ message: "Acesso restrito à administração da plataforma." });
