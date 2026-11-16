@@ -13,12 +13,12 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | 5 | Frontend funcional e responsivo | Parcial | Login, cadastro, recuperação de senha, dashboard, áreas, análise, alertas, mapa, organização e privacidade usam a API real. Relatórios e Inteligência Operacional também usam a API real. Testado em 1366 px e iPhone 13. |
 | 6 | Backend integrado | Implementado e testado | 27 testes de integração com PostgreSQL real |
 | 7 | Serviço de análise de risco | Implementado e testado | 109 pytest; caminho Node→Python testado com o serviço no ar e com fallback |
-| 8 | Banco de dados e migrações | Implementado e testado | 11 migrações versionadas (0000–0010); 0004–0009 aplicadas em cópia restaurada e em dev com impressão digital idêntica; papéis com privilégio mínimo verificados; 0010 (Sisfogo) aplicada em dev; ver `09`, `10` e `11` |
-| 9 | Mapas e gráficos | Parcial | Áreas, polígonos e ocorrências com filtros; Consulta Pública (`/consulta-publica`) com mapa, gráficos por mês/hora e comparação de períodos. Pendente: agrupamento de pontos, desenho de polígono no mapa, busca por endereço, camada de focos de calor. |
+| 8 | Banco de dados e migrações | Implementado e testado | 12 migrações versionadas (0000–0011); 0004–0009 e 0011 aplicadas em cópia restaurada com impressão digital idêntica e em dev; executor recusa numeração duplicada, codificação corrompida e migração aplicada editada (checksum); papéis com privilégio mínimo; ver `09`–`12` |
+| 9 | Mapas e gráficos | Parcial | Mapa Ambiental com camadas independentes (Sisfogo, INPE, ocorrências importadas, áreas, resultado de risco), agrupamento de pontos, filtros (UF, município, período, tipo de local, área monitorada num raio de 10 km, nível), legenda com fonte e data de atualização; Consulta Pública com mapa, gráficos e comparação. Pendente: desenho de polígono, busca por endereço. |
 | 10 | Módulo de alertas | Implementado e testado | Ciclo de vida, histórico, deduplicação. **Notificação por e-mail pendente.** |
 | 11 | Importação de dados | Implementado e testado | Revalidação no servidor, motivos de rejeição por lote, isolamento por organização |
 | 12 | Relatórios | Parcial | Relatório por área e período (resumo, distribuição, histórico, alertas e medidas, fontes, qualidade, motor/versão, limitações), impressão/PDF pelo navegador e CSV. Pendentes: PDF gerado no servidor, mapa dentro do relatório, módulo PoV. |
-| 13 | Testes automatizados | Implementado | 34 + 10 TS legados, 19 unitários, 48 de integração (39 de API + 9 de banco; 2 exigem PostGIS), 109 pytest, 12 E2E, 12 telas axe |
+| 13 | Testes automatizados | Implementado | TS legados (`npm test`), 37 unitários, 66 de integração com PostgreSQL real (41 API, 9 banco, 16 Sisfogo; os 66 também com PostGIS), 109 pytest, 12 passos E2E, 15 telas axe sem violações |
 | 14 | Documentação das APIs | Implementado | `03_API.md` |
 | 15 | Docker Compose dev e produção | Implementado e testado (parcial) | Pilha `artemis_ai` + PostGIS executada: init de papéis, `migrate`, API saudável com papel restrito, banco sem porta publicada, backup/restauração via contêiner, recuperação após reinício. Não verificado aqui: build completo das imagens (sem acesso a npm/PyPI no build) e motor Python em contêiner |
 | 16 | Implantação na Hostinger | Implementado (documento) | `04_IMPLANTACAO_HOSTINGER.md`. Não executado: requer VPS e autorização. |
@@ -26,6 +26,8 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | 18 | Manual do usuário e do administrador | Implementado | `06_MANUAL.md` |
 | 19 | Limitações e pendências | Implementado | `07_LIMITACOES_PENDENCIAS.md` |
 | 20 | Plano de validação da Prova de Valor | Implementado (plano) | `08_PLANO_PROVA_DE_VALOR.md`. Nenhum resultado da PoV existe ainda. |
+| 21 | Integração Sisfogo (Ibama/Prevfogo) | Implementado e testado (dev) | Contrato verificado com a API real; sincronização completa real em dev (1.698 ROIs); histórico de retificações, indisponibilidade, retomada, trava; motor de risco com proveniência; painel e sincronização manual de administrador. Pendente: execução na VPS — `11`, `13`, `14` |
+| 22 | Consolidação das branches | Implementado | `12_CONSOLIDACAO_BRANCHES.md`; branch `integration/artemis-sisfogo-inpe` |
 
 ## Critérios de aceitação da primeira versão (seção 16 do prompt mestre)
 

@@ -112,6 +112,21 @@ Focos de calor do INPE (de hora em hora) e backup diário. As linhas exatas est�
 docker compose --profile jobs run --rm inpe-sync node dist/sync-inpe.cjs --days 7
 ```
 
+Sisfogo (ROIs oficiais, leitura da API pública). Primeira carga = sincronização completa (≈ 5–30 min; 1.698 ROIs em 4 min no teste de 16/11/2026):
+
+```bash
+docker compose --profile jobs run --rm sisfogo-sync node dist/sync-sisfogo.cjs --mode completa --trigger agendado
+```
+
+Cron sugerido (horário do servidor; fora de pico):
+
+```
+23 4 * * *  cd ~/artemis && docker compose --profile jobs run --rm sisfogo-sync >> logs/sisfogo.log 2>&1
+47 3 * * 0  cd ~/artemis && docker compose --profile jobs run --rm sisfogo-sync node dist/sync-sisfogo.cjs --mode completa --trigger agendado >> logs/sisfogo.log 2>&1
+```
+
+Código de saída: 0 sucesso, 1 falha (registrada em `source_sync_runs`), 75 já havia outra sincronização em andamento. Se falhar no meio, `--resume` continua da página seguinte à última gravada.
+
 ## 7b. Backups
 
 Ver `05_BACKUP_RECUPERACAO.md`. Agende antes de liberar acesso a usuários.
