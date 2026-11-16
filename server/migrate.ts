@@ -7,10 +7,17 @@ import { pool } from "./db";
  * Tracks applied migrations in a `_drizzle_migrations` table.
  * Safe to call on every startup — already-applied migrations are skipped.
  */
-export async function runMigrations(): Promise<void> {
+export interface MigrateOptions {
+  /** Apply only up to and including this file (tests / staged rollout). */
+  upTo?: string;
+  /** Only report pending migrations, change nothing. */
+  dryRun?: boolean;
+}
+
+export async function runMigrations(opts: MigrateOptions = {}): Promise<string[]> {
   if (!pool) {
     console.warn("[migrate] No database pool — skipping migrations");
-    return;
+    return [];
   }
 
   const client = await pool.connect();
@@ -27,17 +34,18 @@ export async function runMigrations(): Promise<void> {
     const migrationsDir = path.resolve(process.cwd(), "migrations");
     if (!fs.existsSync(migrationsDir)) {
       console.log("[migrate] No migrations directory found — skipping");
-      return;
+      return [];
     }
 
     const files = fs
       .readdirSync(migrationsDir)
       .filter((f) => f.endsWith(".sql"))
-      .sort();
+      .sort()
+      .filter((f) => !opts.upTo || f <= opts.upTo);
 
     if (files.length === 0) {
       console.log("[migrate] No migration files found");
-      return;
+      return [];
     }
 
     // Fetch already-applied migrations
@@ -47,6 +55,11 @@ export async function runMigrations(): Promise<void> {
     const appliedSet = new Set(applied.map((r: { name: string }) => r.name));
 
     let count = 0;
+    const pending = files.filter((f) => !appliedSet.has(f));
+    if (opts.dryRun) {
+      console.log(pending.length ? `[migrate] pendentes: ${pending.join(", ")}` : "[migrate] nenhuma migração pendente");
+      return pending;
+    }
     for (const file of files) {
       if (appliedSet.has(file)) continue;
 
@@ -84,6 +97,7 @@ export async function runMigrations(): Promise<void> {
     } else {
       console.log(`[migrate] Applied ${count} migration(s)`);
     }
+    return pending;
   } finally {
     client.release();
   }

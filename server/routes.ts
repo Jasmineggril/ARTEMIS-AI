@@ -4,8 +4,8 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { db } from "./db";
-import { and, desc, eq } from "drizzle-orm";
-import { importBatches, fireOccurrences, dataSources, users } from "@shared/schema";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { importBatches, fireOccurrences, dataSources, users, municipalities } from "@shared/schema";
 import { calculateRisk } from "@shared/risk-engine";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerArtemisRoutes } from "./artemis-routes";
@@ -85,6 +85,23 @@ export function revalidateImportRecord(r: z.infer<typeof importRecordSchema>) {
   }
   if (reasons.length) status = "inválido";
   return { status, reasons, isoDate };
+}
+
+/** Same normalisation as scripts/load-ibge-municipalities.ts. */
+export function normalizeMunicipalityName(name: string): string {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/** Resolves IBGE codes from (UF, name) using the municipalities table; NULL when unknown or table empty. */
+async function municipalityResolver(tx: any, states: (string | null | undefined)[]) {
+  const ufs = Array.from(new Set(states.filter(Boolean).map((s) => String(s).toUpperCase().slice(0, 2))));
+  const map = new Map<string, string>();
+  if (ufs.length) {
+    const rows = await tx.select().from(municipalities).where(inArray(municipalities.state, ufs));
+    for (const m of rows) map.set(`${m.state}|${m.nameNormalized}`, m.ibgeCode);
+  }
+  return (state?: string | null, name?: string | null) =>
+    state && name ? map.get(`${state.toUpperCase().slice(0, 2)}|${normalizeMunicipalityName(name)}`) ?? null : null;
 }
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
@@ -365,31 +382,59 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           })
           .returning();
         const toInsert = checked.filter((c) => c.status === "válido" || c.status === "válido com ressalvas");
+        const ibge = await municipalityResolver(tx, toInsert.map(({ r }) => r.state));
+        let inserted = { valid: 0, warning: 0 };
         for (let i = 0; i < toInsert.length; i += 1000) {
-          await tx.insert(fireOccurrences).values(
-            toInsert.slice(i, i + 1000).map(({ r, status, isoDate }) => ({
-              importBatchId: batch.id,
-              organizationId: orgId,
-              occurrenceDate: isoDate,
-              occurrenceTime: r.occurrenceTime ?? null,
-              municipality: r.municipality ?? null,
-              state: r.state ? r.state.toUpperCase().slice(0, 40) : null,
-              latitude: r.latitude ?? null,
-              longitude: r.longitude ?? null,
-              occurrenceType: r.occurrenceType ?? null,
-              occurrenceStatus: r.occurrenceStatus ?? null,
-              affectedArea: r.affectedArea ?? null,
-              cause: r.cause ?? null,
-              vegetationCondition: r.vegetationCondition ?? null,
-              notes: r.notes ?? null,
-              source: r.source ?? null,
-              sourceReference: r.sourceReference ?? null,
-              validationStatus: status,
-              rawData: r.rawData ?? null,
-            })),
-          );
+          const rows = await tx
+            .insert(fireOccurrences)
+            .values(
+              toInsert.slice(i, i + 1000).map(({ r, status, isoDate }) => ({
+                importBatchId: batch.id,
+                organizationId: orgId,
+                occurrenceDate: isoDate,
+                occurrenceTime: r.occurrenceTime ?? null,
+                municipality: r.municipality ?? null,
+                state: r.state ? r.state.toUpperCase().slice(0, 40) : null,
+                municipalityIbgeCode: ibge(r.state, r.municipality),
+                latitude: r.latitude ?? null,
+                longitude: r.longitude ?? null,
+                occurrenceType: r.occurrenceType ?? null,
+                occurrenceStatus: r.occurrenceStatus ?? null,
+                affectedArea: r.affectedArea ?? null,
+                cause: r.cause ?? null,
+                vegetationCondition: r.vegetationCondition ?? null,
+                notes: r.notes ?? null,
+                source: r.source ?? null,
+                sourceReference: r.sourceReference ?? null,
+                validationStatus: status,
+                rawData: r.rawData ?? null,
+              })),
+            )
+            // Same occurrence already stored for this organization (any batch): skip, count as duplicate.
+            .onConflictDoNothing({
+              target: [fireOccurrences.organizationId, fireOccurrences.dedupKey],
+              where: sql`${fireOccurrences.dedupKey} IS NOT NULL`,
+            })
+            .returning({ status: fireOccurrences.validationStatus });
+          rows.forEach((x) => { if (x.status === "válido") inserted.valid++; else inserted.warning++; });
         }
-        return { batch, saved: toInsert.length };
+        const saved = inserted.valid + inserted.warning;
+        const crossBatchDuplicates = toInsert.length - saved;
+        let finalBatch = batch;
+        if (crossBatchDuplicates > 0) {
+          const reason = "duplicado de ocorrência já importada pela organização";
+          [finalBatch] = await tx
+            .update(importBatches)
+            .set({
+              validRows: inserted.valid,
+              warningRows: inserted.warning,
+              duplicateRows: count("duplicado") + crossBatchDuplicates,
+              rejectionReasons: { ...reasons, [reason]: (reasons[reason] ?? 0) + crossBatchDuplicates },
+            })
+            .where(eq(importBatches.id, batch.id))
+            .returning();
+        }
+        return { batch: finalBatch, saved };
       });
 
       await audit(req, "import.batch_created", { type: "import_batch", id: result.batch.id }, {

@@ -53,6 +53,7 @@ interface ImportReport {
   municipalities: string[];
   states: string[];
   period: string;
+  reasons: Record<string, number>;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -324,11 +325,14 @@ export default function DataImport() {
 
       setReport({
         batchId: data.batchId,
-        total: validationResult.length,
-        valid: toSave.filter(r => r.status === "válido").length,
-        warnings: toSave.filter(r => r.status === "válido com ressalvas").length,
-        invalid: validationResult.filter(r => r.status === "inválido").length,
-        duplicates: validationResult.filter(r => r.status === "duplicado").length,
+        // Counts come from the SERVER report: it re-validates and also detects
+        // occurrences already imported in earlier batches.
+        total: data.report?.totalRows ?? validationResult.length,
+        valid: data.report?.validRows ?? toSave.filter(r => r.status === "válido").length,
+        warnings: data.report?.warningRows ?? toSave.filter(r => r.status === "válido com ressalvas").length,
+        invalid: data.report?.invalidRows ?? validationResult.filter(r => r.status === "inválido").length,
+        duplicates: data.report?.duplicateRows ?? validationResult.filter(r => r.status === "duplicado").length,
+        reasons: data.report?.rejectionReasons ?? {},
         withCoords: validationResult.filter(r => r.mapped.latitude != null && r.mapped.longitude != null).length,
         withoutCoords: validationResult.filter(r => r.mapped.latitude == null || r.mapped.longitude == null).length,
         municipalities: muns,
@@ -336,7 +340,7 @@ export default function DataImport() {
         period,
       });
       setStep(3);
-      toast({ title: "Importação concluída", description: `${toSave.length} registros salvos com sucesso.` });
+      toast({ title: "Importação concluída", description: `${data.saved} registro(s) salvo(s).` });
     } catch (err) {
       toast({ title: "Erro ao salvar", description: String(err), variant: "destructive" });
     } finally {
@@ -602,7 +606,7 @@ export default function DataImport() {
               { label: "Válidos", value: report.valid, sub: "importados" },
               { label: "Com ressalvas", value: report.warnings, sub: "importados" },
               { label: "Inválidos", value: report.invalid, sub: "rejeitados" },
-              { label: "Duplicados", value: report.duplicates, sub: "ignorados" },
+              { label: "Duplicados", value: report.duplicates, sub: "não gravados novamente" },
               { label: "Com coordenadas", value: report.withCoords },
               { label: "Sem coordenadas", value: report.withoutCoords },
               { label: "Municípios", value: report.municipalities.length },
@@ -614,6 +618,17 @@ export default function DataImport() {
               </div>
             ))}
           </div>
+
+          {Object.keys(report.reasons).length > 0 && (
+            <div className="bg-card border border-border/50 rounded-xl p-5 text-sm">
+              <p className="font-semibold mb-2">Registros não gravados — motivos</p>
+              <ul className="space-y-1">
+                {Object.entries(report.reasons).map(([reason, n]) => (
+                  <li key={reason} className="flex justify-between gap-3"><span>{reason}</span><span className="font-semibold tabular-nums">{n}</span></li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="bg-card border border-border/50 rounded-xl p-5 space-y-3 text-sm">
             <div className="flex justify-between">

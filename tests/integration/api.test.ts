@@ -484,6 +484,71 @@ test("Consulta Pública: only explicitly published batches are public, sanitised
   assert.equal((await anon.get("/api/public/occurrences")).body.points.length, 0);
 });
 
+test("re-importing the same occurrences counts them as duplicates (cross-batch), never stores twice", async () => {
+  const records = [
+    { occurrenceDate: "2025-08-10", municipality: "Alto Paraíso de Goiás", state: "GO", latitude: -14.131, longitude: -47.512, validationStatus: "válido" },
+    { occurrenceDate: "2025-08-11", municipality: "Alto Paraíso de Goiás", state: "GO", latitude: -14.14, longitude: -47.50, validationStatus: "válido com ressalvas" },
+    { occurrenceDate: "2025-08-25", municipality: "Alto Paraíso de Goiás", state: "GO", latitude: -14.2, longitude: -47.6, validationStatus: "válido" },
+  ];
+  const before = (await alice.get("/api/fire-occurrences")).body.length;
+  const r = await alice.post("/api/import-batches", { filename: "reenvio.csv", records });
+  assert.equal(r.status, 201);
+  assert.equal(r.body.saved, 1, "only the new occurrence is stored");
+  assert.equal(r.body.report.duplicateRows, 2);
+  assert.equal(r.body.report.validRows + r.body.report.warningRows, 1);
+  assert.equal(r.body.report.rejectionReasons["duplicado de ocorrência já importada pela organização"], 2);
+  assert.equal((await alice.get("/api/fire-occurrences")).body.length, before + 1);
+});
+
+test("an import that fails midway is rolled back completely (no partial batch)", async () => {
+  const batchesBefore = (await alice.get("/api/import-batches")).body.length;
+  const occBefore = Number((await alice.get("/api/fire-occurrences?limit=1")).headers.get("x-total-count"));
+  const records = Array.from({ length: 1500 }, (_, i) => ({
+    occurrenceDate: `2024-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 28) + 1).padStart(2, "0")}`,
+    municipality: `Município ${i}`, state: "GO", latitude: -15 - i / 10000, longitude: -48, validationStatus: "válido",
+    // row 1200 sits in the 2nd insert chunk; PostgreSQL rejects NUL bytes in text
+    notes: i === 1200 ? "texto com byte nulo \u0000 aqui" : null,
+  }));
+  const r = await alice.post("/api/import-batches", { filename: "quebra.csv", records });
+  assert.equal(r.status, 500);
+  assert.equal(r.body.message, "Erro interno. Tente novamente mais tarde.");
+  assert.equal((await alice.get("/api/import-batches")).body.length, batchesBefore, "no batch row left behind");
+  assert.equal(Number((await alice.get("/api/fire-occurrences?limit=1")).headers.get("x-total-count")), occBefore, "first chunk rolled back");
+});
+
+test("pagination: limit/offset with X-Total-Count, body stays an array", async () => {
+  const all = await alice.get("/api/fire-occurrences");
+  const total = Number(all.headers.get("x-total-count"));
+  assert.equal(all.body.length, total);
+  const p1 = await alice.get("/api/fire-occurrences?limit=2&offset=0");
+  const p2 = await alice.get("/api/fire-occurrences?limit=2&offset=2");
+  assert.ok(Array.isArray(p1.body));
+  assert.equal(p1.body.length, Math.min(2, total));
+  assert.equal(Number(p1.headers.get("x-total-count")), total);
+  assert.ok(!p1.body.some((a: any) => p2.body.some((b: any) => b.id === a.id)), "pages do not overlap");
+  assert.equal((await alice.get("/api/fire-occurrences?limit=0")).status, 400);
+  assert.equal((await alice.get("/api/fire-occurrences?limit=999999")).status, 400);
+  const al = await alice.get("/api/alerts?limit=1");
+  assert.equal(al.body.length, 1);
+  assert.ok(Number(al.headers.get("x-total-count")) >= 1);
+});
+
+test("imports resolve the official IBGE municipality code when the list is loaded", async () => {
+  const c = new pg.Client({ connectionString: TEST_DB });
+  await c.connect();
+  await c.query(`INSERT INTO municipalities (ibge_code, name, state, name_normalized) VALUES ('5205307','Cavalcante','GO','cavalcante') ON CONFLICT DO NOTHING`);
+  await c.end();
+  const r = await alice.post("/api/import-batches", { filename: "ibge.csv", records: [
+    { occurrenceDate: "2025-10-02", municipality: "CAVALCANTE", state: "go", latitude: -13.7, longitude: -47.4, validationStatus: "válido" },
+    { occurrenceDate: "2025-10-03", municipality: "Lugar Inexistente", state: "GO", latitude: -13.7, longitude: -47.4, validationStatus: "válido" },
+  ] });
+  assert.equal(r.status, 201);
+  const occ = (await alice.get(`/api/fire-occurrences?batchId=${r.body.batchId}`)).body;
+  const byMun = Object.fromEntries(occ.map((o: any) => [o.municipality, o.municipalityIbgeCode]));
+  assert.equal(byMun["CAVALCANTE"], "5205307");
+  assert.equal(byMun["Lugar Inexistente"], null, "unknown name is left NULL, never guessed");
+});
+
 test("critical operations are written to the audit log", async () => {
   const r = await alice.get("/api/audit-logs");
   assert.equal(r.status, 200);

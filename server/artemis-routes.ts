@@ -116,6 +116,20 @@ async function countNearbyOccurrences(orgId: number, latitude: number, longitude
   return rows.filter((r) => distanceKm(latitude, longitude, r.latitude!, r.longitude!) <= radiusKm).length;
 }
 
+/** limit/offset pagination; the body stays an array (backwards compatible), totals go in headers. */
+export function pageSchema(defaultLimit: number) {
+  return {
+    limit: z.coerce.number().int().min(1).max(defaultLimit).default(defaultLimit),
+    offset: z.coerce.number().int().min(0).max(10_000_000).default(0),
+  };
+}
+export function setPageHeaders(res: Response, total: number, limit: number, offset: number) {
+  res.setHeader("X-Total-Count", String(total));
+  res.setHeader("X-Limit", String(limit));
+  res.setHeader("X-Offset", String(offset));
+  res.setHeader("Access-Control-Expose-Headers", "X-Total-Count, X-Limit, X-Offset");
+}
+
 function csvCell(v: unknown): string {
   if (v === null || v === undefined) return "";
   let s = typeof v === "object" ? JSON.stringify(v) : String(v);
@@ -353,6 +367,10 @@ export function registerArtemisRoutes(app: Express) {
         dataSources,
         dataQuality,
         limitations,
+        areaSnapshot: {
+          name: area.name, municipality: area.municipality, state: area.state,
+          latitude: area.latitude, longitude: area.longitude, areaHectares: area.areaHectares,
+        },
         createdBy: req.ctx.userId,
       })
       .returning();
@@ -418,7 +436,10 @@ export function registerArtemisRoutes(app: Express) {
     else if (status && (ALERT_STATUSES as readonly string[]).includes(status)) conds.push(eq(alerts.status, status));
     const areaId = idParam(req.query.areaId);
     if (areaId) conds.push(eq(alerts.areaId, areaId));
-    const rows = await db.select().from(alerts).where(and(...conds)).orderBy(desc(alerts.updatedAt)).limit(500);
+    const page = z.object(pageSchema(500)).parse(req.query);
+    const [{ total }] = await db.select({ total: sql<number>`count(*)::int` }).from(alerts).where(and(...conds));
+    const rows = await db.select().from(alerts).where(and(...conds)).orderBy(desc(alerts.updatedAt), desc(alerts.id)).limit(page.limit).offset(page.offset);
+    setPageHeaders(res, total, page.limit, page.offset);
     res.json(rows.map((a) => ({ ...a, allowedTransitions: allowedTransitions(a.status as any) })));
   }));
 
@@ -469,15 +490,20 @@ export function registerArtemisRoutes(app: Express) {
         municipality: z.string().trim().max(120).optional(),
         from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
         to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        ...pageSchema(5000),
       })
       .parse(req.query);
     const conds = [eq(fireOccurrences.organizationId, req.ctx.organizationId)];
     if (q.batchId) conds.push(eq(fireOccurrences.importBatchId, q.batchId));
     if (q.state) conds.push(eq(fireOccurrences.state, q.state));
     if (q.municipality) conds.push(sql`lower(${fireOccurrences.municipality}) = lower(${q.municipality})`);
-    if (q.from) conds.push(gte(fireOccurrences.occurrenceDate, q.from));
-    if (q.to) conds.push(lte(fireOccurrences.occurrenceDate, q.to));
-    const rows = await db.select().from(fireOccurrences).where(and(...conds)).orderBy(desc(fireOccurrences.occurrenceDate)).limit(5000);
+    if (q.from) conds.push(gte(fireOccurrences.occurredOn, q.from));
+    if (q.to) conds.push(lte(fireOccurrences.occurredOn, q.to));
+    const where = and(...conds);
+    const [{ total }] = await db.select({ total: sql<number>`count(*)::int` }).from(fireOccurrences).where(where);
+    const rows = await db.select().from(fireOccurrences).where(where)
+      .orderBy(sql`${fireOccurrences.occurredOn} desc nulls last`, desc(fireOccurrences.id)).limit(q.limit).offset(q.offset);
+    setPageHeaders(res, total, q.limit, q.offset);
     res.json(rows);
   }));
 
@@ -658,9 +684,9 @@ export function registerArtemisRoutes(app: Express) {
       .where(and(eq(alerts.organizationId, orgId), gte(alerts.createdAt, from), lte(alerts.createdAt, to)))
       .groupBy(alerts.status);
     const occMonthly = await db
-      .select({ month: sql<string>`substr(${fireOccurrences.occurrenceDate}, 1, 7)`, n: sql<number>`count(*)::int` })
+      .select({ month: sql<string>`to_char(${fireOccurrences.occurredOn}, 'YYYY-MM')`, n: sql<number>`count(*)::int` })
       .from(fireOccurrences)
-      .where(and(eq(fireOccurrences.organizationId, orgId), isNotNull(fireOccurrences.occurrenceDate)))
+      .where(and(eq(fireOccurrences.organizationId, orgId), isNotNull(fireOccurrences.occurredOn)))
       .groupBy(sql`1`).orderBy(sql`1`);
 
     const weeks = new Map<string, Record<string, number>>();

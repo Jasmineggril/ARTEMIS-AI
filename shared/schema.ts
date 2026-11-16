@@ -1,4 +1,5 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, json, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json, uniqueIndex, index, date, smallint, char } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -15,7 +16,7 @@ export const users = pgTable("users", {
   bio: text("bio").default(""),
   avatar: text("avatar").default(""),
   propertyProfile: json("property_profile"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const sensors = pgTable("sensors", {
@@ -24,17 +25,17 @@ export const sensors = pgTable("sensors", {
   type: text("type").notNull(),
   location: text("location").notNull(),
   status: text("status").notNull().default("active"),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
-  lastPing: timestamp("last_ping").defaultNow(),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
+  lastPing: timestamp("last_ping", { withTimezone: true }).defaultNow(),
 });
 
 export const readings = pgTable("readings", {
   id: serial("id").primaryKey(),
   sensorId: integer("sensor_id").notNull(),
-  value: real("value").notNull(),
+  value: doublePrecision("value").notNull(),
   unit: text("unit").notNull(),
-  timestamp: timestamp("timestamp").defaultNow(),
+  timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow(),
 });
 
 export const alerts = pgTable("alerts", {
@@ -44,7 +45,7 @@ export const alerts = pgTable("alerts", {
   message: text("message").notNull(),
   severity: text("severity").notNull(),
   isResolved: boolean("is_resolved").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   // ARTEMIS AI (migration 0002)
   organizationId: integer("organization_id"),
   areaId: integer("area_id"),
@@ -52,28 +53,28 @@ export const alerts = pgTable("alerts", {
   status: text("status").notNull().default("novo"), // novo | reconhecido | em_acompanhamento | resolvido | descartado
   reason: text("reason"),
   dataSource: text("data_source"),
-  dataReferenceAt: timestamp("data_reference_at"),
+  dataReferenceAt: timestamp("data_reference_at", { withTimezone: true }),
   assignedTo: integer("assigned_to"),
   recommendations: json("recommendations"),
   dedupKey: text("dedup_key"),
   occurrenceCount: integer("occurrence_count").notNull().default(1),
   isDemo: boolean("is_demo").notNull().default(false),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const weatherData = pgTable("weather_data", {
   id: serial("id").primaryKey(),
-  latitude: real("latitude").notNull(),
-  longitude: real("longitude").notNull(),
-  temperature: real("temperature"),
-  humidity: real("humidity"),
-  windSpeed: real("wind_speed"),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  temperature: doublePrecision("temperature"),
+  humidity: doublePrecision("humidity"),
+  windSpeed: doublePrecision("wind_speed"),
   windDirection: text("wind_direction"),
-  rainfall: real("rainfall"),
-  pressure: real("pressure"),
-  uvIndex: real("uv_index"),
+  rainfall: doublePrecision("rainfall"),
+  pressure: doublePrecision("pressure"),
+  uvIndex: doublePrecision("uv_index"),
   condition: text("condition"),
-  timestamp: timestamp("timestamp").defaultNow(),
+  timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow(),
 });
 
 export const userStats = pgTable("user_stats", {
@@ -83,7 +84,7 @@ export const userStats = pgTable("user_stats", {
   level: integer("level").default(1),
   denunciasCount: integer("denuncias_count").default(0),
   achievement: text("achievement").default("iniciante"),
-  lastActivity: timestamp("last_activity").defaultNow(),
+  lastActivity: timestamp("last_activity", { withTimezone: true }).defaultNow(),
 });
 
 export const denuncias = pgTable("denuncias", {
@@ -92,12 +93,12 @@ export const denuncias = pgTable("denuncias", {
   titulo: text("titulo").notNull(),
   descricao: text("descricao").notNull(),
   categoria: text("categoria").notNull(),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
   municipio: text("municipio"),
   status: text("status").default("pendente"),
   pontosAtribuidos: integer("pontos_atribuidos").default(50),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const achievements = pgTable("achievements", {
@@ -106,7 +107,7 @@ export const achievements = pgTable("achievements", {
   badgeId: text("badge_id").notNull(),
   badgeName: text("badge_name").notNull(),
   badgeDesc: text("badge_desc").notNull(),
-  earnedAt: timestamp("earned_at").defaultNow(),
+  earnedAt: timestamp("earned_at", { withTimezone: true }).defaultNow(),
 });
 
 // ─── New tables for risk platform ────────────────────────────────────────────
@@ -118,13 +119,13 @@ export const monitoredAreas = pgTable("monitored_areas", {
   operationType: text("operation_type").notNull(), // 'agroindústria', 'florestal', 'energia', 'mineração', 'logística', 'outro'
   municipality: text("municipality").notNull(),
   state: text("state").notNull(),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
-  areaHectares: real("area_hectares"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
+  areaHectares: doublePrecision("area_hectares"),
   status: text("status").notNull().default("ativo"), // 'ativo', 'inativo', 'em análise'
   createdBy: integer("created_by"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   // ARTEMIS AI (migration 0002)
   organizationId: integer("organization_id"),
   vegetationCategory: text("vegetation_category"),
@@ -138,14 +139,14 @@ export const riskAnalyses = pgTable("risk_analyses", {
   areaId: integer("area_id"),
   score: integer("score").notNull(),
   level: text("level").notNull(), // 'baixo' | 'moderado' | 'alto' | 'crítico'
-  confidence: real("confidence"),
+  confidence: doublePrecision("confidence"),
   inputData: json("input_data"),
   factors: json("factors"),
   recommendations: json("recommendations"),
   isSimulated: boolean("is_simulated").default(true),
   calculationVersion: text("calculation_version").default("1.0.0"),
   createdBy: integer("created_by"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   // ARTEMIS AI (migration 0002)
   organizationId: integer("organization_id"),
   engineType: text("engine_type"),          // transparent-rule-engine | supervised-ml | ...-ts-fallback
@@ -153,6 +154,7 @@ export const riskAnalyses = pgTable("risk_analyses", {
   dataSources: json("data_sources"),        // [{ name, kind, referenceAt, url? }]
   dataQuality: json("data_quality"),        // { level, missingFields[], notes[] }
   limitations: json("limitations"),         // string[]
+  areaSnapshot: json("area_snapshot"),      // area as it was at analysis time (migration 0004)
 });
 
 /** Fontes de dados disponíveis */
@@ -162,8 +164,8 @@ export const dataSources = pgTable("data_sources", {
   type: text("type").notNull(), // 'estação climática', 'sensor IoT', 'API ambiental', 'base histórica', 'base geográfica', 'entrada manual', 'simulação'
   status: text("status").notNull().default("simulado"), // 'ativo', 'simulado', 'em integração', 'indisponível'
   isSimulated: boolean("is_simulated").default(true),
-  lastUpdate: timestamp("last_update").defaultNow(),
-  quality: real("quality"), // 0–1
+  lastUpdate: timestamp("last_update", { withTimezone: true }).defaultNow(),
+  quality: doublePrecision("quality"), // 0–1
   description: text("description"),
 });
 
@@ -178,14 +180,14 @@ export const importBatches = pgTable("import_batches", {
   warningRows: integer("warning_rows").notNull().default(0),
   invalidRows: integer("invalid_rows").notNull().default(0),
   duplicateRows: integer("duplicate_rows").notNull().default(0),
-  importedAt: timestamp("imported_at").defaultNow(),
+  importedAt: timestamp("imported_at", { withTimezone: true }).defaultNow(),
   importedBy: integer("imported_by"),
   status: text("status").notNull().default("concluído"),
   notes: text("notes"),
   organizationId: integer("organization_id"),
   rejectionReasons: json("rejection_reasons"),
   visibility: text("visibility").notNull().default("privado"), // privado | publico (migration 0003)
-  publishedAt: timestamp("published_at"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
   publishedBy: integer("published_by"),
 });
 
@@ -197,11 +199,11 @@ export const fireOccurrences = pgTable("fire_occurrences", {
   occurrenceTime: text("occurrence_time"),
   municipality: text("municipality"),
   state: text("state"),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
   occurrenceType: text("occurrence_type"),
   occurrenceStatus: text("occurrence_status"),
-  affectedArea: real("affected_area"),
+  affectedArea: doublePrecision("affected_area"),
   cause: text("cause"),
   vegetationCondition: text("vegetation_condition"),
   notes: text("notes"),
@@ -209,9 +211,25 @@ export const fireOccurrences = pgTable("fire_occurrences", {
   sourceReference: text("source_reference"),
   validationStatus: text("validation_status").notNull().default("válido"),
   rawData: json("raw_data"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   organizationId: integer("organization_id"),
+  // Generated by PostgreSQL from the original text columns (migration 0005).
+  occurredOn: date("occurred_on", { mode: "string" }).generatedAlwaysAs(sql`CASE WHEN occurrence_date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN make_date(substr(occurrence_date, 1, 4)::int, substr(occurrence_date, 6, 2)::int, substr(occurrence_date, 9, 2)::int) END`),
+  occurredHour: smallint("occurred_hour").generatedAlwaysAs(sql`CASE WHEN occurrence_time ~ '^([01]?[0-9]|2[0-3])([:hH]|$)' THEN substring(occurrence_time from '^([0-9]{1,2})')::smallint END`),
+  dedupKey: text("dedup_key").generatedAlwaysAs(sql`CASE WHEN occurrence_date IS NOT NULL THEN md5(occurrence_date || '|' || lower(btrim(coalesce(municipality, ''))) || '|' || upper(coalesce(state, '')) || '|' || coalesce(round(latitude::numeric, 3)::text, '') || '|' || coalesce(round(longitude::numeric, 3)::text, '') || '|' || lower(btrim(coalesce(occurrence_type, '')))) END`),
+  municipalityIbgeCode: char("municipality_ibge_code", { length: 7 }),
 });
+
+/** Official IBGE municipality list (migration 0005). */
+export const municipalities = pgTable("municipalities", {
+  ibgeCode: char("ibge_code", { length: 7 }).primaryKey(),
+  name: text("name").notNull(),
+  state: char("state", { length: 2 }).notNull(),
+  nameNormalized: text("name_normalized").notNull(),
+  source: text("source").notNull().default("IBGE — API de Localidades"),
+  loadedAt: timestamp("loaded_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type Municipality = typeof municipalities.$inferSelect;
 
 // ─── ARTEMIS AI: organizations, alert history, audit (migration 0002) ────────
 
@@ -223,7 +241,7 @@ export const organizations = pgTable("organizations", {
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   type: text("type").notNull().default("produtor"), // produtor | empresa | pesquisa | gestao_publica | outro
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const organizationMembers = pgTable("organization_members", {
@@ -231,7 +249,7 @@ export const organizationMembers = pgTable("organization_members", {
   organizationId: integer("organization_id").notNull(),
   userId: integer("user_id").notNull(),
   role: text("role").notNull().default("viewer"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 }, (t) => ({
   orgUserUnique: uniqueIndex("organization_members_org_user_uq").on(t.organizationId, t.userId),
 }));
@@ -246,7 +264,7 @@ export const alertEvents = pgTable("alert_events", {
   toStatus: text("to_status").notNull(),
   note: text("note"),
   userId: integer("user_id"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 }, (t) => ({ alertIdx: index("alert_events_alert_idx").on(t.alertId) }));
 
 export const auditLogs = pgTable("audit_logs", {
@@ -258,16 +276,16 @@ export const auditLogs = pgTable("audit_logs", {
   entityId: text("entity_id"),
   metadata: json("metadata"),
   ip: text("ip"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   tokenHash: text("token_hash").notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
-  usedAt: timestamp("used_at"),
-  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 // ─── Insert schemas ───────────────────────────────────────────────────────────
