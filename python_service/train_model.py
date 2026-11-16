@@ -1,5 +1,5 @@
 """
-CERES AI — Script de Treinamento do Classificador de Risco de Incêndio
+ARTEMIS AI — Script de Treinamento do Classificador de Risco de Incêndio
 
 AVISO: Este script usa dataset SINTÉTICO gerado a partir do motor de regras.
 As métricas obtidas demonstram apenas viabilidade técnica em ambiente controlado.
@@ -112,7 +112,7 @@ def generate_synthetic_dataset(n_samples: int = 2000, seed: int = 42) -> tuple:
 
 def train_and_save():
     print("=" * 65)
-    print("CERES AI — Treinamento do Classificador de Risco de Incêndio")
+    print("ARTEMIS AI — Treinamento do Classificador de Risco de Incêndio")
     print("Dataset: SINTÉTICO | Não representa validação operacional real")
     print("=" * 65)
 
@@ -182,7 +182,7 @@ def train_and_save():
             xticks=range(4), yticks=range(4),
             xticklabels=CLASS_NAMES, yticklabels=CLASS_NAMES,
             ylabel="Rótulo real", xlabel="Predição do modelo",
-            title="Matriz de Confusão — CERES AI Risk Classifier\n(Dataset sintético · não operacional)",
+            title="Matriz de Confusão — ARTEMIS AI Risk Classifier\n(Dataset sintético · não operacional)",
         )
         thresh = cm.max() / 2.0
         for i in range(4):

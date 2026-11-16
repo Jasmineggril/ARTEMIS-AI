@@ -1,249 +1,68 @@
+/**
+ * Authentication — server-side session only (HttpOnly cookie, bcrypt).
+ * No credentials, sessions or users are stored in the browser.
+ */
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { api, ApiError } from "@/lib/api";
 
-const AUTH_STORAGE_KEY = "ceres-auth-session";
-const LOCAL_USERS_STORAGE_KEY = "ceres-local-users";
-export const DEMO_EMAIL = "demo@ceres.ai";
-export const DEMO_PASSWORD = "Demo123!";
-export const DEMO_NAME = "Seu Raimundo";
+export type OrgRole = "owner" | "admin" | "manager" | "analyst" | "viewer";
 
 export interface AuthUser {
-  userId: number | string;
+  userId: number;
   email: string;
   name: string;
-  source: "local" | "server";
+  platformRole: string;
+  organization: { id: number; name: string; type: string; role: OrgRole } | null;
 }
 
-interface LocalUserRecord {
-  id: number;
-  email: string;
-  password: string;
-  name: string;
+export const AUTH_QUERY_KEY = ["/api/auth/status"];
+
+const RANK: Record<OrgRole, number> = { viewer: 1, analyst: 2, manager: 3, admin: 4, owner: 5 };
+export function hasRole(user: AuthUser | null | undefined, min: OrgRole): boolean {
+  const r = user?.organization?.role;
+  return !!r && RANK[r] >= RANK[min];
 }
 
-function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
-}
-
-export function isDemoCredentials(email: string, password: string) {
-  return normalizeEmail(email) === DEMO_EMAIL && password === DEMO_PASSWORD;
-}
-
-export function createDemoSession(email = DEMO_EMAIL): AuthUser {
-  return {
-    userId: `demo:${normalizeEmail(email)}`,
-    email: DEMO_EMAIL,
-    name: DEMO_NAME,
-    source: "local",
-  };
-}
-
-export function authenticateDemoSession(email: string, password: string) {
-  return isDemoCredentials(email, password) ? createDemoSession(email) : null;
-}
-
-function readStorageValue(key: string): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(key);
-}
-
-function writeStorageValue(key: string, value: string) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(key, value);
-}
-
-export function readStoredAuthSession(): AuthUser | null {
-  const stored = readStorageValue(AUTH_STORAGE_KEY);
-  if (!stored) return null;
-
-  try {
-    return JSON.parse(stored) as AuthUser;
-  } catch {
-    return null;
-  }
-}
-
-export function writeStoredAuthSession(user: AuthUser) {
-  writeStorageValue(AUTH_STORAGE_KEY, JSON.stringify(user));
-}
-
-export function clearStoredAuthSession() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(AUTH_STORAGE_KEY);
-}
-
-function readLocalUsers(): LocalUserRecord[] {
-  const stored = readStorageValue(LOCAL_USERS_STORAGE_KEY);
-  if (!stored) {
-    const seededUsers: LocalUserRecord[] = [
-      {
-        id: 1,
-        email: DEMO_EMAIL,
-        password: DEMO_PASSWORD,
-        name: DEMO_NAME,
-      },
-    ];
-    writeLocalUsers(seededUsers);
-    return seededUsers;
-  }
-
-  try {
-    const parsed = JSON.parse(stored) as LocalUserRecord[];
-    if (parsed.length === 0) {
-      const seededUsers: LocalUserRecord[] = [
-        {
-          id: 1,
-          email: DEMO_EMAIL,
-          password: DEMO_PASSWORD,
-          name: DEMO_NAME,
-        },
-      ];
-      writeLocalUsers(seededUsers);
-      return seededUsers;
-    }
-
-    return parsed;
-  } catch {
-    return [];
-  }
-}
-
-function writeLocalUsers(users: LocalUserRecord[]) {
-  writeStorageValue(LOCAL_USERS_STORAGE_KEY, JSON.stringify(users));
-}
-
-export function authenticateLocally({
-  email,
-  password,
-  name,
-  createIfMissing = false,
-}: {
-  email: string;
-  password: string;
-  name?: string;
-  createIfMissing?: boolean;
-}) {
-  const normalizedEmail = normalizeEmail(email);
-  const users = readLocalUsers();
-  const existing = users.find((user) => user.email.toLowerCase() === normalizedEmail);
-
-  if (createIfMissing) {
-    if (existing) {
-      return existing.password === password
-        ? {
-            userId: existing.id,
-            email: existing.email,
-            name: existing.name,
-            source: "local" as const,
-          }
-        : null;
-    }
-
-    const newUser = {
-      id: Date.now(),
-      email: normalizedEmail,
-      password,
-      name: name?.trim() || normalizedEmail.split("@")[0],
-    };
-    writeLocalUsers([...users, newUser]);
-    return {
-      userId: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      source: "local" as const,
-    };
-  }
-
-  if (!existing || existing.password !== password) return null;
-
-  return {
-    userId: existing.id,
-    email: existing.email,
-    name: existing.name,
-    source: "local" as const,
-  };
-}
-
-export function changeLocalPassword({
-  email,
-  currentPassword,
-  newPassword,
-}: {
-  email: string;
-  currentPassword: string;
-  newPassword: string;
-}) {
-  const normalizedEmail = normalizeEmail(email);
-  const users = readLocalUsers();
-  const existing = users.find((user) => user.email.toLowerCase() === normalizedEmail);
-
-  if (!existing || existing.password !== currentPassword) {
-    return { success: false as const, reason: "current-password" as const };
-  }
-
-  const nextUsers = users.map((user) =>
-    user.email.toLowerCase() === normalizedEmail
-      ? { ...user, password: newPassword }
-      : user
-  );
-
-  writeLocalUsers(nextUsers);
-  return { success: true as const };
-}
+export const ROLE_LABEL: Record<OrgRole, string> = {
+  owner: "Proprietário", admin: "Administrador", manager: "Gestor", analyst: "Analista", viewer: "Leitor",
+};
 
 export function useAuthStatus() {
-  return useQuery({
-    queryKey: ["/auth/status"],
+  return useQuery<AuthUser | null>({
+    queryKey: AUTH_QUERY_KEY,
     queryFn: async () => {
-      const localSession = readStoredAuthSession();
-
-      if (isSupabaseConfigured && supabase) {
-        try {
-          const { data: user, error } = await supabase.auth.getUser();
-          if (!error && user?.user) {
-            const session = {
-              userId: user.user.id,
-              email: user.user.email ?? "",
-              name: user.user.user_metadata?.full_name ?? user.user.email?.split("@")[0] ?? "",
-              source: "server" as const,
-            };
-            writeStoredAuthSession(session);
-            return session;
-          }
-        } catch {
-          // keep fallback to local session when Supabase session cannot be retrieved
-        }
-
-        if (localSession) {
-          return localSession;
-        }
-
-        return null;
+      try {
+        return await api<AuthUser>("GET", "/api/auth/status");
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 401) return null;
+        throw e;
       }
-
-      return localSession;
     },
     retry: false,
-    staleTime: 1000 * 30,
+    staleTime: 30_000,
   });
+}
+
+export async function login(email: string, password: string) {
+  await api("POST", "/api/auth/login", { email, password });
+  await queryClient.invalidateQueries();
+}
+
+export async function signup(input: {
+  name: string; email: string; password: string;
+  organizationName?: string; organizationType?: string; acceptPrivacy: boolean;
+}) {
+  await api("POST", "/api/auth/signup", input);
+  await queryClient.invalidateQueries();
 }
 
 export function useLogout() {
   return useMutation({
-    mutationFn: async () => {
-      if (isSupabaseConfigured && supabase) {
-        try {
-          await supabase.auth.signOut();
-        } catch {
-          // ignore network errors and continue with local logout
-        }
-      }
-      clearStoredAuthSession();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/auth/status"] });
-      window.location.assign(new URL("login", window.location.href).toString());
+    mutationFn: () => api("POST", "/api/auth/logout"),
+    onSettled: () => {
+      queryClient.clear();
+      window.location.assign("/login");
     },
   });
 }

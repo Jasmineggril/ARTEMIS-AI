@@ -7,12 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/Button";
 import { Switch } from "@/components/ui/switch";
-import { useAuthStatus, useLogout, changeLocalPassword } from "@/hooks/use-auth";
-import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { useAuthStatus, useLogout } from "@/hooks/use-auth";
+import { api } from "@/lib/api";
 import { PRODUCT_NAME, SUBMISSION_MODE } from "@shared/identity";
 import { resetOnboarding } from "@/hooks/use-onboarding";
 
-const STORAGE_KEY = "ceres-profile-settings";
+const STORAGE_KEY = "artemis-profile-settings";
 
 const BRAZILIAN_REFERENCE_LOCATIONS = [
   { municipality: "Manaus", state: "AM", latitude: -3.119, longitude: -60.021 },
@@ -142,85 +142,21 @@ export default function Settings() {
     }));
   }, [user?.email, user?.name]);
 
-  React.useEffect(() => {
-    if (!user?.userId || !isSupabaseConfigured) return;
-    const supabaseClient = supabase;
-    if (!supabaseClient) {
-      setSyncMode("local");
-      return;
-    }
-
-    const loadServerProfile = async () => {
-      try {
-        const { data, error } = await supabaseClient
-          .from("profiles")
-          .select("name, role, state, municipality, avatar, alerts, legislation, language, appearance, highContrast")
-          .eq("id", user.userId)
-          .single();
-
-        if (error) {
-          console.error("Erro ao carregar perfil do Supabase:", error);
-          setSyncMode("local");
-          return;
-        }
-
-        if (data) {
-          setSettings((current) => ({
-            ...current,
-            fullName: String(data.name ?? current.fullName),
-            role: (data.role as UserRole) || current.role,
-            state: String(data.state ?? current.state),
-            municipality: String(data.municipality ?? current.municipality),
-            avatar: String(data.avatar ?? current.avatar),
-            alerts: typeof data.alerts === "boolean" ? data.alerts : current.alerts,
-            legislation: typeof data.legislation === "boolean" ? data.legislation : current.legislation,
-            language: (data.language as LanguagePreference) || current.language,
-            appearance: (data.appearance as AppearancePreference) || current.appearance,
-            highContrast: typeof data.highContrast === "boolean" ? data.highContrast : current.highContrast,
-          }));
-          setSyncMode("server");
-        }
-      } catch (error) {
-        console.error("Erro ao carregar perfil do Supabase:", error);
-        setSyncMode("local");
-      }
-    };
-
-    void loadServerProfile();
-  }, [user?.userId]);
+  // Interface preferences (language, appearance, contrast) stay in this
+  // browser only; identity fields are saved to the server profile.
 
   const persistSettings = async (nextSettings: SettingsState) => {
     const storageKey = nextSettings.email ? `${STORAGE_KEY}:${nextSettings.email}` : STORAGE_KEY;
     window.localStorage.setItem(storageKey, JSON.stringify(nextSettings));
 
-    if (isSupabaseConfigured && supabase && user?.source === "server") {
+    if (user) {
       try {
-        const response = await supabase.from("profiles").upsert(
-          {
-            id: user.userId,
-            email: nextSettings.email,
-            name: nextSettings.fullName,
-            role: nextSettings.role,
-            state: nextSettings.state,
-            municipality: nextSettings.municipality,
-            avatar: nextSettings.avatar || "",
-            alerts: nextSettings.alerts,
-            legislation: nextSettings.legislation,
-            language: nextSettings.language,
-            appearance: nextSettings.appearance,
-            highContrast: nextSettings.highContrast,
-          },
-          { onConflict: "id" }
-        );
-
-        if (!response.error) {
-          setSyncMode("server");
-          return "server" as const;
-        }
-
-        console.error("Erro ao salvar perfil no Supabase:", response.error);
+        const [firstName, ...rest] = nextSettings.fullName.trim().split(/\s+/);
+        await api("PUT", "/api/user/profile", { firstName: firstName ?? "", lastName: rest.join(" ") });
+        setSyncMode("server");
+        return "server" as const;
       } catch (error) {
-        console.error("Erro ao salvar perfil no Supabase:", error);
+        console.error("Erro ao salvar perfil:", error);
       }
     }
 
@@ -354,10 +290,10 @@ export default function Settings() {
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
+    if (passwordForm.newPassword.length < 8) {
       toast({
         title: "Senha muito curta",
-        description: "A nova senha deve ter pelo menos 6 caracteres.",
+        description: "A nova senha deve ter pelo menos 8 caracteres, com letras e números.",
         variant: "destructive",
       });
       return;
@@ -365,49 +301,18 @@ export default function Settings() {
 
     setIsChangingPassword(true);
     try {
-      if (user.source === "server" && isSupabaseConfigured && supabase) {
-        // Re-authenticate to verify the current password, then update via Supabase
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: user.email,
-          password: passwordForm.currentPassword,
-        });
-
-        if (signInError) {
-          toast({
-            title: "Senha atual incorreta",
-            description: "A senha atual informada não corresponde à sua conta.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: passwordForm.newPassword,
-        });
-
-        if (updateError) {
-          toast({
-            title: "Erro ao alterar senha",
-            description: updateError.message ?? "Não foi possível alterar a senha.",
-            variant: "destructive",
-          });
-          return;
-        }
-      } else {
-        const result = changeLocalPassword({
-          email: user.email,
+      try {
+        await api("PUT", "/api/auth/password", {
           currentPassword: passwordForm.currentPassword,
           newPassword: passwordForm.newPassword,
         });
-
-        if (!result.success) {
-          toast({
-            title: "Senha atual incorreta",
-            description: "A senha atual informada não corresponde à conta local.",
-            variant: "destructive",
-          });
-          return;
-        }
+      } catch (err) {
+        toast({
+          title: "Não foi possível alterar a senha",
+          description: err instanceof Error ? err.message : "Tente novamente.",
+          variant: "destructive",
+        });
+        return;
       }
 
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
@@ -462,7 +367,7 @@ export default function Settings() {
                 )}
               </Avatar>
               <div>
-                <p className="text-lg font-semibold text-foreground">{settings.fullName || "Usuário CERES"}</p>
+                <p className="text-lg font-semibold text-foreground">{settings.fullName || "Usuário"}</p>
                 <p className="text-sm text-muted-foreground">{settings.role}</p>
               </div>
             </div>
@@ -539,7 +444,7 @@ export default function Settings() {
                   <div className="flex items-center justify-between gap-2">
                     <div>
                       <p className="font-medium text-foreground">Receber alertas ambientais</p>
-                      <p className="text-sm text-muted-foreground">Alertas de risco e clima em tempo real.</p>
+                      <p className="text-sm text-muted-foreground">Avisos de alertas de risco (envio por e-mail ainda não disponível).</p>
                     </div>
                     <Switch checked={settings.alerts} onCheckedChange={handleToggle("alerts")} />
                   </div>
@@ -643,7 +548,7 @@ export default function Settings() {
             <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MoonStar className="h-4 w-4" />
-                Ajustes salvos automaticamente no navegador e, quando disponível, no Supabase.
+                Preferências de interface ficam neste navegador; nome e senha são salvos na sua conta.
               </div>
               <Button type="button" onClick={handleSave} isLoading={isSaving}>
                 Salvar

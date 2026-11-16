@@ -59,6 +59,14 @@ async function buildAll() {
     external: externals,
     logLevel: "info",
   });
+
+  // Operational CLIs shipped in the production image (no tsx at runtime).
+  for (const [entry, out] of [["scripts/db/migrate.ts", "dist/migrate.cjs"], ["scripts/sync-inpe.ts", "dist/sync-inpe.cjs"], ["scripts/sync-sisfogo.ts", "dist/sync-sisfogo.cjs"], ["scripts/load-ibge-municipalities.ts", "dist/load-municipalities.cjs"]]) {
+    await esbuild({
+      entryPoints: [entry], platform: "node", bundle: true, format: "cjs", outfile: out,
+      define: { "process.env.NODE_ENV": '"production"' }, minify: true, external: externals, logLevel: "warning",
+    });
+  }
 }
 
 buildAll().catch((err) => {

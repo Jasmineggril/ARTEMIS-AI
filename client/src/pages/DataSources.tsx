@@ -1,3 +1,8 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Lock } from "lucide-react";
+import { useAuthStatus, hasRole } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import {
@@ -28,6 +33,8 @@ interface ImportBatch {
   totalRows: number;
   validRows: number;
   invalidRows: number;
+  warningRows: number;
+  visibility?: "privado" | "publico";
   importedAt: string;
   status: string;
 }
@@ -132,7 +139,7 @@ export default function DataSources() {
         </h1>
         <p className="text-muted-foreground mt-1 text-sm flex items-center gap-1">
           <Info className="w-4 h-4" />
-          {SIMULATED_DATA_LABEL} Fontes demonstrativas para validação do fluxo tecnológico.
+          Fontes cadastradas e arquivos importados pela organização. {sources.some((x) => x.isSimulated) && SIMULATED_DATA_LABEL}
         </p>
       </header>
 
@@ -206,6 +213,8 @@ export default function DataSources() {
         </div>
       )}
 
+      <BatchPublication batches={batches} />
+
       {/* Import CTA */}
       <div className="mt-8 p-5 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between gap-4">
         <div>
@@ -221,10 +230,63 @@ export default function DataSources() {
       <div className="mt-4 text-xs text-muted-foreground flex items-start gap-1.5">
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
         <span>
-          As fontes marcadas como "Simulado" utilizam dados demonstrativos gerados em ambiente controlado.
-          A integração com fontes externas reais será implementada durante a Prova de Valor.
+          Fontes integradas: INPE (focos de calor por satélite, sincronização incremental), Sisfogo (API pública de ROIs finalizados do
+          Ibama/Prevfogo, sem convênio), Open-Meteo (clima sob demanda, com cache) e importação de arquivos autorizados. Fontes marcadas como
+          "Simulado" usam dados demonstrativos.
         </span>
       </div>
     </Layout>
+  );
+}
+
+function BatchPublication({ batches }: { batches: ImportBatch[] }) {
+  const { data: user } = useAuthStatus();
+  const isAdmin = hasRole(user, "admin");
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const toggle = useMutation({
+    mutationFn: (v: { id: number; visibility: "privado" | "publico" }) =>
+      api("PATCH", `/api/import-batches/${v.id}/visibility`, { visibility: v.visibility, confirm: v.visibility === "publico" ? true : undefined }),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["/api/import-batches"] });
+      toast({ title: v.visibility === "publico" ? "Lote publicado na Consulta Pública" : "Lote tornado privado" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  function ask(b: ImportBatch & { visibility?: string }) {
+    if (b.visibility === "publico") return toggle.mutate({ id: b.id, visibility: "privado" });
+    const ok = window.confirm(
+      `Publicar "${b.filename}" na Consulta Pública da ARTEMIS AI?\n\n` +
+      "• Confirme que a organização tem direito de divulgar estes registros.\n" +
+      "• Serão públicos: data, hora, município, UF, tipo e coordenadas arredondadas (~1 km).\n" +
+      "• Observações, referências internas e dados brutos NÃO são publicados.\n" +
+      "• O nome da organização aparece como responsável pela publicação.",
+    );
+    if (ok) toggle.mutate({ id: b.id, visibility: "publico" });
+  }
+
+  if (batches.length === 0) return null;
+  return (
+    <section className="mt-8 bg-card border rounded-2xl p-5" aria-labelledby="batches-title">
+      <h2 id="batches-title" className="font-semibold">Lotes importados e publicação</h2>
+      <p className="text-xs text-muted-foreground mb-3">Todo lote é privado por padrão. Apenas administradores podem publicá-lo na <a href="/consulta-publica" className="underline">Consulta Pública</a>.</p>
+      <div className="overflow-x-auto"><table className="w-full text-sm">
+        <thead><tr className="text-left text-muted-foreground text-xs"><th className="py-1">Arquivo</th><th>Fonte</th><th>Importado</th><th>Válidos/total</th><th>Visibilidade</th><th><span className="sr-only">Ação</span></th></tr></thead>
+        <tbody>{batches.map((b: ImportBatch & { visibility?: string }) => (
+          <tr key={b.id} className="border-t">
+            <td className="py-2 break-all">{b.filename}</td><td>{b.sourceName || "—"}</td>
+            <td className="whitespace-nowrap">{b.importedAt ? new Date(b.importedAt).toLocaleDateString("pt-BR") : "—"}</td>
+            <td>{b.validRows + b.warningRows}/{b.totalRows}</td>
+            <td>{b.visibility === "publico"
+              ? <span className="inline-flex items-center gap-1 text-green-800"><Globe className="w-3.5 h-3.5" aria-hidden />Público</span>
+              : <span className="inline-flex items-center gap-1 text-muted-foreground"><Lock className="w-3.5 h-3.5" aria-hidden />Privado</span>}</td>
+            <td className="text-right">{isAdmin && (
+              <button className="text-xs underline" onClick={() => ask(b)} disabled={toggle.isPending}>
+                {b.visibility === "publico" ? "Tornar privado" : "Publicar"}
+              </button>)}</td>
+          </tr>))}</tbody>
+      </table></div>
+    </section>
   );
 }

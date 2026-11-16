@@ -44,7 +44,7 @@
   --font-display: 'Outfit', sans-serif;
   --font-body: 'DM Sans', sans-serif;
 
-  /* CERES AI Official Palette */
+  /* ARTEMIS AI palette */
   --background: 200 17% 97%;       /* #F5F7F8 Cinza Claro */
   --foreground: 201 19% 18%;       /* #263238 Cinza Escuro */
 
@@ -57,7 +57,7 @@
   --muted: 200 15% 90%;
   --muted-foreground: 201 10% 45%;
 
-  --accent: 43 68% 47%;            /* #C9A227 Dourado Ceres */
+  --accent: 43 68% 47%;            /* #C9A227 dourado (destaque) */
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 84% 60%;
@@ -76,7 +76,7 @@
   --verde-institucional: 153 69% 19%;
   --verde-agricola: 123 46% 33%;
   --verde-claro: 123 39% 64%;
-  --dourado-ceres: 43 68% 47%;
+  --dourado: 43 68% 47%;
   --azul-geoespacial: 213 80% 46%;
 }
 
@@ -142,4 +142,11 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted-foreground) / 0.4);
+}
+
+/* Printing / "salvar em PDF": white page, A4 margins, keep colours of risk badges */
+@media print {
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #ffffff !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

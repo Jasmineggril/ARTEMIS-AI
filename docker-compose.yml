@@ -1,0 +1,166 @@
+# ARTEMIS AI — production stack for a single VPS (e.g. Hostinger KVM 2: 2 vCPU / 8 GB / 100 GB).
+#   cp .env.example .env   # fill in secrets (chmod 600 .env)
+#   docker compose up -d --build
+# Only Caddy publishes ports. PostgreSQL and the risk engine live on an internal network.
+# Order: db (healthy) -> migrate (owner role, one-shot) -> api (app role, no DDL).
+name: artemis
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
+x-api-image: &api-build
+  build: { context: ., dockerfile: infrastructure/docker/api.Dockerfile }
+  image: artemis-api:local
+
+services:
+  db:
+    # PostgreSQL 16 + PostGIS 3.4 (pinned minor version line)
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: artemis_ai
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:-artemis_admin}           # superuser: administration only
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?defina POSTGRES_ADMIN_PASSWORD}
+      ARTEMIS_OWNER_PASSWORD: ${ARTEMIS_OWNER_PASSWORD:?defina ARTEMIS_OWNER_PASSWORD}
+      ARTEMIS_APP_PASSWORD: ${ARTEMIS_APP_PASSWORD:?defina ARTEMIS_APP_PASSWORD}
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infrastructure/postgres/initdb:/docker-entrypoint-initdb.d:ro
+    command:
+      - postgres
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=2GB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - max_connections=50
+      - -c
+      - timezone=UTC
+      - -c
+      - log_min_duration_statement=1000
+      - -c
+      - log_connections=on
+      - -c
+      - password_encryption=scram-sha-256
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d artemis_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy: { resources: { limits: { memory: 2g, cpus: "1.0" } } }
+    shm_size: 256m
+    networks: [internal]
+    logging: *logging
+
+  migrate:
+    <<: *api-build
+    command: ["node", "dist/migrate.cjs"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      # owner role: the only credential allowed to change the schema
+      MIGRATION_DATABASE_URL: postgresql://artemis_owner:${ARTEMIS_OWNER_PASSWORD}@db:5432/artemis_ai
+      DATABASE_URL: postgresql://artemis_owner:${ARTEMIS_OWNER_PASSWORD}@db:5432/artemis_ai
+    networks: [internal]
+    logging: *logging
+
+  risk-engine:
+    build: { context: ., dockerfile: infrastructure/docker/risk-engine.Dockerfile }
+    restart: unless-stopped
+    environment:
+      RISK_ENGINE_MODE: ${RISK_ENGINE_MODE:-rules}
+    deploy: { resources: { limits: { memory: 768m, cpus: "0.75" } } }
+    networks: [internal]
+    logging: *logging
+
+  api:
+    <<: *api-build
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+      risk-engine: { condition: service_started }
+    environment:
+      NODE_ENV: production
+      # runtime role: SELECT/INSERT/UPDATE/DELETE only (see infrastructure/postgres/initdb)
+      DATABASE_URL: postgresql://artemis_app:${ARTEMIS_APP_PASSWORD}@db:5432/artemis_ai
+      RUN_MIGRATIONS_ON_START: "false"     # only verifies nothing is pending
+      SESSION_SECRET: ${SESSION_SECRET:?defina SESSION_SECRET com 32+ caracteres}
+      PYTHON_SERVICE_URL: http://risk-engine:8000
+      RISK_ENGINE: ${RISK_ENGINE:-python}
+      PUBLIC_BASE_URL: https://${APP_DOMAIN:?defina APP_DOMAIN}
+      TRUST_PROXY_HOPS: "1"
+      ALERT_MIN_LEVEL: ${ALERT_MIN_LEVEL:-alto}
+      INPE_MAX_AGE_HOURS: ${INPE_MAX_AGE_HOURS:-6}
+      WEATHER_CACHE_MINUTES: ${WEATHER_CACHE_MINUTES:-30}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    deploy: { resources: { limits: { memory: 1g, cpus: "1.0" } } }
+    # `internal` (db, engine) + `edge` (Caddy and outbound HTTPS: Open-Meteo, INPE).
+    networks: [internal, edge]
+    logging: *logging
+
+  # One-shot job, scheduled by the host cron (see docs/artemis/04_IMPLANTACAO_HOSTINGER.md):
+  #   docker compose run --rm inpe-sync
+  inpe-sync:
+    <<: *api-build
+    profiles: ["jobs"]
+    command: ["node", "dist/sync-inpe.cjs", "--days", "2"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://artemis_app:${ARTEMIS_APP_PASSWORD}@db:5432/artemis_ai
+    deploy: { resources: { limits: { memory: 512m, cpus: "0.5" } } }
+    networks: [internal, edge]
+    logging: *logging
+
+  # Sisfogo ROI sync (public Ibama API; daily is enough):
+  #   docker compose run --rm sisfogo-sync
+  sisfogo-sync:
+    <<: *api-build
+    profiles: ["jobs"]
+    command: ["node", "dist/sync-sisfogo.cjs"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://artemis_app:${ARTEMIS_APP_PASSWORD}@db:5432/artemis_ai
+    deploy: { resources: { limits: { memory: 512m, cpus: "0.5" } } }
+    networks: [internal, edge]
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?defina ACME_EMAIL para o Let's Encrypt}
+    volumes:
+      - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    deploy: { resources: { limits: { memory: 256m } } }
+    networks: [edge]
+    logging: *logging
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal: { internal: true }
+  edge: {}

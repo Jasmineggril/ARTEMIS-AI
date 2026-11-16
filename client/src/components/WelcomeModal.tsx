@@ -1,3 +1,4 @@
+import { ArtemisMark } from "@/components/ArtemisMark";
 import { useEffect, useRef } from "react";
 import { Leaf, X } from "lucide-react";
 import { PRODUCT_NAME, SUBMISSION_MODE } from "@shared/identity";
@@ -69,10 +70,10 @@ export function WelcomeModal({ onStart, onSkip, onNeverShow }: WelcomeModalProps
 
         {/* Icon */}
         <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6"
-          style={{ background: "#0F5132" }}
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 p-1.5"
+          style={{ background: "#061A14" }}
         >
-          <Leaf className="w-7 h-7 text-white" />
+          <ArtemisMark className="w-full h-full" inverted detail="full" />
         </div>
 
         <h2 id="welcome-title" className="text-2xl font-bold font-display text-foreground mb-3">

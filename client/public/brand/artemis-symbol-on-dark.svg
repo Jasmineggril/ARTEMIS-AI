@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="ARTEMIS AI">
+  <defs>
+    <linearGradient id="da" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0FDF4"/><stop offset="0.3" stop-color="#86EFAC"/><stop offset="0.7" stop-color="#22C55E"/><stop offset="1" stop-color="#047857"/></linearGradient>
+    <radialGradient id="dg" cx="0.5" cy="0.35" r="0.6"><stop offset="0" stop-color="#D9F99D"/><stop offset="1" stop-color="#4ADE80"/></radialGradient>
+    <linearGradient id="dl" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#15803D"/><stop offset="0.55" stop-color="#4ADE80"/><stop offset="1" stop-color="#D9F99D"/></linearGradient>
+    <clipPath id="dc"><path d="M64 24 L93 92 H35 Z"/></clipPath>
+  </defs>
+  <path d="M20 84 A47 47 0 0 1 84 18" fill="none" stroke="#10B981" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M56 12 H72 L116 118 H91 L64 54 L37 118 H12 Z" fill="url(#da)"/>
+  <g clip-path="url(#dc)">
+    <rect x="30" y="20" width="70" height="75" fill="url(#dg)"/>
+    <path d="M64 30 L78 60 H50 Z" fill="#16A34A" opacity=".45"/>
+    <g fill="#14532D">
+      <path d="M44 52 C44 47 50 45 54 47 C56 42 63 41 66 44 C69 40 77 41 79 46 C84 45 88 49 85 53 C86 56 80 58 76 56 C72 59 64 59 61 56 C56 59 49 58 47 55 C44 56 43 54 44 52 Z"/>
+      <path d="M65 56 L63.6 84 H68 L66.6 56 Z M62 62 L58 58 L59 57 L63.5 61 Z M69 61 L73 57 L74 58 L69.5 62.5 Z"/>
+      <path d="M40 70 C40 65 47 63 50 66 C54 64 58 68 55 71 C55 75 48 75 46 72 C43 74 39 73 40 70 Z"/><path d="M47.4 72 H49.2 V86 H47.4 Z"/>
+      <path d="M36 92 L40 74 L44 92 Z M43 92 L46 80 L49 92 Z M78 92 L82 72 L86 92 Z M85 92 L88 79 L91 92 Z M73 92 L76 82 L79 92 Z"/>
+    </g>
+  </g>
+  <path d="M8 100 C 22 96, 58 80, 82 58 C 94 47, 102 38, 107 30 C 104 42, 92 58, 80 68 C 58 88, 26 104, 12 106 C 6 107, 4 102, 8 100 Z" fill="#FFFFFF"/>
+  <g transform="translate(99 15) rotate(38)">
+    <rect x="-3.6" y="-5.5" width="7.2" height="11" rx="1.6" fill="#FFFFFF" stroke="#064E3B" stroke-width=".8"/>
+    <rect x="-18" y="-3.4" width="13" height="6.8" fill="#FFFFFF" stroke="#064E3B" stroke-width=".8"/>
+    <rect x="5" y="-3.4" width="13" height="6.8" fill="#FFFFFF" stroke="#064E3B" stroke-width=".8"/>
+    <path d="M-13.7 -3.4 V3.4 M-9.3 -3.4 V3.4 M9.3 -3.4 V3.4 M13.7 -3.4 V3.4" stroke="#064E3B" stroke-width=".8"/>
+    <circle cx="0" cy="8" r="2.2" fill="#FFFFFF" stroke="#064E3B" stroke-width=".8"/>
+  </g>
+  <path d="M88 27 a6.5 6.5 0 0 1 -6.5 6.5 M92 27 a10.5 10.5 0 0 1 -10.5 10.5 M96 27 a14.5 14.5 0 0 1 -14.5 14.5" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M66 122 C 62 98, 78 74, 116 62 C 114 94, 96 116, 66 122 Z" fill="url(#dl)"/>
+  <path d="M71 116 C 80 100, 92 86, 108 72 M82 101 C 86 96, 90 95, 96 96 M89 92 C 92 86, 95 85, 100 85" fill="none" stroke="#064E3B" stroke-width="2.6" stroke-linecap="round"/>
+</svg>

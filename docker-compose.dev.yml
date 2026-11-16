@@ -1,0 +1,18 @@
+# Development: PostgreSQL only. Run the apps on the host:
+#   docker compose -f docker-compose.dev.yml up -d
+#   npm run dev            (web + API, port 5000)
+#   npm run dev:python     (FastAPI, port 8000)
+name: artemis-dev
+services:
+  db:
+    image: postgis/postgis:16-3.4   # same major/PostGIS as production
+    environment:
+      POSTGRES_DB: artemis_dev
+      POSTGRES_USER: artemis
+      POSTGRES_PASSWORD: artemis_dev
+    ports: ["127.0.0.1:5432:5432"]
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+      - ./scripts/ops/init-test-db.sql:/docker-entrypoint-initdb.d/10-test.sql:ro
+volumes:
+  pgdata_dev: {}

@@ -87,7 +87,18 @@ export class DatabaseStorage implements IStorage {
     console.warn("Falling back to in-memory storage:", reason instanceof Error ? reason.message : String(reason));
   }
 
+  /**
+   * In-memory fallback is a development convenience only. It is disabled by
+   * default (and always in production) so that a database outage never
+   * silently stores users or data in process memory.
+   */
+  private readonly fallbackAllowed =
+    process.env.NODE_ENV !== "production" && process.env.STORAGE_MEMORY_FALLBACK === "true";
+
   private async runWithFallback<T>(operation: () => Promise<T>, fallback: () => T): Promise<T> {
+    if (!this.fallbackAllowed) {
+      return operation();
+    }
     if (this.useFallback) {
       return fallback();
     }
@@ -312,6 +323,19 @@ export class DatabaseStorage implements IStorage {
           severity: alert.severity,
           isResolved: false,
           createdAt: new Date(),
+          organizationId: alert.organizationId ?? null,
+          areaId: alert.areaId ?? null,
+          riskAnalysisId: alert.riskAnalysisId ?? null,
+          status: alert.status ?? "novo",
+          reason: alert.reason ?? null,
+          dataSource: alert.dataSource ?? null,
+          dataReferenceAt: alert.dataReferenceAt ?? null,
+          assignedTo: alert.assignedTo ?? null,
+          recommendations: alert.recommendations ?? null,
+          dedupKey: alert.dedupKey ?? null,
+          occurrenceCount: alert.occurrenceCount ?? 1,
+          isDemo: alert.isDemo ?? true,
+          updatedAt: new Date(),
         };
         fallbackState.alerts.push(newAlert);
         return newAlert;
@@ -367,6 +391,11 @@ export class DatabaseStorage implements IStorage {
           uvIndex: data.uvIndex ?? null,
           condition: data.condition ?? null,
           timestamp: new Date(),
+          sourceKey: data.sourceKey ?? "open-meteo",
+          kind: data.kind ?? "atual",
+          observedAt: data.observedAt ?? null,
+          fetchedAt: new Date(),
+          precipitation72h: data.precipitation72h ?? null,
         };
         fallbackState.weatherData.push(newWeather);
         return newWeather;

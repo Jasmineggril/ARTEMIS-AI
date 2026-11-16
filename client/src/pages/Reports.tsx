@@ -1,281 +1,183 @@
-import { useState } from "react";
-import { Layout } from "@/components/Layout";
-import { RiskBadge } from "@/components/RiskBadge";
-import { calculateRisk, DEMO_SCENARIOS, type RiskResult } from "@shared/risk-engine";
-import { SIMULATED_DATA_LABEL, DECISION_SUPPORT_DISCLAIMER, PRODUCT_NAME, TRL_LABEL, SUBMISSION_MODE } from "@shared/identity";
-import { FileText, Download, Printer, Info, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { FileText, Printer, Download, FlaskConical } from "lucide-react";
+import { Layout } from "@/components/Layout";
+import { Button } from "@/components/ui/button";
+import { RiskBadge } from "@/components/RiskBadge";
+import { useAuthStatus, hasRole } from "@/hooks/use-auth";
+import { STATUS_LABEL } from "@/hooks/use-alerts";
+import { api } from "@/lib/api";
+import { PRODUCT_NAME, DECISION_SUPPORT_DISCLAIMER, SUBMISSION_MODE } from "@shared/identity";
+import type { MonitoredArea, AlertStatus } from "@shared/schema";
+import { Link } from "wouter";
 
-const DEMO_RESULTS = Object.entries(DEMO_SCENARIOS).map(([key, s]) => ({
-  key,
-  label: s.label,
-  areaName: `Área Demo — ${s.label}`,
-  operationType: { baixo: "Agroindústria", moderado: "Empresa florestal", alto: "Energia", crítico: "Mineração" }[key] ?? "Outro",
-  municipality: { baixo: "Alto Paraíso/GO", moderado: "Niquelândia/GO", alto: "Goiânia/GO", crítico: "Crixás/GO" }[key] ?? "—",
-  input: s.input,
-  result: calculateRisk(s.input, true),
-}));
+type AreaRow = MonitoredArea & { latestAnalysis: { createdAt: string } | null };
+import type { RiskLevel } from "@shared/risk-engine";
+import { OPERATION_LABELS } from "./Areas";
 
-function AnalysisReport({ item }: { item: typeof DEMO_RESULTS[0] }) {
-  const [expanded, setExpanded] = useState(false);
-  const r = item.result;
-  const now = format(new Date(r.calculatedAt), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR });
-
-  return (
-    <div className="bg-card border border-border/50 rounded-2xl shadow-sm overflow-hidden">
-      <button
-        className="w-full flex items-center justify-between p-5 hover:bg-muted/20 transition-colors text-left"
-        onClick={() => setExpanded(e => !e)}
-      >
-        <div className="flex items-center gap-4">
-          <RiskBadge level={r.level} score={r.score} size="md" />
-          <div>
-            <p className="font-semibold text-foreground">{item.areaName}</p>
-            <p className="text-xs text-muted-foreground">{item.operationType} · {item.municipality}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground hidden sm:block">{now}</span>
-          {expanded ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="border-t border-border/30 p-6 space-y-6">
-          {/* Header */}
-          <div className="bg-muted/30 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Plataforma</p>
-                <p className="font-semibold text-foreground">
-                  {SUBMISSION_MODE ? "Plataforma Preditiva de Inteligência Ambiental" : PRODUCT_NAME}
-                </p>
-              </div>
-              <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-full font-medium">
-                {TRL_LABEL}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-              <div><p className="text-xs text-muted-foreground">Área</p><p className="font-medium">{item.areaName}</p></div>
-              <div><p className="text-xs text-muted-foreground">Operação</p><p className="font-medium">{item.operationType}</p></div>
-              <div><p className="text-xs text-muted-foreground">Local</p><p className="font-medium">{item.municipality}</p></div>
-              <div><p className="text-xs text-muted-foreground">Data</p><p className="font-medium">{now}</p></div>
-            </div>
-          </div>
-
-          {/* Score */}
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="bg-card border border-border/40 rounded-xl p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Índice de Risco</p>
-              <p className="text-4xl font-bold text-foreground">{r.score}</p>
-              <p className="text-xs text-muted-foreground">/100</p>
-              <RiskBadge level={r.level} size="sm" className="mt-2" />
-            </div>
-            <div className="bg-card border border-border/40 rounded-xl p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Confiança</p>
-              <p className="text-4xl font-bold text-foreground">{Math.round(r.confidence * 100)}%</p>
-              <p className="text-xs text-muted-foreground mt-1">baseado na qualidade dos dados</p>
-            </div>
-            <div className="bg-card border border-border/40 rounded-xl p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Motor</p>
-              <p className="text-xl font-bold text-foreground">v{r.calculationVersion}</p>
-              <p className="text-xs text-muted-foreground mt-1">Baseado em regras documentadas</p>
-            </div>
-          </div>
-
-          {/* Inputs */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-3 text-sm">Dados de entrada</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              {[
-                { label: "Temperatura", value: `${item.input.temperature}°C` },
-                { label: "Umidade", value: `${item.input.humidity}%` },
-                { label: "Vento", value: `${item.input.windSpeed} km/h` },
-                { label: "Precipitação 72h", value: `${item.input.recentRainfall} mm` },
-                { label: "Vegetação", value: ["Muito seca","Seca","Moderada","Úmida"][item.input.vegetationCondition] },
-                { label: "Foco próximo", value: item.input.nearbyHotspot ? `Sim (${item.input.hotspotDistance} km)` : "Não" },
-                { label: "Histórico", value: `${item.input.historicalOccurrences} ocorrências` },
-                { label: "Qualidade dos dados", value: ["Ruim","Regular","Boa","Excelente"][item.input.dataQuality] },
-              ].map(d => (
-                <div key={d.label} className="bg-muted/20 rounded-lg p-2.5">
-                  <p className="text-muted-foreground">{d.label}</p>
-                  <p className="font-semibold text-foreground mt-0.5">{d.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Factors */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-3 text-sm">Fatores identificados</h3>
-            <div className="space-y-2">
-              {r.factors.map((f, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg text-sm">
-                  <span className={cn("font-bold shrink-0 min-w-[32px] text-xs", f.contribution > 0 ? "text-red-600" : "text-green-600")}>
-                    {f.contribution > 0 ? `+${f.contribution}` : f.contribution}
-                  </span>
-                  <div>
-                    <p className="font-medium text-foreground">{f.name} — <span className="text-muted-foreground font-normal">{f.value}</span></p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{f.description}</p>
-                  </div>
-                </div>
-              ))}
-              {r.factors.length === 0 && <p className="text-sm text-muted-foreground">Nenhum fator de risco significativo.</p>}
-            </div>
-          </div>
-
-          {/* Recommendations */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-3 text-sm">Recomendações</h3>
-            <div className="space-y-2">
-              {r.recommendations.slice(0, 4).map((rec, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm p-3 bg-muted/20 rounded-lg">
-                  <span className="font-bold text-primary shrink-0 mt-0.5 capitalize text-xs">{rec.priority}:</span>
-                  <span className="text-muted-foreground">{rec.action}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Simulated data notice + disclaimer */}
-          <div className="space-y-3">
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-start gap-2">
-              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              {SIMULATED_DATA_LABEL}
-            </div>
-            <div className="bg-muted/30 border border-border/30 rounded-xl p-3 text-xs text-muted-foreground flex items-start gap-2">
-              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              {DECISION_SUPPORT_DISCLAIMER}
-            </div>
-            <div className="border border-dashed border-border/50 rounded-xl p-3 text-xs text-muted-foreground">
-              <p className="font-semibold mb-1">Espaço para validação técnica:</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="border-b border-dashed border-border/40 pb-1">Validado por: ___________________</div>
-                <div className="border-b border-dashed border-border/40 pb-1">Data: ___________________</div>
-                <div className="border-b border-dashed border-border/40 pb-1">Cargo: ___________________</div>
-                <div className="border-b border-dashed border-border/40 pb-1">Assinatura: ___________________</div>
-              </div>
-            </div>
-          </div>
-
-          <Button variant="outline" size="sm" onClick={() => window.print()} className="w-full">
-            <Printer className="w-4 h-4 mr-2" /> Imprimir relatório
-          </Button>
-        </div>
-      )}
-    </div>
-  );
+interface AreaReport {
+  generatedAt: string;
+  systemVersion: string;
+  period: { from: string; to: string };
+  area: MonitoredArea;
+  summary: { analyses: number; experimental: number; scoreMin: number | null; scoreMax: number | null; scoreAvg: number | null; distribution: Record<RiskLevel, number>; qualityLevels: Record<string, number> };
+  sources: { key: string; name: string; count: number }[];
+  engines: { engine: string; count: number }[];
+  analyses: { id: number; createdAt: string; score: number; level: RiskLevel; engineType: string; isExperimental: boolean; topFactors: string[] }[];
+  alerts: { id: number; createdAt: string; severity: string; status: AlertStatus; occurrenceCount: number; recommendations: { priority: string; action: string }[] | null }[];
+  limitations: string[];
 }
 
+const LEVELS: RiskLevel[] = ["crítico", "alto", "moderado", "baixo"];
+const dt = (d: string) => format(new Date(d), "dd/MM/yyyy HH:mm", { locale: ptBR });
+const day = (d: string) => format(new Date(d), "dd/MM/yyyy", { locale: ptBR });
+
 export default function Reports() {
-  const [showComparative, setShowComparative] = useState(false);
+  const { data: user } = useAuthStatus();
+  const today = format(new Date(), "yyyy-MM-dd");
+  const [areaId, setAreaId] = useState<number | null>(null);
+  const [from, setFrom] = useState(format(subDays(new Date(), 90), "yyyy-MM-dd"));
+  const [to, setTo] = useState(today);
 
-  const totals = {
-    analyses: DEMO_RESULTS.length,
-    critical: DEMO_RESULTS.filter(r => r.result.level === "crítico").length,
-    high: DEMO_RESULTS.filter(r => r.result.level === "alto").length,
-    avgScore: Math.round(DEMO_RESULTS.reduce((s, r) => s + r.result.score, 0) / DEMO_RESULTS.length),
-  };
+  const { data: areas = [] } = useQuery<AreaRow[]>({ queryKey: ["/api/areas"], queryFn: () => api("GET", "/api/areas") });
+  // Default: the area with the most recent analysis (an empty report is not a useful first view).
+  useEffect(() => {
+    if (areaId || !areas.length) return;
+    const analysed = areas.filter((a) => a.latestAnalysis).sort((a, b) => Date.parse(b.latestAnalysis!.createdAt) - Date.parse(a.latestAnalysis!.createdAt));
+    setAreaId((analysed[0] ?? areas[0]).id);
+  }, [areas, areaId]);
 
+  const { data: r, isFetching, error } = useQuery<AreaReport>({
+    queryKey: ["/api/reports/areas", areaId, from, to],
+    queryFn: () => api("GET", `/api/reports/areas/${areaId}?from=${from}&to=${to}`),
+    enabled: !!areaId,
+  });
+
+  const input = "rounded-lg border border-input bg-background px-3 py-2 text-sm";
   return (
     <Layout>
-      <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
-            <FileText className="w-8 h-8 text-primary" />
-            Relatórios
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {DEMO_RESULTS.length} análises demonstrativas · <span className="text-amber-600 text-sm">{SIMULATED_DATA_LABEL}</span>
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => window.print()}>
-            <Printer className="w-4 h-4 mr-2" /> Imprimir
-          </Button>
-        </div>
+      <header className="mb-6 print:hidden">
+        <h1 className="text-3xl font-bold font-display flex items-center gap-2"><FileText className="w-8 h-8 text-primary" aria-hidden />Relatórios</h1>
+        <p className="text-muted-foreground mt-1">Relatório por área e período, gerado a partir das análises e alertas armazenados da organização.</p>
       </header>
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm text-center">
-          <p className="text-3xl font-bold text-foreground">{totals.analyses}</p>
-          <p className="text-xs text-muted-foreground mt-1">Análises realizadas</p>
-        </div>
-        <div className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm text-center">
-          <p className="text-3xl font-bold text-red-600">{totals.critical}</p>
-          <p className="text-xs text-muted-foreground mt-1">Risco crítico</p>
-        </div>
-        <div className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm text-center">
-          <p className="text-3xl font-bold text-orange-600">{totals.high}</p>
-          <p className="text-xs text-muted-foreground mt-1">Risco alto</p>
-        </div>
-        <div className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm text-center">
-          <p className="text-3xl font-bold text-foreground">{totals.avgScore}</p>
-          <p className="text-xs text-muted-foreground mt-1">Score médio /100</p>
-        </div>
-      </div>
+      {areas.length === 0 ? (
+        <p className="text-muted-foreground">Cadastre uma área e execute análises para gerar relatórios.</p>
+      ) : (
+        <form className="flex flex-col sm:flex-row sm:items-end gap-3 mb-6 print:hidden" onSubmit={(e) => e.preventDefault()}>
+          <div className="flex-1"><label htmlFor="r-area" className="text-xs text-muted-foreground block mb-1">Área</label>
+            <select id="r-area" className={`${input} w-full`} value={areaId ?? ""} onChange={(e) => setAreaId(Number(e.target.value))}>
+              {areas.map((a) => <option key={a.id} value={a.id}>{a.name} — {a.municipality}/{a.state}{a.latestAnalysis ? "" : " (sem análises)"}</option>)}
+            </select></div>
+          <div><label htmlFor="r-from" className="text-xs text-muted-foreground block mb-1">De</label>
+            <input id="r-from" type="date" className={input} value={from} max={to} onChange={(e) => setFrom(e.target.value)} /></div>
+          <div><label htmlFor="r-to" className="text-xs text-muted-foreground block mb-1">Até</label>
+            <input id="r-to" type="date" className={input} value={to} min={from} max={today} onChange={(e) => setTo(e.target.value)} /></div>
+          <Button type="button" variant="outline" onClick={() => window.print()} disabled={!r}><Printer className="w-4 h-4 mr-1" aria-hidden />Imprimir / PDF</Button>
+          {hasRole(user, "analyst") && areaId && (
+            <Button asChild variant="outline"><a href={`/api/reports/areas/${areaId}/analyses.csv`} download><Download className="w-4 h-4 mr-1" aria-hidden />CSV completo</a></Button>
+          )}
+        </form>
+      )}
 
-      {/* Relatório comparativo */}
-      <div className="bg-card border border-border/50 rounded-2xl shadow-sm mb-6 overflow-hidden">
-        <button
-          className="w-full flex items-center justify-between p-5 hover:bg-muted/20 transition-colors"
-          onClick={() => setShowComparative(e => !e)}
-        >
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-foreground">Relatório Comparativo — 4 cenários demonstrativos</span>
-          </div>
-          {showComparative ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
-        </button>
-        {showComparative && (
-          <div className="border-t border-border/30 p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border/30">
-                    <th className="pb-3 text-left text-xs font-semibold text-muted-foreground">Cenário</th>
-                    <th className="pb-3 text-left text-xs font-semibold text-muted-foreground">Índice</th>
-                    <th className="pb-3 text-left text-xs font-semibold text-muted-foreground">Nível</th>
-                    <th className="pb-3 text-left text-xs font-semibold text-muted-foreground">Fatores</th>
-                    <th className="pb-3 text-left text-xs font-semibold text-muted-foreground">Confiança</th>
-                    <th className="pb-3 text-left text-xs font-semibold text-muted-foreground">Recomendações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {DEMO_RESULTS.map(r => (
-                    <tr key={r.key} className="border-b border-border/20 last:border-0">
-                      <td className="py-3 font-medium text-foreground">{r.label}</td>
-                      <td className="py-3 font-bold text-foreground">{r.result.score}</td>
-                      <td className="py-3"><RiskBadge level={r.result.level} size="sm" /></td>
-                      <td className="py-3 text-muted-foreground">{r.result.factors.length} fator(es)</td>
-                      <td className="py-3 text-muted-foreground">{Math.round(r.result.confidence * 100)}%</td>
-                      <td className="py-3 text-muted-foreground">{r.result.recommendations.length} rec.</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {isFetching && <p className="text-muted-foreground print:hidden">Gerando relatório...</p>}
+      {error && <p role="alert" className="text-red-700">{(error as Error).message}</p>}
+
+      {r && (
+        <article className="bg-card border rounded-2xl p-6 space-y-6 print:border-0 print:p-0" aria-labelledby="rep-title">
+          <header className="flex flex-col sm:flex-row sm:justify-between gap-2 border-b pb-4">
+            <div>
+              <p className="text-xs text-muted-foreground">{SUBMISSION_MODE ? "Plataforma Preditiva" : PRODUCT_NAME} · {user?.organization?.name}</p>
+              <h2 id="rep-title" className="text-2xl font-bold">{r.area.name}</h2>
+              <p className="text-sm text-muted-foreground">
+                {r.area.municipality}/{r.area.state} · {OPERATION_LABELS[r.area.operationType] ?? r.area.operationType}
+                {r.area.areaHectares != null && ` · ${r.area.areaHectares.toLocaleString("pt-BR")} ha`}
+                {r.area.latitude != null && ` · ${r.area.latitude.toFixed(4)}, ${r.area.longitude!.toFixed(4)}`}
+              </p>
             </div>
-            <p className="text-xs text-amber-600 mt-4">{SIMULATED_DATA_LABEL}</p>
-          </div>
-        )}
-      </div>
+            <dl className="text-xs text-muted-foreground grid grid-cols-[auto_1fr] gap-x-2 sm:text-right">
+              <dt>Período</dt><dd>{day(r.period.from)} a {day(r.period.to)}</dd>
+              <dt>Gerado em</dt><dd>{dt(r.generatedAt)}</dd>
+              <dt>Sistema</dt><dd>{r.systemVersion}</dd>
+              <dt>Maturidade</dt><dd className="whitespace-nowrap">TRL 4 — protótipo</dd>
+            </dl>
+          </header>
 
-      {/* Individual reports */}
-      <div className="space-y-4">
-        <h2 className="font-semibold text-foreground">Relatórios individuais de análise</h2>
-        {DEMO_RESULTS.map(item => (
-          <AnalysisReport key={item.key} item={item} />
-        ))}
-      </div>
+          {r.summary.analyses === 0 ? (
+            <div className="rounded-xl border border-dashed p-6 text-center">
+              <p className="font-medium">Nenhuma análise desta área no período selecionado.</p>
+              <p className="text-sm text-muted-foreground mt-1">Amplie o período ou execute uma análise para esta área.</p>
+              {hasRole(user, "analyst") && (
+                <Button asChild className="mt-4 print:hidden"><Link href={`/risk-analysis?area=${r.area.id}`}>Analisar esta área</Link></Button>
+              )}
+            </div>
+          ) : (
+            <>
+              <section aria-labelledby="s-sum">
+                <h3 id="s-sum" className="font-semibold mb-3">Resumo</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Análises</p><p className="text-xl font-bold">{r.summary.analyses}</p></div>
+                  <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Índice médio</p><p className="text-xl font-bold">{r.summary.scoreAvg}</p></div>
+                  <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Mín. – máx.</p><p className="text-xl font-bold">{r.summary.scoreMin}–{r.summary.scoreMax}</p></div>
+                  <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">Alertas emitidos</p><p className="text-xl font-bold">{r.alerts.length}</p></div>
+                </div>
+                <ul className="flex flex-wrap gap-3 mt-3 text-sm">
+                  {LEVELS.map((l) => <li key={l} className="flex items-center gap-1"><RiskBadge level={l} size="sm" showIcon /> {r.summary.distribution[l] ?? 0}</li>)}
+                </ul>
+                {r.summary.experimental > 0 && (
+                  <p className="text-xs mt-2 text-violet-800 flex items-center gap-1"><FlaskConical className="w-3 h-3" aria-hidden />{r.summary.experimental} análise(s) feita(s) com o modelo experimental (dados sintéticos).</p>
+                )}
+              </section>
 
-      <div className="flex items-start gap-2 mt-6 text-xs text-muted-foreground">
-        <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        Exportação CSV/PDF: funcionalidade demonstrativa. Utilize o botão "Imprimir" para salvar como PDF via diálogo do navegador.
-      </div>
+              <section aria-labelledby="s-hist">
+                <h3 id="s-hist" className="font-semibold mb-2">Histórico das análises</h3>
+                <div className="overflow-x-auto"><table className="w-full text-sm">
+                  <thead><tr className="text-left text-muted-foreground text-xs"><th className="py-1">#</th><th>Data/hora</th><th>Nível</th><th>Principais fatores</th></tr></thead>
+                  <tbody>{r.analyses.map((a) => (
+                    <tr key={a.id} className="border-t align-top">
+                      <td className="py-1.5">{a.id}</td><td className="whitespace-nowrap pr-2">{dt(a.createdAt)}</td>
+                      <td><RiskBadge level={a.level} score={a.score} size="sm" />{a.isExperimental && <span className="text-[10px] text-violet-800 ml-1">exp.</span>}</td>
+                      <td className="text-xs">{a.topFactors.join("; ") || "—"}</td>
+                    </tr>))}</tbody>
+                </table></div>
+              </section>
+
+              <section aria-labelledby="s-alerts">
+                <h3 id="s-alerts" className="font-semibold mb-2">Alertas e medidas preventivas</h3>
+                {r.alerts.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum alerta no período.</p> : (
+                  <ul className="space-y-2 text-sm">{r.alerts.map((a) => (
+                    <li key={a.id} className="border rounded-xl p-3">
+                      <p className="font-medium">Alerta #{a.id} · {dt(a.createdAt)} · {a.severity} · {STATUS_LABEL[a.status] ?? a.status}{a.occurrenceCount > 1 && ` · confirmado ${a.occurrenceCount}×`}</p>
+                      {a.recommendations && <ul className="list-disc list-inside text-xs mt-1">{a.recommendations.map((x, i) => <li key={i}><span className="capitalize">{x.priority}</span>: {x.action}</li>)}</ul>}
+                    </li>))}</ul>
+                )}
+              </section>
+
+              <section aria-labelledby="s-src" className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h3 id="s-src" className="font-semibold mb-2">Fontes utilizadas</h3>
+                  <ul className="text-sm space-y-1">{r.sources.map((s) => <li key={s.key}>• {s.name} — {s.count} análise(s)</li>)}</ul>
+                  <h3 className="font-semibold mt-4 mb-2">Indicadores de qualidade</h3>
+                  <ul className="text-sm space-y-1">{Object.entries(r.summary.qualityLevels).map(([k, v]) => <li key={k}>• Qualidade {k}: {v} análise(s)</li>)}</ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">Motor e versão</h3>
+                  <ul className="text-sm space-y-1 break-all">{r.engines.map((e) => <li key={e.engine}>• {e.engine} — {e.count}</li>)}</ul>
+                </div>
+              </section>
+            </>
+          )}
+
+          <section aria-labelledby="s-lim" className="break-inside-avoid rounded-xl bg-amber-50 text-amber-950 border border-amber-200 p-4">
+            <h3 id="s-lim" className="font-semibold mb-2">Limitações metodológicas</h3>
+            <ul className="list-disc list-inside text-xs space-y-1">
+              {(r.limitations.length ? r.limitations : [DECISION_SUPPORT_DISCLAIMER]).map((l, i) => <li key={i}>{l}</li>)}
+            </ul>
+          </section>
+                  </article>
+      )}
     </Layout>
   );
 }

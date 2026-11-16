@@ -65,7 +65,7 @@ def generate_synthetic_dataset(n_samples: int = 1000, seed: int = 42) -> tuple:
 
 def train_and_save():
     print("=" * 60)
-    print("CERES AI — Treinamento de Modelo Demonstrativo")
+    print("ARTEMIS AI — Treinamento de Modelo Demonstrativo")
     print("AVISO: Dataset sintético. Não representa desempenho real.")
     print("=" * 60)
 

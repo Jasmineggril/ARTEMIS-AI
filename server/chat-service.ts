@@ -1,12 +1,12 @@
 /**
- * Serviço de chat com IA para a Plataforma Preditiva de Inteligência Ambiental.
+ * Serviço de chat com IA para a ARTEMIS AI, plataforma de inteligência ambiental.
  * Usa a API OpenAI (GPT-4o-mini) com fallback para respostas offline.
  *
  * O assistente está sempre disponível — se a API OpenAI falhar, o fallback
  * offline garante que as perguntas sejam respondidas sem interrupção.
  */
 
-const SYSTEM_PROMPT = `Você é um especialista em prevenção de incêndios em áreas produtivas e ativos territoriais, integrado à Plataforma Preditiva de Inteligência Ambiental (TRL 4).
+const SYSTEM_PROMPT = `Você é um especialista em prevenção de incêndios em áreas produtivas e ativos territoriais, integrado à ARTEMIS AI, plataforma de inteligência ambiental (TRL 4).
 
 Sua função é ajudar usuários a:
 - Entender o índice de risco de incêndio calculado pelo motor da plataforma (0–100, níveis: Baixo/Moderado/Alto/Crítico)
@@ -82,7 +82,7 @@ function getOfflineResponse(message: string): string {
       return entry.response;
     }
   }
-  return "Sou o Assistente da Plataforma Preditiva de Inteligência Ambiental. Posso ajudar com dúvidas sobre o índice de risco, fatores ambientais, protocolos de prevenção e como usar a plataforma. Qual é sua pergunta?";
+  return "Sou o Assistente da ARTEMIS AI, plataforma de inteligência ambiental. Posso ajudar com dúvidas sobre o índice de risco, fatores ambientais, protocolos de prevenção e como usar a plataforma. Qual é sua pergunta?";
 }
 
 export type PropertyProfile = {

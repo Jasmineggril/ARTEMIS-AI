@@ -3,13 +3,15 @@ import {
   LayoutDashboard, Bell, Settings,
   FileText, Map, BarChart3, Home,
   Flame, MapPinned, ShieldCheck, Database,
-  Upload, HelpCircle, TrendingUp
+  Upload, HelpCircle, TrendingUp, Users, Menu, X, Globe
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/Header";
 import { AccessibilityBar } from "@/components/AccessibilityBar";
-import { PRODUCT_NAME, PRODUCT_SUBTITLE } from "@shared/identity";
-import ceresLogo from "@assets/LOGO_CERES_AI_1782244864205.png";
+import { PRODUCT_NAME, PRODUCT_SUBTITLE, SUBMISSION_MODE } from "@shared/identity";
+import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
+import { PrintBrandHeader } from "@/components/BrandScreens";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,29 +19,50 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [location]);
 
   const navItems = [
     { icon: Home,            label: "Início",                    href: "/",              tour: undefined },
     { icon: LayoutDashboard, label: "Visão Geral",               href: "/dashboard",     tour: "dashboard-summary" },
     { icon: MapPinned,       label: "Áreas Monitoradas",         href: "/areas",         tour: "monitored-areas" },
     { icon: Flame,           label: "Análise de Risco",          href: "/risk-analysis", tour: "risk-analysis" },
-    { icon: Map,             label: "Mapa de Risco",             href: "/maps",          tour: "risk-map" },
+    { icon: Map,             label: "Mapa Ambiental",            href: "/maps",          tour: "risk-map" },
     { icon: Bell,            label: "Alertas Preventivos",       href: "/alerts",        tour: "alerts" },
     { icon: Upload,          label: "Importação de Ocorrências", href: "/data-import",   tour: undefined },
+    { icon: Globe,           label: "Consulta Pública", href: "/consulta-publica",   tour: undefined },
     { icon: Database,        label: "Fontes de Dados",           href: "/data-sources",  tour: undefined },
     { icon: TrendingUp,      label: "Inteligência Operacional",  href: "/insights",      tour: undefined },
     { icon: ShieldCheck,     label: "Protocolos de Prevenção",   href: "/prevention",    tour: undefined },
     { icon: FileText,        label: "Relatórios",                href: "/reports",       tour: "reports" },
     { icon: HelpCircle,      label: "Ajuda",                     href: "/help",          tour: undefined },
+    { icon: Users,           label: "Organização",               href: "/organization",  tour: undefined },
     { icon: Settings,        label: "Configurações",             href: "/settings",      tour: undefined },
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans">
+    <div className="min-h-screen bg-background flex flex-col font-sans print:bg-white print:min-h-0">
       <Header />
-      <div className="flex flex-1">
+      <div className="flex flex-col md:flex-row flex-1">
+        {/* Mobile menu toggle */}
+        <button
+          type="button"
+          className="md:hidden print:hidden flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-card text-sm font-semibold"
+          aria-expanded={menuOpen}
+          aria-controls="main-sidebar"
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          {menuOpen ? <X className="w-5 h-5" aria-hidden /> : <Menu className="w-5 h-5" aria-hidden />}
+          {menuOpen ? "Fechar menu" : "Menu"}
+        </button>
         {/* Sidebar */}
-        <aside className="w-full md:w-64 bg-card border-r border-border/50 flex flex-col sticky top-0 md:h-screen z-20">
+        <aside
+          id="main-sidebar"
+          className={cn(
+            "w-full md:w-64 bg-card border-r border-border/50 flex-col md:sticky md:top-0 md:h-screen z-20 print:hidden",
+            menuOpen ? "flex" : "hidden md:flex",
+          )}
+        >
           {/* Logo */}
           <Link href="/">
             <div
@@ -47,13 +70,9 @@ export function Layout({ children }: LayoutProps) {
               data-testid="button-sidebar-logo"
               title="Página inicial"
             >
-              <img
-                src={ceresLogo}
-                alt={PRODUCT_NAME}
-                className="h-10 w-auto group-hover:scale-105 transition-transform"
-              />
+              <ArtemisMark className="w-10 h-10 shrink-0" />
               <div>
-                <h1 className="font-display font-bold text-sm leading-none tracking-tight">{PRODUCT_NAME}</h1>
+                <p className="text-sm leading-none">{SUBMISSION_MODE ? <span className="font-bold">{PRODUCT_NAME}</span> : <ArtemisWordmark />}</p>
                 <p className="text-xs text-muted-foreground mt-0.5 font-medium leading-snug">
                   {PRODUCT_SUBTITLE}
                 </p>
@@ -96,8 +115,7 @@ export function Layout({ children }: LayoutProps) {
 
           <div className="p-3 m-3 rounded-xl bg-gradient-to-br from-primary/8 to-transparent border border-primary/10">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-semibold text-primary">Sistema Online</span>
+              <span className="text-xs font-semibold text-primary">Ambiente de validação</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Protótipo em validação controlada — TRL 4
@@ -106,13 +124,14 @@ export function Layout({ children }: LayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
+        <main className="flex-1 min-w-0 overflow-auto">
+          <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500 print:p-0 print:max-w-none">
+            <PrintBrandHeader />
             {children}
           </div>
         </main>
       </div>
-      <AccessibilityBar />
+      <div className="print:hidden"><AccessibilityBar /></div>
     </div>
   );
 }
