@@ -1,3 +1,4 @@
+import { ArtemisMark } from "@/components/ArtemisMark";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Bot, X, Send, Flame, AlertTriangle, Info, Loader2, Wifi, WifiOff, Trash2, MapPin } from "lucide-react";
@@ -300,8 +301,8 @@ export function Chatbot() {
           {/* Header */}
           <div className="bg-gradient-to-r from-primary to-emerald-700 text-white p-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
-                <Flame className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center p-1">
+                <ArtemisMark className="w-full h-full" inverted />
               </div>
               <div>
                 <h3 className="font-bold text-sm leading-none text-white">Assistente de Risco</h3>

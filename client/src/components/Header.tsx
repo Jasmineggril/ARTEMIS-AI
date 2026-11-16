@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, HelpCircle } from "lucide-react";
 import { useState } from "react";
-import { ArtemisMark } from "@/components/ArtemisMark";
+import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
 import { PRODUCT_NAME } from "@shared/identity";
 
 export function Header() {
@@ -14,7 +14,7 @@ export function Header() {
 
   if (!user) {
     return (
-      <header className="bg-card border-b border-border/50 sticky top-0 z-40 backdrop-blur-sm">
+      <header className="bg-card border-b border-border/50 sticky top-0 z-40 backdrop-blur-sm print:hidden">
         <div className="px-6 py-3 flex items-center justify-between">
           <button
             onClick={() => setLocation("/")}
@@ -23,6 +23,7 @@ export function Header() {
             aria-label="Voltar para página inicial"
           >
             <ArtemisMark className="w-9 h-9 shrink-0" />
+            <ArtemisWordmark className="text-base" />
           </button>
           <div className="flex gap-2">
             <Button
@@ -47,7 +48,7 @@ export function Header() {
   }
 
   return (
-    <header className="bg-card border-b border-border/50 sticky top-0 z-40 backdrop-blur-sm">
+    <header className="bg-card border-b border-border/50 sticky top-0 z-40 backdrop-blur-sm print:hidden">
       <div className="px-6 py-3 flex items-center justify-between">
         <button
           onClick={() => setLocation("/")}
@@ -55,8 +56,14 @@ export function Header() {
           data-testid="button-header-logo"
           aria-label="Voltar para página inicial"
         >
-          <ArtemisMark className="w-9 h-9 shrink-0" />
+          <ArtemisMark className="w-9 h-9 shrink-0 md:hidden" />
+          <ArtemisWordmark className="text-base md:hidden" />
         </button>
+        {user.organization && (
+          <p className="hidden md:block text-sm text-muted-foreground truncate max-w-md" title="Organização ativa">
+            Organização: <span className="font-semibold text-foreground">{user.organization.name}</span>
+          </p>
+        )}
 
         <div className="flex items-center gap-2">
           <button

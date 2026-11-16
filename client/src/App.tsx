@@ -30,6 +30,7 @@ import Privacy from "@/pages/Privacy";
 import PublicLookup from "@/pages/PublicLookup";
 import { Redirect } from "wouter";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { BrandSplash } from "@/components/BrandScreens";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { data: user, isLoading } = useAuthStatus();
@@ -41,16 +42,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
     }
   }, [user, isLoading, setLocation]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F5F7F8" }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#0F5132", borderTopColor: "transparent" }} />
-          <p className="text-sm text-gray-500">Verificando acesso...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <BrandSplash message="Verificando acesso…" />;
 
   if (!user) return null;
   return <Component />;
