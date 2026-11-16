@@ -2,15 +2,18 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileText, Printer, Download, Info, FlaskConical } from "lucide-react";
+import { FileText, Printer, Download, FlaskConical } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/RiskBadge";
 import { useAuthStatus, hasRole } from "@/hooks/use-auth";
 import { STATUS_LABEL } from "@/hooks/use-alerts";
 import { api } from "@/lib/api";
-import { PRODUCT_NAME, TRL_LABEL, DECISION_SUPPORT_DISCLAIMER, SUBMISSION_MODE } from "@shared/identity";
+import { PRODUCT_NAME, DECISION_SUPPORT_DISCLAIMER, SUBMISSION_MODE } from "@shared/identity";
 import type { MonitoredArea, AlertStatus } from "@shared/schema";
+import { Link } from "wouter";
+
+type AreaRow = MonitoredArea & { latestAnalysis: { createdAt: string } | null };
 import type { RiskLevel } from "@shared/risk-engine";
 import { OPERATION_LABELS } from "./Areas";
 
@@ -38,8 +41,13 @@ export default function Reports() {
   const [from, setFrom] = useState(format(subDays(new Date(), 90), "yyyy-MM-dd"));
   const [to, setTo] = useState(today);
 
-  const { data: areas = [] } = useQuery<MonitoredArea[]>({ queryKey: ["/api/areas"], queryFn: () => api("GET", "/api/areas") });
-  useEffect(() => { if (!areaId && areas.length) setAreaId(areas[0].id); }, [areas, areaId]);
+  const { data: areas = [] } = useQuery<AreaRow[]>({ queryKey: ["/api/areas"], queryFn: () => api("GET", "/api/areas") });
+  // Default: the area with the most recent analysis (an empty report is not a useful first view).
+  useEffect(() => {
+    if (areaId || !areas.length) return;
+    const analysed = areas.filter((a) => a.latestAnalysis).sort((a, b) => Date.parse(b.latestAnalysis!.createdAt) - Date.parse(a.latestAnalysis!.createdAt));
+    setAreaId((analysed[0] ?? areas[0]).id);
+  }, [areas, areaId]);
 
   const { data: r, isFetching, error } = useQuery<AreaReport>({
     queryKey: ["/api/reports/areas", areaId, from, to],
@@ -61,7 +69,7 @@ export default function Reports() {
         <form className="flex flex-col sm:flex-row sm:items-end gap-3 mb-6 print:hidden" onSubmit={(e) => e.preventDefault()}>
           <div className="flex-1"><label htmlFor="r-area" className="text-xs text-muted-foreground block mb-1">Área</label>
             <select id="r-area" className={`${input} w-full`} value={areaId ?? ""} onChange={(e) => setAreaId(Number(e.target.value))}>
-              {areas.map((a) => <option key={a.id} value={a.id}>{a.name} — {a.municipality}/{a.state}</option>)}
+              {areas.map((a) => <option key={a.id} value={a.id}>{a.name} — {a.municipality}/{a.state}{a.latestAnalysis ? "" : " (sem análises)"}</option>)}
             </select></div>
           <div><label htmlFor="r-from" className="text-xs text-muted-foreground block mb-1">De</label>
             <input id="r-from" type="date" className={input} value={from} max={to} onChange={(e) => setFrom(e.target.value)} /></div>
@@ -93,12 +101,18 @@ export default function Reports() {
               <dt>Período</dt><dd>{day(r.period.from)} a {day(r.period.to)}</dd>
               <dt>Gerado em</dt><dd>{dt(r.generatedAt)}</dd>
               <dt>Sistema</dt><dd>{r.systemVersion}</dd>
-              <dt>Maturidade</dt><dd>{TRL_LABEL}</dd>
+              <dt>Maturidade</dt><dd className="whitespace-nowrap">TRL 4 — protótipo</dd>
             </dl>
           </header>
 
           {r.summary.analyses === 0 ? (
-            <p className="text-muted-foreground">Nenhuma análise desta área no período selecionado.</p>
+            <div className="rounded-xl border border-dashed p-6 text-center">
+              <p className="font-medium">Nenhuma análise desta área no período selecionado.</p>
+              <p className="text-sm text-muted-foreground mt-1">Amplie o período ou execute uma análise para esta área.</p>
+              {hasRole(user, "analyst") && (
+                <Button asChild className="mt-4 print:hidden"><Link href={`/risk-analysis?area=${r.area.id}`}>Analisar esta área</Link></Button>
+              )}
+            </div>
           ) : (
             <>
               <section aria-labelledby="s-sum">
@@ -156,14 +170,13 @@ export default function Reports() {
             </>
           )}
 
-          <section aria-labelledby="s-lim" className="rounded-xl bg-amber-50 text-amber-950 border border-amber-200 p-4">
+          <section aria-labelledby="s-lim" className="break-inside-avoid rounded-xl bg-amber-50 text-amber-950 border border-amber-200 p-4">
             <h3 id="s-lim" className="font-semibold mb-2">Limitações metodológicas</h3>
             <ul className="list-disc list-inside text-xs space-y-1">
               {(r.limitations.length ? r.limitations : [DECISION_SUPPORT_DISCLAIMER]).map((l, i) => <li key={i}>{l}</li>)}
             </ul>
           </section>
-          <p className="text-xs text-muted-foreground flex items-start gap-1"><Info className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden />{DECISION_SUPPORT_DISCLAIMER}</p>
-        </article>
+                  </article>
       )}
     </Layout>
   );

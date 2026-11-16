@@ -83,7 +83,7 @@ export function RiskBadge({ level, score, size = "md", showIcon = false, classNa
       {showIcon && <span aria-hidden>{cfg.icon}</span>}
       <span>{cfg.label}</span>
       {score !== undefined && (
-        <span className="opacity-70 font-normal ml-0.5">({score})</span>
+        <span className="opacity-90 font-normal ml-0.5">({score})</span>
       )}
     </span>
   );

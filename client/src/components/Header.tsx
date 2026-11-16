@@ -83,7 +83,7 @@ export function Header() {
               data-testid="button-profile-menu"
             >
               <User className="w-4 h-4" />
-              <span className="text-sm font-medium truncate max-w-[150px]">{user.name}</span>
+              <span className="text-sm font-medium truncate max-w-[220px]" title={user.name}>{user.name}</span>
             </button>
 
             {showMenu && (

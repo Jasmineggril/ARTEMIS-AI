@@ -175,6 +175,12 @@ test("login with wrong password returns 401 with generic message", async () => {
   assert.equal(r.body.message, "E-mail ou senha inválidos.");
 });
 
+test("auth status answers 200 null for anonymous visitors (no console noise)", async () => {
+  const r = await anon.get("/api/auth/status");
+  assert.equal(r.status, 200);
+  assert.equal(r.body, null);
+});
+
 test("protected endpoints require authentication", async () => {
   for (const p of ["/api/areas", "/api/alerts", "/api/dashboard/summary", "/api/sensors", "/api/fire-occurrences", "/api/denuncias"]) {
     const r = await anon.get(p);

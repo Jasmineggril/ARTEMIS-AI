@@ -143,14 +143,18 @@ export function registerAuthRoutes(app: Express) {
 
   app.get("/api/auth/status", async (req, res, next) => {
     try {
-      if (!req.session?.userId) return res.status(401).json({ message: "Não autenticado." });
+      // Anonymous visitors are a normal state for this endpoint (landing page,
+      // public lookup): answer 200 with `null` instead of a 401 that browsers
+      // log as a console error on every public page view.
+      res.setHeader("Cache-Control", "no-store");
+      if (!req.session?.userId) return res.json(null);
       const [user] = await db
         .select({ id: users.id, email: users.email, name: users.name, platformRole: users.role })
         .from(users)
         .where(eq(users.id, req.session.userId));
       if (!user) {
         req.session.destroy(() => {});
-        return res.status(401).json({ message: "Não autenticado." });
+        return res.json(null);
       }
       let organization: { id: number; name: string; type: string; role: string } | null = null;
       if (req.session.organizationId) {

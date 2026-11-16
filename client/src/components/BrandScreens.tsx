@@ -28,8 +28,7 @@ export function PrintBrandHeader() {
       </div>
       <div className="text-right text-[10px] text-slate-600">
         <p>Documento gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-        <p>{typeof window !== "undefined" ? window.location.host : ""} · {TRL_LABEL}</p>
-        <p>Apoio à decisão — não substitui laudo técnico nem protocolo oficial.</p>
+        <p>{typeof window !== "undefined" ? window.location.host : ""}</p>
       </div>
     </div>
   );
