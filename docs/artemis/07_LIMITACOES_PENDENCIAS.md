@@ -23,7 +23,7 @@
 | 3 | Consulta Pública: implementada com dados de lotes publicados pelas organizações. Pendente: fonte pública oficial (INPE/Sisfogo) com licença compatível; cobertura hoje depende de quem publica | Acesso e licença das fontes |
 | 3 | Canal de relatos com moderação, anexos de imagem validados, anti-spam além do limite por IP (ex.: CAPTCHA), encaminhamentos | Validação jurídica e operacional |
 | 3 | Mapa: agrupamento de pontos, busca por endereço/município (geocodificação), desenho de polígono, camadas de focos de calor | Licença do geocodificador; acesso INPE |
-| 3 | Landing page: conteúdo ainda focado em áreas produtivas; apresentar perfis (cidadão, pesquisador, gestor) e revisar o modo escuro tela a tela | — |
+| 3 | Revisar o modo escuro tela a tela; publicar o canal de contato institucional na página inicial | Definição do contato institucional |
 | 4 | Registro de versões de modelo (`model_versions`), datasets, detecção de deriva, comparação entre versões | Dados reais rotulados |
 | 4 | Módulo de Prova de Valor na interface | Área piloto definida |
 | 4 | Teste de carga compatível com a VPS | VPS ou ambiente equivalente |

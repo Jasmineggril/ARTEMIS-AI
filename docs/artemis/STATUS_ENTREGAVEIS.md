@@ -9,7 +9,7 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | 1 | Diagnóstico do repositório | Implementado | `00_DIAGNOSTICO.md` |
 | 2 | Requisitos funcionais e não funcionais | Implementado | `01_REQUISITOS.md` |
 | 3 | Arquitetura atualizada | Implementado | `02_ARQUITETURA.md` |
-| 4 | Identidade visual | Parcial | Nome ARTEMIS AI em todas as telas, API, serviço Python e documentação; marca, paleta e telas de autenticação. Modo escuro não revisado tela a tela; landing ainda sem seções por perfil de usuário. |
+| 4 | Identidade visual | Implementado | Nome ARTEMIS AI em todas as telas, API, serviço Python e documentação; marca, paleta, telas de autenticação; página inicial reescrita (indicadores reais do INPE, módulos, perfis de público, fontes e limites, privacidade, maturidade). Modo escuro não revisado tela a tela |
 | 5 | Frontend funcional e responsivo | Parcial | Login, cadastro, recuperação de senha, dashboard, áreas, análise, alertas, mapa, organização e privacidade usam a API real. Relatórios e Inteligência Operacional também usam a API real. Testado em 1366 px e iPhone 13. |
 | 6 | Backend integrado | Implementado e testado | 27 testes de integração com PostgreSQL real |
 | 7 | Serviço de análise de risco | Implementado e testado | 109 pytest; caminho Node→Python testado com o serviço no ar e com fallback |

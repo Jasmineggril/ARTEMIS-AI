@@ -304,7 +304,7 @@ export function Chatbot() {
                 <Flame className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-sm leading-none">Assistente de Risco</h3>
+                <h3 className="font-bold text-sm leading-none text-white">Assistente de Risco</h3>
                 <p className="text-emerald-200 text-xs mt-0.5">{PRODUCT_NAME} · TRL 4</p>
               </div>
             </div>
