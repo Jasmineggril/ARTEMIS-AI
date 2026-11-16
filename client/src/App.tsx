@@ -27,6 +27,7 @@ import DataSources from "@/pages/DataSources";
 import NotFound from "@/pages/not-found";
 import Organization from "@/pages/Organization";
 import Privacy from "@/pages/Privacy";
+import Florestai from "@/pages/Florestai";
 import { OnboardingTour } from "@/components/OnboardingTour";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -62,6 +63,7 @@ function Router() {
       <Route path="/signup" component={Signup} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/privacidade" component={Privacy} />
+      <Route path="/florestai" component={Florestai} />
       <Route path="/organization" component={() => <ProtectedRoute component={Organization} />} />
       {/* Public — analysis page accessible without login */}
       <Route path="/simulacao" component={RiskAnalysis} />

@@ -5,7 +5,7 @@
 Plataforma brasileira de inteligência ambiental para prevenção de incêndios, análise preditiva de risco e apoio à decisão. Integra duas propostas anteriores, cuja história é preservada neste repositório:
 
 - **CERES AI** — núcleo preditivo: índice de risco 0–100 explicável, alertas e recomendações (documentação TRL 4 em `docs/trl4/`).
-- **Florestaí** — visão de monitoramento acessível de queimadas para o público geral (em construção; ver pendências).
+- **Florestaí** — consulta pública e acessível de ocorrências de queimadas, prevenção e biomas (`/florestai`).
 
 > **Estágio:** protótipo em validação controlada (TRL 4). **Não está pronto para produção.**
 > O índice não está calibrado com incêndios reais. A plataforma apoia decisões humanas e **não é serviço de emergência** — em caso de incêndio ligue **193**.
@@ -23,6 +23,7 @@ Plataforma brasileira de inteligência ambiental para prevenção de incêndios,
 | Alertas com ciclo de vida, histórico e deduplicação | Implementado e testado |
 | Importação CSV/XLS/XLSX com revalidação no servidor | Implementado e testado |
 | Mapa com áreas, polígonos e ocorrências filtráveis | Parcial |
+| Consulta pública Florestaí (`/florestai`): só lotes publicados explicitamente, coordenadas ~1 km | Implementado e testado |
 | Painel, relatório por área/período e indicadores agregados (fonte e data em cada bloco) | Implementado e testado |
 | Exportação CSV | Implementado e testado |
 | Docker Compose (Caddy + API + motor + PostgreSQL), backup cifrado | Backup/restauração testados; imagens não construídas aqui |
@@ -82,10 +83,10 @@ DEMO_SEED_PASSWORD='escolhaUmaSenha1' npm run db:seed-demo
 | `npm run check` | TypeScript (0 erros) |
 | `npm test` | Motor de risco TS (34) + hash de senha (10) |
 | `npm run test:unit` | Conector, procedência, alertas, segurança, CSV, GeoJSON, importação (14) |
-| `TEST_DATABASE_URL=... npm run test:integration` | API completa contra PostgreSQL real, incl. isolamento entre organizações (29). **Apaga o banco de teste**; o nome precisa conter `test`. Com `TEST_PYTHON_URL` usa o FastAPI real. |
+| `TEST_DATABASE_URL=... npm run test:integration` | API completa contra PostgreSQL real, incl. isolamento entre organizações (30). **Apaga o banco de teste**; o nome precisa conter `test`. Com `TEST_PYTHON_URL` usa o FastAPI real. |
 | `npm run test:python` | Serviço FastAPI (109) |
-| `E2E_BASE_URL=... npm run test:e2e` | Fluxos no navegador, desktop e celular (11) |
-| `E2E_BASE_URL=... E2E_DEMO_PASSWORD=... npm run test:a11y` | axe-core WCAG A/AA em 11 telas |
+| `E2E_BASE_URL=... npm run test:e2e` | Fluxos no navegador, desktop e celular (12) |
+| `E2E_BASE_URL=... E2E_DEMO_PASSWORD=... npm run test:a11y` | axe-core WCAG A/AA em 12 telas |
 
 ## Tecnologias
 

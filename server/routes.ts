@@ -9,6 +9,7 @@ import { importBatches, fireOccurrences, dataSources, users } from "@shared/sche
 import { calculateRisk } from "@shared/risk-engine";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerArtemisRoutes } from "./artemis-routes";
+import { registerPublicRoutes } from "./public-routes";
 import { rateLimit, requireAuth, requireOrg } from "./security";
 import { audit } from "./services/audit";
 import { fetchWeatherData } from "./weather-service";
@@ -89,6 +90,7 @@ export function revalidateImportRecord(r: z.infer<typeof importRecordSchema>) {
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   registerAuthRoutes(app);
   registerArtemisRoutes(app);
+  registerPublicRoutes(app);
 
   // ── Profile ────────────────────────────────────────────────────────────────
   app.get(api.user.profile.get.path, requireAuth, async (req, res) => {
@@ -419,6 +421,33 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.json(b);
     } catch (err) {
       next(err);
+    }
+  });
+
+  // Explicit publication of a batch to the public Florestaí view (admin only).
+  app.patch("/api/import-batches/:id/visibility", requireOrg("admin"), async (req, res, next) => {
+    try {
+      const { visibility, confirm } = z
+        .object({ visibility: z.enum(["privado", "publico"]), confirm: z.boolean().optional() })
+        .strict()
+        .parse(req.body);
+      if (visibility === "publico" && confirm !== true) {
+        return res.status(400).json({ message: "Confirme que a organização tem direito de publicar estes dados." });
+      }
+      const [b] = await db
+        .update(importBatches)
+        .set({
+          visibility,
+          publishedAt: visibility === "publico" ? new Date() : null,
+          publishedBy: visibility === "publico" ? req.ctx!.userId : null,
+        })
+        .where(and(eq(importBatches.id, Number(req.params.id)), eq(importBatches.organizationId, req.ctx!.organizationId)))
+        .returning();
+      if (!b) return res.status(404).json({ message: "Lote não encontrado." });
+      await audit(req, visibility === "publico" ? "import.batch_published" : "import.batch_unpublished", { type: "import_batch", id: b.id });
+      res.json(b);
+    } catch (err) {
+      if (!zodError(res, err)) next(err);
     }
   });
 

@@ -104,6 +104,17 @@ Transições: `novo → reconhecido | em_acompanhamento | resolvido | descartado
 | GET | `/api/connectors` | público | Situação real de cada fonte |
 | GET | `/api/health` | público | `{ status, database, riskEngine }` — sem dados |
 
+## Consulta pública Florestaí (sem login, 60 req/min)
+
+Expõe **somente** ocorrências de lotes publicados explicitamente (`visibility = 'publico'`). Coordenadas arredondadas a 2 casas (~1 km). Nunca retorna `notes`, `cause`, `sourceReference` nem `rawData`.
+
+| Método | Rota | Observações |
+|---|---|---|
+| GET | `/api/public/occurrences?state=&municipality=&from=&to=&hourFrom=&hourTo=` | até 3000 pontos, `truncated` |
+| GET | `/api/public/summary?…&compareFrom=&compareTo=` | total, por mês, por hora (0–23), top municípios, quem publicou, comparação de períodos |
+| GET | `/api/public/municipalities?state=` | municípios com registros publicados |
+| PATCH | `/api/import-batches/:id/visibility` | **admin**; `{ visibility: "publico" \| "privado", confirm: true }` (confirmação obrigatória para publicar); auditado |
+
 ## Rotas legadas mantidas
 
 `GET/PUT /api/user/profile` (sem `role`), `/api/sensors*` e `/api/readings*` (leitura autenticada; escrita só `platform_admin`), `/api/weather/latest`, `POST /api/weather/fetch`, `GET /api/user-stats/me`, `POST /api/denuncias` (público, 5/h), `GET /api/denuncias` (`platform_admin`), `/api/chat*` (autenticado), `POST /api/python-risk-analysis` (simulador público, não armazena).

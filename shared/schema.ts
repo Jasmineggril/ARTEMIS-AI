@@ -184,6 +184,9 @@ export const importBatches = pgTable("import_batches", {
   notes: text("notes"),
   organizationId: integer("organization_id"),
   rejectionReasons: json("rejection_reasons"),
+  visibility: text("visibility").notNull().default("privado"), // privado | publico (migration 0003)
+  publishedAt: timestamp("published_at"),
+  publishedBy: integer("published_by"),
 });
 
 /** Ocorrências de incêndio importadas */

@@ -31,7 +31,7 @@ Status por requisito: ✅ implementado e testado · 🟡 parcial · ⏳ pendente
 | RF23 | Trilha de auditoria consultável | admin | ✅ |
 | RF24 | Simulação pública sem login, rotulada como não armazenada | público | ✅ |
 | RF25 | Canal de relatos ambientais com moderação | público | ⏳ endpoint legado protegido; módulo de moderação pendente |
-| RF26 | Experiência pública Florestaí (consulta por município, gráficos, comparação de períodos) | público | ⏳ |
+| RF26 | Experiência pública Florestaí: consulta por UF/município/período/horário, mapa, gráficos por mês e hora, comparação de períodos, link compartilhável, conteúdo de prevenção e biomas | público | ✅ (dados apenas de lotes publicados por opção explícita) |
 | RF27 | Notificações por e-mail com limite de frequência | sistema | ⏳ |
 | RF28 | Módulo de Prova de Valor (área piloto, linha de base, métricas) | gestor | ⏳ plano em `08_PLANO_PROVA_DE_VALOR.md` |
 | RF29 | Focos de calor INPE | sistema | ⏳ avaliar acesso e licença |

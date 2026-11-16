@@ -85,6 +85,38 @@ const shot = (p, n) => p.screenshot({ path: `${process.env.E2E_OUT ?? '/tmp'}/${
     await page.locator('.recharts-rectangle').first().waitFor();
     await shot(page, '7-insights');
   });
+  await step('publish batch and see it on public Florestaí', async () => {
+    const r = await page.evaluate(async () => (await fetch('/api/import-batches', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: 'brigada.csv', sourceName: 'Brigada E2E', records: [
+        { occurrenceDate: '2026-08-10', occurrenceTime: '15:20', municipality: 'Cavalcante E2E', state: 'GO', latitude: -13.7971, longitude: -47.4567, occurrenceType: 'Queimada', notes: 'SEGREDO-INTERNO', validationStatus: 'válido' },
+        { occurrenceDate: '2026-09-02', occurrenceTime: '10:05', municipality: 'Cavalcante E2E', state: 'GO', latitude: -13.81, longitude: -47.47, validationStatus: 'válido' },
+      ] }) })).status);
+    if (r !== 201) throw new Error('import status ' + r);
+    page.once('dialog', d => d.accept());
+    await page.goto(BASE + '/data-sources');
+    await page.getByRole('row', { name: /brigada\.csv/ }).getByRole('button', { name: 'Publicar' }).click();
+    await page.getByRole('row', { name: /brigada\.csv/ }).getByText('Público').waitFor();
+    const anonCtx = await browser.newContext();
+    const ap = await anonCtx.newPage();
+    await ap.goto(BASE + '/florestai');
+    await ap.fill('#f-mun', 'Cavalcante E2E');
+    await ap.check('text=Comparar com período anterior');
+    await ap.getByRole('button', { name: 'Consultar' }).click();
+    await ap.getByText('Quem publicou estes dados').waitFor();
+    const total = await ap.locator('text=Ocorrências no filtro').locator('..').locator('p').nth(1).textContent();
+    if (total.trim() !== '2') throw new Error('public total ' + total);
+    if ((await ap.content()).includes('SEGREDO-INTERNO')) throw new Error('private note leaked');
+    if (!ap.url().includes('municipality=Cavalcante')) throw new Error('filters not in URL: ' + ap.url());
+    await ap.waitForTimeout(800);
+    await ap.screenshot({ path: `${process.env.E2E_OUT ?? '/tmp'}/8-florestai.png` });
+    const m = await browser.newContext({ ...devices['iPhone 13'] });
+    const mp = await m.newPage();
+    await mp.goto(ap.url()); await mp.waitForTimeout(1200);
+    const over = await mp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    if (over > 2) throw new Error('florestai overflows on mobile by ' + over);
+    await mp.screenshot({ path: `${process.env.E2E_OUT ?? '/tmp'}/9-florestai-mobile.png` });
+    await m.close(); await anonCtx.close();
+  });
   await step('mobile layout (no horizontal scroll)', async () => {
     const m = await browser.newContext({ ...devices['iPhone 13'] });
     await m.addCookies(await ctx.cookies());

@@ -428,11 +428,67 @@ test("insights aggregate only the caller's organization", async () => {
   assert.equal(b.body.occurrencesByMonth.points.length, 0);
 });
 
+test("Florestaí: only explicitly published batches are public, sanitised and filterable", async () => {
+  const records = [
+    { occurrenceDate: "2025-09-03", occurrenceTime: "14:30", municipality: "Cavalcante", state: "GO", latitude: -13.79712, longitude: -47.45678,
+      occurrenceType: "Queimada", notes: "proprietário João, tel 6199999", sourceReference: "interno-123", validationStatus: "válido" },
+    { occurrenceDate: "2025-09-20", occurrenceTime: "9h", municipality: "Cavalcante", state: "GO", latitude: -13.8, longitude: -47.46, validationStatus: "válido" },
+    { occurrenceDate: "2024-09-10", occurrenceTime: "15:00", municipality: "Cavalcante", state: "GO", latitude: -13.81, longitude: -47.47, validationStatus: "válido" },
+  ];
+  const imp = await alice.post("/api/import-batches", { filename: "publicavel.csv", sourceName: "Brigada local (autorizado)", records });
+  assert.equal(imp.status, 201);
+  const batchId = imp.body.batchId;
+
+  // private by default
+  let pub = await anon.get("/api/public/occurrences?municipality=Cavalcante");
+  assert.equal(pub.status, 200);
+  assert.equal(pub.body.points.length, 0);
+
+  // publishing requires explicit confirmation, admin role and own organization
+  assert.equal((await alice.patch(`/api/import-batches/${batchId}/visibility`, { visibility: "publico" })).status, 400);
+  assert.equal((await bob.patch(`/api/import-batches/${batchId}/visibility`, { visibility: "publico", confirm: true })).status, 404);
+  const ok = await alice.patch(`/api/import-batches/${batchId}/visibility`, { visibility: "publico", confirm: true });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.body.visibility, "publico");
+
+  pub = await anon.get("/api/public/occurrences?state=GO&municipality=cavalcante");
+  assert.equal(pub.body.points.length, 3);
+  const p0 = pub.body.points.find((p: any) => p.date === "2025-09-03");
+  assert.equal(p0.latitude, -13.8);   // rounded to ~1 km
+  assert.equal(p0.longitude, -47.46);
+  const json = JSON.stringify(pub.body);
+  assert.ok(!json.includes("João") && !json.includes("interno-123") && !json.includes("rawData"), "no private fields");
+  // the earlier private batch of the same organization stays hidden
+  assert.equal((await anon.get("/api/public/occurrences?municipality=Alto%20Paraíso%20de%20Goiás")).body.points.length, 0);
+
+  // filters: period, hour
+  assert.equal((await anon.get("/api/public/occurrences?from=2025-01-01&to=2025-12-31")).body.points.length, 2);
+  assert.equal((await anon.get("/api/public/occurrences?hourFrom=12&hourTo=23")).body.points.length, 2);
+  assert.equal((await anon.get("/api/public/occurrences?hourFrom=0&hourTo=11")).body.points.length, 1);
+  assert.equal((await anon.get("/api/public/occurrences?state=XX")).status, 400);
+
+  const sum = await anon.get("/api/public/summary?from=2025-09-01&to=2025-09-30&compareFrom=2024-09-01&compareTo=2024-09-30");
+  assert.equal(sum.status, 200);
+  assert.equal(sum.body.total, 2);
+  assert.equal(sum.body.byHour.length, 24);
+  assert.equal(sum.body.byHour[14].n, 1);
+  assert.equal(sum.body.byHour[9].n, 1);
+  assert.deepEqual(sum.body.comparison.current.total, 2);
+  assert.deepEqual(sum.body.comparison.previous.total, 1);
+  assert.equal(sum.body.comparison.changePct, 100);
+  assert.equal(sum.body.sources[0].organization, "Cooperativa Alfa");
+  assert.deepEqual((await anon.get("/api/public/municipalities?state=GO")).body, ["Cavalcante"]);
+
+  // unpublish removes it immediately
+  await alice.patch(`/api/import-batches/${batchId}/visibility`, { visibility: "privado" });
+  assert.equal((await anon.get("/api/public/occurrences")).body.points.length, 0);
+});
+
 test("critical operations are written to the audit log", async () => {
   const r = await alice.get("/api/audit-logs");
   assert.equal(r.status, 200);
   const actions = new Set(r.body.map((x: any) => x.action));
-  for (const a of ["auth.signup", "area.created", "analysis.created", "alert.status_changed", "import.batch_created", "org.member_added", "report.exported"]) {
+  for (const a of ["auth.signup", "area.created", "analysis.created", "alert.status_changed", "import.batch_created", "import.batch_published", "import.batch_unpublished", "org.member_added", "report.exported"]) {
     assert.ok(actions.has(a), `missing audit action ${a}`);
   }
   assert.ok(!JSON.stringify(r.body).includes("senhaForte1"), "no password in audit");

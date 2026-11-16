@@ -33,6 +33,7 @@ function PublicHeader() {
           )}
         </div>
         <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+          <a href="/florestai" className="hover:text-foreground transition-colors font-semibold">Consulta pública</a>
           <a href="#solucao" className="hover:text-foreground transition-colors">Solução</a>
           <a href="#como-funciona" className="hover:text-foreground transition-colors">Como funciona</a>
           <a href="#setores" className="hover:text-foreground transition-colors">Setores</a>

@@ -14,11 +14,11 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | 6 | Backend integrado | Implementado e testado | 27 testes de integração com PostgreSQL real |
 | 7 | Serviço de análise de risco | Implementado e testado | 109 pytest; caminho Node→Python testado com o serviço no ar e com fallback |
 | 8 | Banco de dados e migrações | Implementado e testado | `0002_artemis_core.sql`, idempotente, aplicada 2× sem erro |
-| 9 | Mapas e gráficos | Parcial | Áreas, polígonos e ocorrências com filtros. Pendente: agrupamento de pontos, desenho de polígono no mapa, busca por endereço, camada de focos de calor. |
+| 9 | Mapas e gráficos | Parcial | Áreas, polígonos e ocorrências com filtros; consulta pública Florestaí (`/florestai`) com mapa, gráficos por mês/hora e comparação de períodos. Pendente: agrupamento de pontos, desenho de polígono no mapa, busca por endereço, camada de focos de calor. |
 | 10 | Módulo de alertas | Implementado e testado | Ciclo de vida, histórico, deduplicação. **Notificação por e-mail pendente.** |
 | 11 | Importação de dados | Implementado e testado | Revalidação no servidor, motivos de rejeição por lote, isolamento por organização |
 | 12 | Relatórios | Parcial | Relatório por área e período (resumo, distribuição, histórico, alertas e medidas, fontes, qualidade, motor/versão, limitações), impressão/PDF pelo navegador e CSV. Pendentes: PDF gerado no servidor, mapa dentro do relatório, módulo PoV. |
-| 13 | Testes automatizados | Implementado | 34 + 10 TS legados, 14 unitários, 29 integração, 109 pytest, 11 E2E, 11 telas axe |
+| 13 | Testes automatizados | Implementado | 34 + 10 TS legados, 14 unitários, 30 integração, 109 pytest, 12 E2E, 12 telas axe |
 | 14 | Documentação das APIs | Implementado | `03_API.md` |
 | 15 | Docker Compose dev e produção | Parcial | Arquivos validados com `docker compose config`. **Build das imagens não verificado** neste ambiente (Docker Hub respondeu HTTP 429). |
 | 16 | Implantação na Hostinger | Implementado (documento) | `04_IMPLANTACAO_HOSTINGER.md`. Não executado: requer VPS e autorização. |

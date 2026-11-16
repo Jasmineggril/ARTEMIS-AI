@@ -122,7 +122,7 @@ function computeTooltipStyle(rect: Rect | null): React.CSSProperties {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const PUBLIC_ROUTES = ["/", "/login", "/signup", "/reset-password", "/privacidade", "/simulacao"];
+const PUBLIC_ROUTES = ["/", "/login", "/signup", "/reset-password", "/privacidade", "/simulacao", "/florestai"];
 
 export function OnboardingTour() {
   const [location, setLocation] = useLocation();
