@@ -98,6 +98,11 @@ export function originCheck(): RequestHandler {
       const o = new URL(origin);
       const host = req.get("host");
       if (o.host === host || extra.includes(origin)) return next();
+      // Behind a TRUSTED reverse proxy (trust proxy > 0) the public host arrives in
+      // X-Forwarded-Host; Express exposes it as req.hostname only in that case.
+      const trusted = Number(req.app.get("trust proxy")) > 0 || req.app.get("trust proxy") === true;
+      const fwd = req.get("x-forwarded-host")?.split(",")[0].trim();
+      if (trusted && fwd && o.host === fwd) return next();
     } catch {
       /* fall through */
     }

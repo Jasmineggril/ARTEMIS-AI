@@ -64,8 +64,10 @@ async function upsertHotspotAlert(
   const satellites = Array.from(new Set(hits.map((h) => h.satellite))).sort();
   const dedupKey = `area:${area.id}:foco:${DAY.format(now)}`;
   const where = kind === "poligono" ? (inside ? "dentro da propriedade" : `a ${nearest.toLocaleString("pt-BR")} km do limite`) : `a ${nearest.toLocaleString("pt-BR")} km do ponto da área`;
-  const reason = `${hits.length} foco(s) de calor detectado(s) por satélite (INPE) ${inside ? `${inside} dentro da propriedade; ` : ""}o mais próximo ${where}. ` +
-    `Última detecção ${latest.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (${satellites.join(", ")}). Foco de calor não é incêndio confirmado.`;
+  const when = latest.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const reason = `${hits.length} foco(s) de calor detectado(s) por satélite (INPE): ` +
+    (inside ? `${inside} dentro da propriedade${hits.length > inside ? `, ${hits.length - inside} no entorno de até ${limitKm} km` : ""}. ` : `o mais próximo ${where}. `) +
+    `Última detecção em ${when} (horário de Brasília; ${satellites.join(", ")}). Foco de calor não é incêndio confirmado.`;
   const evidence = {
     windowStart: new Date(Math.min(...hits.map((h) => h.detectedAt.getTime()))).toISOString(),
     latestAt: latest.toISOString(), count: hits.length, inside, nearestKm: nearest, limitKm, reference: kind, satellites,

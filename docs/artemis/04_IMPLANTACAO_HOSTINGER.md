@@ -1,5 +1,7 @@
 # 04 — Implantação na VPS Hostinger (KVM 2)
 
+> **Homologação privada (recomendado primeiro):** depois das seções 1–4, rode `bash scripts/ops/deploy-homolog.sh` — HTTPS + senha do site, dados reais e sua conta de administradora. Situação do produto: `15_PRODUTO_SITUACAO.md`.
+
 > **Nada aqui foi executado.** Este procedimento exige a VPS, um domínio e autorização expressa. Nenhuma compra, publicação ou alteração de infraestrutura foi feita.
 
 Alvo: 2 vCPU · 8 GB RAM · 100 GB NVMe · Ubuntu 24.04 LTS · região Brasil (São Paulo), se disponível.

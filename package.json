@@ -26,6 +26,7 @@
     "db:seed-demo": "tsx scripts/seed-demo.ts",
     "sync:inpe": "tsx scripts/sync-inpe.ts",
     "sync:sisfogo": "tsx scripts/sync-sisfogo.ts",
+    "admin:create": "tsx scripts/ops/create-admin.ts",
     "db:load-municipalities": "tsx scripts/load-ibge-municipalities.ts",
     "test:e2e": "node tests/e2e/flow.cjs",
     "test:a11y": "node tests/e2e/a11y.cjs"

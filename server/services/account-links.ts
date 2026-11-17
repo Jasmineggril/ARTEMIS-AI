@@ -34,7 +34,10 @@ export function setMailerForTests(t: Transporter | null | undefined) {
 export function baseUrl(req: Request): string {
   const configured = process.env.PUBLIC_BASE_URL?.trim().replace(/\/$/, "");
   if (configured) return configured;
-  return `${req.protocol}://${req.get("host")}`;
+  // req.protocol already follows X-Forwarded-Proto behind a trusted proxy; do the same for the host.
+  const trusted = Number(req.app.get("trust proxy")) > 0 || req.app.get("trust proxy") === true;
+  const fwd = trusted ? req.get("x-forwarded-host")?.split(",")[0].trim() : undefined;
+  return `${req.protocol}://${fwd || req.get("host")}`;
 }
 
 export async function issueAccountLink(req: Request, userId: number, ttlMs: number): Promise<{ link: string; expiresAt: Date }> {

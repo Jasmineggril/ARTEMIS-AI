@@ -3,11 +3,12 @@
  * official fire records (Sisfogo), own imports, analyses and open alerts.
  * Every block states where its data comes from and how current it is.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useRoute } from "wouter";
 import { format } from "date-fns";
-import { MapContainer, TileLayer, Polygon, Circle, CircleMarker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Polygon, Circle, CircleMarker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
 import { MapPinned, Flame, FileText, Satellite, Landmark, Upload, BellRing, Info, ArrowLeft, Pencil } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,24 @@ const HOT = "#7e22ce";
 const SIS = "#b45309";
 const when = (iso: string | null | undefined) => (iso ? format(new Date(iso), "dd/MM/yyyy HH:mm") : "—");
 const km = (v: number) => (v === 0 ? "dentro da propriedade" : `${v.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} km`);
+
+/** Frames the property once the map has its real size (it may mount during a page transition). */
+function FitArea({ g, center, radiusKm }: { g: BoundaryGeom | null; center: [number, number]; radiusKm: number }) {
+  const map = useMap();
+  useEffect(() => {
+    const fit = () => {
+      map.invalidateSize();
+      if (g) map.fitBounds(L.latLngBounds(polygons(g).flatMap((p) => p[0].map(([x, y]) => [y, x] as [number, number]))), { padding: [40, 40], maxZoom: 16, animate: false });
+      else map.fitBounds(L.latLng(center).toBounds(radiusKm * 2000), { animate: false });
+    };
+    fit();
+    const t = setTimeout(fit, 400);
+    return () => clearTimeout(t);
+  }, [map, g, center[0], center[1], radiusKm]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
+const ALERT_STATUS: Record<string, string> = { novo: "novo", reconhecido: "reconhecido", em_acompanhamento: "em acompanhamento", resolvido: "resolvido", descartado: "descartado" };
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return <div className="rounded-xl bg-muted/50 p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-bold tabular-nums">{value}</p>{sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}</div>;
@@ -93,9 +112,9 @@ export default function AreaDetail() {
       <div className="grid lg:grid-cols-[1fr_360px] gap-4 mb-6">
         <figure className="m-0">
           <div className="h-[420px] rounded-2xl overflow-hidden border" role="region" aria-label="Mapa da propriedade e entorno">
-            <MapContainer center={center} zoom={11} className="h-full w-full" scrollWheelZoom attributionControl={false}
-              bounds={g ? polygons(g).flatMap((p) => p[0].map(([x, y]) => [y, x] as [number, number])) : undefined} boundsOptions={{ padding: [40, 40] }}>
+            <MapContainer center={center} zoom={11} className="h-full w-full" scrollWheelZoom attributionControl={false}>
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <FitArea g={g} center={center} radiusKm={data.reference.radiusKm} />
               {g ? polygons(g).map((p, i) => <Polygon key={i} positions={p.map((r) => r.map(([x, y]) => [y, x] as [number, number]))} pathOptions={{ color: "#0f172a", weight: 2, fillOpacity: 0.08 }} />)
                 : <CircleMarker center={center} radius={8} pathOptions={{ color: "#fff", weight: 2, fillColor: "#0f172a", fillOpacity: 1 }} />}
               {!g && <Circle center={center} radius={data.reference.radiusKm * 1000} pathOptions={{ color: "#0f172a", weight: 1, dashArray: "6", fillOpacity: 0.02 }} />}
@@ -132,7 +151,7 @@ export default function AreaDetail() {
             {data.openAlerts.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum alerta aberto.</p> : (
               <ul className="space-y-1 text-sm">{data.openAlerts.map((al) => (
                 <li key={al.id}><Link href={`/alerts?id=${al.id}`} className="underline">{al.title}</Link>
-                  <span className="text-xs text-muted-foreground"> · {al.kind === "foco_proximo" ? "foco detectado" : "análise de risco"} · {al.status}</span></li>))}</ul>
+                  <span className="text-xs text-muted-foreground"> · {al.kind === "foco_proximo" ? "foco detectado" : "análise de risco"} · {ALERT_STATUS[al.status] ?? al.status}</span></li>))}</ul>
             )}
           </section>
         </aside>

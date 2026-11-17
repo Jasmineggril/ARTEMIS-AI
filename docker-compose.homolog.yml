@@ -1,0 +1,9 @@
+# Private homologation on the VPS: same stack, site protected by a password.
+#   docker compose -f docker-compose.yml -f docker-compose.homolog.yml up -d --build
+services:
+  caddy:
+    environment:
+      HOMOLOG_USER: ${HOMOLOG_USER:?defina HOMOLOG_USER (scripts/ops/deploy-homolog.sh)}
+      HOMOLOG_PASSWORD_HASH: ${HOMOLOG_PASSWORD_HASH:?defina HOMOLOG_PASSWORD_HASH (scripts/ops/deploy-homolog.sh)}
+    volumes:
+      - ./infrastructure/caddy/Caddyfile.homolog:/etc/caddy/Caddyfile:ro
