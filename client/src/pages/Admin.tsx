@@ -78,7 +78,10 @@ export default function Admin() {
           <h1 className="text-3xl font-bold font-display">Painel Administrativo</h1>
           <p className="text-sm text-muted-foreground mt-1">Indicadores lidos do banco de dados{o ? ` em ${when(o.generatedAt)}` : ""}. Dados de demonstração não entram nas contagens de alertas.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}><RefreshCw className={`w-4 h-4 mr-1 ${isFetching ? "animate-spin" : ""}`} aria-hidden />Atualizar</Button>
+        <div className="flex gap-2">
+          <Button size="sm" asChild><Link href="/admin/operacao">Operação e evidências</Link></Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}><RefreshCw className={`w-4 h-4 mr-1 ${isFetching ? "animate-spin" : ""}`} aria-hidden />Atualizar</Button>
+        </div>
       </header>
 
       {isLoading && <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-busy="true">{[...Array(8)].map((_, i) => <div key={i} className="h-24 rounded-2xl border bg-card animate-pulse" />)}</div>}

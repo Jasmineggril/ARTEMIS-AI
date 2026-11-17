@@ -1,0 +1,40 @@
+{
+  "antes": {
+    "info": 0,
+    "low": 0,
+    "moderate": 2,
+    "high": 8,
+    "critical": 1,
+    "total": 11
+  },
+  "depois": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 3,
+    "critical": 0,
+    "total": 3
+  },
+  "restantes": {
+    "xlsx": {
+      "severidade": "high",
+      "correcao_disponivel": false
+    },
+    "zod": {
+      "severidade": "high",
+      "correcao_disponivel": {
+        "name": "zod",
+        "version": "4.6.7",
+        "isSemVerMajor": true
+      }
+    },
+    "zod-validation-error": {
+      "severidade": "high",
+      "correcao_disponivel": {
+        "name": "zod-validation-error",
+        "version": "5.0.0",
+        "isSemVerMajor": true
+      }
+    }
+  }
+}

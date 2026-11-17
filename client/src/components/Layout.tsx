@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/Header";
 import { AccessibilityBar } from "@/components/AccessibilityBar";
+import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { PRODUCT_NAME, PRODUCT_SUBTITLE, SUBMISSION_MODE } from "@shared/identity";
 import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
 import { PrintBrandHeader } from "@/components/BrandScreens";
@@ -132,6 +133,7 @@ export function Layout({ children }: LayoutProps) {
         </main>
       </div>
       <div className="print:hidden"><AccessibilityBar /></div>
+      <FeedbackButton />
     </div>
   );
 }

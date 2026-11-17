@@ -20,6 +20,8 @@ import Insights from "@/pages/Insights";
 import RiskAnalysis from "@/pages/RiskAnalysis";
 import Areas from "@/pages/Areas";
 import AreaDetail from "@/pages/AreaDetail";
+import Avaliacao from "@/pages/Avaliacao";
+import AdminOperations from "@/pages/AdminOperations";
 import Prevention from "@/pages/Prevention";
 import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
@@ -72,6 +74,8 @@ function Router() {
       <Route path="/admin" component={() => <ProtectedRoute component={Admin} />} />
       <Route path="/maps" component={() => <ProtectedRoute component={EnvironmentalMap} />} />
       <Route path="/insights" component={() => <ProtectedRoute component={Insights} />} />
+      <Route path="/admin/operacao" component={() => <ProtectedRoute component={AdminOperations} />} />
+      <Route path="/avaliacao" component={() => <ProtectedRoute component={Avaliacao} />} />
       <Route path="/areas/:id" component={() => <ProtectedRoute component={AreaDetail} />} />
       <Route path="/areas" component={() => <ProtectedRoute component={Areas} />} />
       <Route path="/prevention" component={() => <ProtectedRoute component={Prevention} />} />

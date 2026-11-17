@@ -10,6 +10,50 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthStatus, hasRole } from "@/hooks/use-auth";
 import { useAlerts, useAlert, useAlertTransition, STATUS_LABEL, type AlertRow } from "@/hooks/use-alerts";
 import { EMERGENCY_NOTICE } from "@shared/identity";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+
+const EVAL_LABEL: Record<string, string> = { pertinente: "Pertinente", parcialmente_pertinente: "Parcialmente pertinente", nao_pertinente: "Não pertinente" };
+
+/** Expert verdict on the alert (Proof of Value indicator: share of pertinent alerts). */
+function AlertEvaluation({ a, canAct }: { a: any; canAct: boolean }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [v, setV] = useState<string>(a.evaluation ?? "");
+  const [note, setNote] = useState<string>(a.evaluationNote ?? "");
+  const [busy, setBusy] = useState(false);
+  async function save() {
+    setBusy(true);
+    try {
+      await api("POST", `/api/alerts/${a.id}/evaluation`, { evaluation: v, ...(note.trim() ? { note: note.trim() } : {}) });
+      await qc.invalidateQueries({ queryKey: ["/api/alerts"] });
+      toast({ title: "Avaliação registrada" });
+    } catch (e) {
+      toast({ title: "Não foi possível registrar", description: (e as Error).message, variant: "destructive" });
+    } finally { setBusy(false); }
+  }
+  return (
+    <section className="border-t pt-4" aria-labelledby="eval-t" data-testid="alert-evaluation">
+      <h3 id="eval-t" className="font-semibold text-sm mb-1">Avaliação do alerta</h3>
+      <p className="text-xs text-muted-foreground mb-2">Depois de verificar a situação, registre se o alerta foi pertinente. Esta avaliação mede a utilidade real dos alertas.</p>
+      {a.evaluation && <p className="text-sm mb-2">Atual: <strong>{EVAL_LABEL[a.evaluation]}</strong>{a.evaluationNote ? ` — ${a.evaluationNote}` : ""}</p>}
+      {canAct && (
+        <div className="space-y-2">
+          <div role="radiogroup" aria-label="Avaliação" className="flex flex-wrap gap-2">
+            {Object.entries(EVAL_LABEL).map(([k, l]) => (
+              <label key={k} className={`text-sm rounded-full border px-3 py-1 cursor-pointer ${v === k ? "bg-primary text-primary-foreground border-primary" : ""}`}>
+                <input type="radio" name={`eval-${a.id}`} value={k} checked={v === k} onChange={() => setV(k)} className="sr-only" />{l}
+              </label>))}
+          </div>
+          <label htmlFor="eval-note" className="sr-only">Justificativa</label>
+          <textarea id="eval-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={2000}
+            placeholder={v && v !== "pertinente" ? "Justificativa (obrigatória)" : "Observação (opcional)"} className="w-full rounded-lg border border-input bg-background p-2 text-sm h-16" />
+          <Button size="sm" variant="outline" onClick={save} disabled={!v || busy || (v !== "pertinente" && note.trim().length < 5)}>Registrar avaliação</Button>
+        </div>
+      )}
+    </section>
+  );
+}
 import type { AlertStatus } from "@shared/schema";
 import type { RiskLevel } from "@shared/risk-engine";
 
@@ -103,6 +147,7 @@ function AlertDrawer({ id, onClose, canAct }: { id: number; onClose: () => void;
                 </div>
               </section>
             )}
+            <AlertEvaluation a={a} canAct={canAct} />
             <section className="border-t pt-4">
               <h3 className="font-semibold text-sm mb-2 flex items-center gap-2"><History className="w-4 h-4" aria-hidden />Histórico</h3>
               <ol className="space-y-3">

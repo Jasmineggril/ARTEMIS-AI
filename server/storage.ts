@@ -338,6 +338,7 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
           kind: alert.kind ?? "risco",
           evidence: alert.evidence ?? null,
+          evaluation: null, evaluationNote: null, evaluatedBy: null, evaluatedAt: null,
         };
         fallbackState.alerts.push(newAlert);
         return newAlert;

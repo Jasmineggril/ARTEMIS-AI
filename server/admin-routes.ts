@@ -11,6 +11,7 @@ import { db } from "./db";
 import { requirePlatformAdmin, idParam } from "./security";
 import { audit } from "./services/audit";
 import { issueAccountLink, sendAccountEmail, ADMIN_LINK_TTL_H } from "./services/account-links";
+import { operationsReport } from "./services/operations-report";
 
 const one = async <T extends Record<string, unknown>>(q: ReturnType<typeof sql>) => ((await db.execute<T>(q)).rows[0] ?? {}) as T;
 const iso = (col: string) => sql.raw(`to_char(${col} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')`);
@@ -99,6 +100,44 @@ export function registerAdminRoutes(app: Express) {
       await audit(req, "admin.user_access_link", { type: "user", id }, { emailed });
       res.status(201).json({ expiresAt, emailed, ...(emailed ? {} : { link }) });
     } catch (err) {
+      next(err);
+    }
+  });
+
+  const period = z.object({
+    days: z.coerce.number().int().min(1).max(366).optional(),
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  }).strict();
+  const bounds = (q: unknown) => {
+    const p = period.parse(q);
+    const to = p.to ? new Date(`${p.to}T23:59:59.999Z`) : new Date();
+    const from = p.from ? new Date(`${p.from}T00:00:00Z`) : new Date(to.getTime() - (p.days ?? 30) * 86_400_000);
+    if (!(from < to) || to.getTime() - from.getTime() > 366 * 86_400_000) throw new z.ZodError([{ code: "custom", path: ["from"], message: "Período inválido (máx. 366 dias)." }]);
+    return { from, to };
+  };
+
+  app.get("/api/admin/operations", requirePlatformAdmin, async (req, res, next) => {
+    try {
+      const { from, to } = bounds(req.query);
+      res.setHeader("Cache-Control", "no-store");
+      res.json(await operationsReport(from, to));
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
+      next(err);
+    }
+  });
+
+  // Evidence package for the maturity dossier (downloadable, dated, reproducible from the database).
+  app.get("/api/admin/evidence.json", requirePlatformAdmin, async (req, res, next) => {
+    try {
+      const { from, to } = bounds(req.query);
+      const report = await operationsReport(from, to);
+      await audit(req, "evidence.exported", { type: "report" }, { from: from.toISOString(), to: to.toISOString() });
+      res.setHeader("Content-Disposition", `attachment; filename="artemis-evidencias-${from.toISOString().slice(0, 10)}_${to.toISOString().slice(0, 10)}.json"`);
+      res.json({ system: "ARTEMIS AI", version: process.env.APP_VERSION ?? null, ...report });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.issues[0].message });
       next(err);
     }
   });

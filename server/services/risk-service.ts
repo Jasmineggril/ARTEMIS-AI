@@ -28,6 +28,8 @@ export const analysisRequestSchema = z.object({
     })
     .strict(),
   notes: z.string().max(2000).optional(),
+  /** ms from opening the analysis form to submitting it (Proof of Value: analysis time). */
+  clientDurationMs: z.number().int().min(0).max(86_400_000).optional(),
 });
 export type AnalysisRequest = z.infer<typeof analysisRequestSchema>;
 

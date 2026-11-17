@@ -63,6 +63,11 @@ export const alerts = pgTable("alerts", {
   // migration 0012
   kind: text("kind").notNull().default("risco"), // risco | foco_proximo
   evidence: json("evidence"),
+  // migration 0013: expert verdict (Proof of Value)
+  evaluation: text("evaluation"), // pertinente | parcialmente_pertinente | nao_pertinente
+  evaluationNote: text("evaluation_note"),
+  evaluatedBy: integer("evaluated_by"),
+  evaluatedAt: timestamp("evaluated_at", { withTimezone: true }),
 });
 
 export const weatherData = pgTable("weather_data", {
@@ -171,6 +176,7 @@ export const riskAnalyses = pgTable("risk_analyses", {
   limitations: json("limitations"),         // string[]
   areaSnapshot: json("area_snapshot"),      // area as it was at analysis time (migration 0004)
   modelVersionId: integer("model_version_id"), // migration 0007
+  clientDurationMs: integer("client_duration_ms"), // migration 0013: time from opening the form to the result
 });
 
 /** Fontes de dados disponíveis */
@@ -516,3 +522,52 @@ export const riskAnalysisSources = pgTable("risk_analysis_sources", {
 
 export type ModelVersion = typeof modelVersions.$inferSelect;
 export type RiskAnalysisSource = typeof riskAnalysisSources.$inferSelect;
+
+// ─── Operational evidence (migration 0013) ───────────────────────────────────
+
+export const opsHeartbeats = pgTable("ops_heartbeats", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  instance: text("instance").notNull(),
+  dbOk: boolean("db_ok").notNull(),
+  dbMs: integer("db_ms"),
+  riskEngineOk: boolean("risk_engine_ok").notNull(),
+  inpeFresh: boolean("inpe_fresh"),
+  sisfogoFresh: boolean("sisfogo_fresh"),
+});
+
+export const opsRequestMetrics = pgTable("ops_request_metrics", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  minute: timestamp("minute", { withTimezone: true }).notNull(),
+  route: text("route").notNull(),
+  requests: integer("requests").notNull(),
+  errors5xx: integer("errors_5xx").notNull(),
+  errors4xx: integer("errors_4xx").notNull(),
+  p50Ms: integer("p50_ms").notNull(),
+  p95Ms: integer("p95_ms").notNull(),
+  maxMs: integer("max_ms").notNull(),
+});
+
+export const userFeedback = pgTable("user_feedback", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  organizationId: integer("organization_id"),
+  page: text("page").notNull(),
+  category: text("category").notNull(), // problema | sugestao | elogio | duvida
+  rating: smallint("rating"),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("novo"), // novo | em_analise | resolvido | arquivado
+  response: text("response"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const susResponses = pgTable("sus_responses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  organizationId: integer("organization_id"),
+  answers: smallint("answers").array().notNull(),
+  score: doublePrecision("score").notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

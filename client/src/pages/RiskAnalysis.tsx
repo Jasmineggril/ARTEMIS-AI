@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { format } from "date-fns";
@@ -123,6 +123,8 @@ export default function RiskAnalysisPage() {
   const initialArea = Number(new URLSearchParams(window.location.search).get("area")) || null;
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  // Proof of Value: time from opening the form to the result (sent with the analysis)
+  const formOpenedAt = useRef(Date.now());
   const [areaId, setAreaId] = useState<number | null>(initialArea);
   const [result, setResult] = useState<ResultView | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -183,6 +185,7 @@ export default function RiskAnalysisPage() {
         const body = {
           useLiveWeather: form.useLiveWeather,
           notes: form.notes.trim() || undefined,
+          clientDurationMs: Math.min(Date.now() - formOpenedAt.current, 86_400_000),
           inputs: Object.fromEntries(Object.entries({
             ...values,
             hotspotDistance: form.nearbyHotspot === "sim" ? values.hotspotDistance : undefined,
@@ -193,6 +196,7 @@ export default function RiskAnalysisPage() {
           }).filter(([, v]) => v !== undefined)),
         };
         const stored = await api<StoredAnalysis & { alert: ResultView["alert"] }>("POST", `/api/areas/${areaId}/analyses`, body);
+        formOpenedAt.current = Date.now();
         setResult(fromStored(stored, area?.name));
         qc.invalidateQueries({ queryKey: ["/api/areas"] });
         qc.invalidateQueries({ queryKey: ["/api/alerts"] });

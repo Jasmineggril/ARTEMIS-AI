@@ -565,6 +565,7 @@ export function registerArtemisRoutes(app: Express) {
         level: engine.level,
         confidence: null, // no uncalibrated confidence percentages
         inputData: { ...resolved.engineInput, notes: request.notes ?? null },
+        clientDurationMs: request.clientDurationMs ?? null,
         factors: engine.factors,
         recommendations: engine.recommendations,
         isSimulated: false,
