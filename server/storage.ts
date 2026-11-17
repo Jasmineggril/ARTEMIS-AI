@@ -336,6 +336,8 @@ export class DatabaseStorage implements IStorage {
           occurrenceCount: alert.occurrenceCount ?? 1,
           isDemo: alert.isDemo ?? true,
           updatedAt: new Date(),
+          kind: alert.kind ?? "risco",
+          evidence: alert.evidence ?? null,
         };
         fallbackState.alerts.push(newAlert);
         return newAlert;

@@ -12,6 +12,7 @@ import {
 import { hashPassword, verifyPassword } from "./auth";
 import { rateLimit, requireAuth } from "./security";
 import { audit } from "./services/audit";
+import { issueAccountLink, sendAccountEmail, mailConfigured, RESET_TTL_MIN } from "./services/account-links";
 
 const passwordSchema = z
   .string()
@@ -242,22 +243,21 @@ export function registerAuthRoutes(app: Express) {
       const { email } = z.object({ email: z.string().trim().toLowerCase().email("E-mail inválido.") }).parse(req.body);
       const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
       if (user) {
-        const token = crypto.randomBytes(32).toString("base64url");
-        await db.insert(passwordResetTokens).values({
-          userId: user.id,
-          tokenHash: sha256(token),
-          expiresAt: new Date(Date.now() + 30 * 60_000),
-        });
-        const link = `${process.env.PUBLIC_BASE_URL ?? ""}/reset-password?token=${token}`;
-        // E-mail delivery is not configured yet (SMTP pending). Outside
-        // production the link is printed to the server console for testing.
-        if (process.env.NODE_ENV !== "production") {
+        const { link, expiresAt } = await issueAccountLink(req, user.id, RESET_TTL_MIN * 60_000);
+        const emailed = await sendAccountEmail(email, "reset", link, { expiresAt });
+        // Without SMTP, outside production, the link is printed for local testing only.
+        if (!emailed && process.env.NODE_ENV !== "production") {
           console.log(`[password-reset] link de redefinição (somente desenvolvimento): ${link}`);
         }
-        await audit(req, "auth.password_reset_requested", { type: "user", id: user.id }, undefined, { userId: user.id });
+        await audit(req, "auth.password_reset_requested", { type: "user", id: user.id }, { emailed }, { userId: user.id });
       }
       // Always the same response: does not reveal whether the e-mail exists.
-      res.json({ message: "Se o e-mail estiver cadastrado, você receberá instruções para redefinir a senha." });
+      res.json({
+        message: mailConfigured()
+          ? "Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha (válido por 30 minutos)."
+          : "O envio de e-mail não está ativo neste ambiente. Peça ao administrador da sua organização um link de redefinição de senha.",
+        emailDelivery: mailConfigured(),
+      });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       next(err);

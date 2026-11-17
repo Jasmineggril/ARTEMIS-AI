@@ -72,9 +72,18 @@ function AlertDrawer({ id, onClose, canAct }: { id: number; onClose: () => void;
               <dt className="text-muted-foreground">Atualizado em</dt><dd>{fmt(a.updatedAt)}</dd>
               <dt className="text-muted-foreground">Fonte dos dados</dt><dd>{a.dataSource ?? "—"}</dd>
               <dt className="text-muted-foreground">Referência dos dados</dt><dd>{fmt(a.dataReferenceAt)}</dd>
-              <dt className="text-muted-foreground">Confirmações</dt><dd>{a.occurrenceCount} análise(s)</dd>
-              <dt className="text-muted-foreground">Análise de origem</dt><dd>{a.riskAnalysisId ? `#${a.riskAnalysisId}` : "—"}</dd>
+              <dt className="text-muted-foreground">Origem</dt><dd>{a.kind === "foco_proximo" ? "foco de calor detectado (INPE)" : "análise de risco"}</dd>
+              <dt className="text-muted-foreground">{a.kind === "foco_proximo" ? "Atualizações" : "Confirmações"}</dt><dd>{a.occurrenceCount}{a.kind === "foco_proximo" ? "" : " análise(s)"}</dd>
+              {a.kind !== "foco_proximo" && <><dt className="text-muted-foreground">Análise de origem</dt><dd>{a.riskAnalysisId ? `#${a.riskAnalysisId}` : "—"}</dd></>}
+              {a.areaId && <><dt className="text-muted-foreground">Propriedade</dt><dd><a className="underline" href={`/areas/${a.areaId}`}>abrir</a></dd></>}
             </dl>
+            {a.kind === "foco_proximo" && Array.isArray((a.evidence as any)?.detections) && (
+              <section><h3 className="font-semibold text-sm mb-1">Detecções que motivaram o alerta (observadas)</h3>
+                <ul className="text-xs space-y-0.5 max-h-40 overflow-y-auto">{((a.evidence as any).detections as { id: number; at: string; satellite: string; km: number }[]).map((d) => (
+                  <li key={d.id}>{fmt(d.at)} · {d.satellite} · {d.km === 0 ? "dentro da propriedade" : `${d.km.toLocaleString("pt-BR")} km do limite`}</li>))}</ul>
+                <p className="text-[11px] text-muted-foreground mt-1">Foco de calor é detecção térmica por satélite, não incêndio confirmado.</p>
+              </section>
+            )}
             {Array.isArray(a.recommendations) && (a.recommendations as any[]).length > 0 && (
               <section><h3 className="font-semibold text-sm mb-2">Recomendações associadas</h3>
                 <ul className="list-disc list-inside text-sm space-y-1">{(a.recommendations as any[]).map((r, i) => <li key={i}><span className="capitalize font-medium">{r.priority}</span>: {r.action}</li>)}</ul>
@@ -116,7 +125,8 @@ function AlertDrawer({ id, onClose, canAct }: { id: number; onClose: () => void;
 
 export default function Alerts() {
   const [filter, setFilter] = useState("abertos");
-  const [openId, setOpenId] = useState<number | null>(null);
+  // /alerts?id=N (from the property page or a notification) opens that alert
+  const [openId, setOpenId] = useState<number | null>(() => Number(new URLSearchParams(window.location.search).get("id")) || null);
   const { data: user } = useAuthStatus();
   const { data: alerts = [], isLoading, error } = useAlerts(filter || undefined);
   const canAct = hasRole(user, "analyst");
@@ -125,7 +135,7 @@ export default function Alerts() {
     <Layout>
       <header className="mb-6">
         <h1 className="text-3xl font-bold font-display flex items-center gap-2"><Bell className="w-8 h-8 text-primary" aria-hidden />Alertas Preventivos</h1>
-        <p className="text-muted-foreground mt-1">Emitidos a partir das análises de risco da organização. Reanálises no mesmo nível não duplicam alertas abertos.</p>
+        <p className="text-muted-foreground mt-1">Emitidos por análises de risco de nível alto ou crítico e por focos de calor do INPE detectados dentro ou perto das propriedades. Repetições não duplicam alertas abertos.</p>
         <p className="text-xs mt-2 text-red-800 bg-red-50 border border-red-200 rounded-lg p-2 inline-block">{EMERGENCY_NOTICE}</p>
       </header>
 

@@ -103,6 +103,12 @@ services:
       INPE_MAX_AGE_HOURS: ${INPE_MAX_AGE_HOURS:-6}
       WEATHER_CACHE_MINUTES: ${WEATHER_CACHE_MINUTES:-30}
       RISK_USE_SISFOGO: ${RISK_USE_SISFOGO:-true}
+      # Automatic, monitored syncs inside the API (INPE hourly + hotspot alerts; Sisfogo daily/weekly).
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
+      INPE_SYNC_MINUTES: ${INPE_SYNC_MINUTES:-60}
+      SISFOGO_SYNC_HOURS: ${SISFOGO_SYNC_HOURS:-24}
+      SMTP_URL: ${SMTP_URL:-}
+      MAIL_FROM: ${MAIL_FROM:-}
       SISFOGO_PAGE_SIZE: ${SISFOGO_PAGE_SIZE:-20}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     deploy: { resources: { limits: { memory: 1g, cpus: "1.0" } } }

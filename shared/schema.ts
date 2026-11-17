@@ -60,6 +60,9 @@ export const alerts = pgTable("alerts", {
   occurrenceCount: integer("occurrence_count").notNull().default(1),
   isDemo: boolean("is_demo").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  // migration 0012
+  kind: text("kind").notNull().default("risco"), // risco | foco_proximo
+  evidence: json("evidence"),
 });
 
 export const weatherData = pgTable("weather_data", {
@@ -137,6 +140,12 @@ export const monitoredAreas = pgTable("monitored_areas", {
   vegetationCategory: text("vegetation_category"),
   boundary: json("boundary"), // GeoJSON Polygon/MultiPolygon (validated server-side)
   notes: text("notes"),
+  // migration 0012: provenance of values (informed by the user vs calculated from the polygon)
+  boundaryAreaHa: doublePrecision("boundary_area_ha"),
+  boundarySource: text("boundary_source"), // desenho | geojson | kml | kmz | shapefile
+  areaHectaresSource: text("area_hectares_source"), // informada | calculada
+  coordinatesSource: text("coordinates_source"), // informadas | centro_do_poligono
+  hotspotAlertKm: doublePrecision("hotspot_alert_km").notNull().default(5),
 });
 
 /** Análises de risco executadas */

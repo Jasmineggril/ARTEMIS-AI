@@ -17,6 +17,9 @@ import {
 } from "@shared/schema";
 import { requireOrg, idParam, roleAtLeast, rateLimit } from "./security";
 import { audit } from "./services/audit";
+import { issueAccountLink, sendAccountEmail, ADMIN_LINK_TTL_H } from "./services/account-links";
+import { hashPassword } from "./auth";
+import crypto from "node:crypto";
 import {
   analysisRequestSchema, resolveInputs, runEngine, buildLimitations, buildDataSources,
   MissingInputError, distanceKm, type HotspotContext,
@@ -25,9 +28,11 @@ import { getRiskWeatherCached } from "./services/weather-cache";
 import { inpeFreshness } from "./connectors/inpe";
 import { hasPostgisGeom } from "./spatial";
 import { historyContext, type HistoryContext } from "./services/history-context";
+import { areaSurroundings } from "./services/surroundings";
 import { upsertAlertFromAnalysis, transitionAlert, TransitionError, shouldAlert, allowedTransitions, OPEN_STATUSES } from "./services/alert-service";
 import { fetchRiskWeather, ConnectorError, OPEN_METEO_SOURCE } from "./connectors/open-meteo";
 import { BR_STATES } from "@shared/br-states";
+import { validateBoundary, distanceToBoundaryKm, type BoundaryGeom } from "@shared/geometry";
 
 const ENGINE_VERSION_LABEL = "artemis-api-1.0.0";
 
@@ -62,8 +67,61 @@ const areaBaseSchema = z.object({
   status: z.enum(["ativo", "inativo", "em análise"]).default("ativo"),
   vegetationCategory: z.string().trim().max(80).nullable().optional(),
   boundary: boundarySchema.nullable().optional(),
+  boundarySource: z.enum(["desenho", "geojson", "kml", "kmz", "shapefile"]).nullable().optional(),
+  hotspotAlertKm: z.number().min(0).max(50).optional(),
   notes: z.string().max(4000).nullable().optional(),
 });
+
+/**
+ * Validates the boundary geometry and fills what can be CALCULATED from it,
+ * recording the provenance of each value (informed by the user or calculated).
+ */
+function applyBoundary<T extends Record<string, any>>(input: T, current?: { latitude: number | null; longitude: number | null; areaHectares: number | null; areaHectaresSource: string | null; coordinatesSource: string | null }) {
+  const out: Record<string, unknown> = { ...input };
+  const warnings: string[] = [];
+  if (input.latitude !== undefined) out.coordinatesSource = input.latitude == null ? null : "informadas";
+  if (input.areaHectares !== undefined) out.areaHectaresSource = input.areaHectares == null ? null : "informada";
+  if (input.boundary === null) {
+    out.boundaryAreaHa = null;
+    out.boundarySource = null;
+    if (current?.areaHectaresSource === "calculada" && input.areaHectares === undefined) { out.areaHectares = null; out.areaHectaresSource = null; }
+    if (current?.coordinatesSource === "centro_do_poligono" && input.latitude === undefined) { out.latitude = null; out.longitude = null; out.coordinatesSource = null; }
+  } else if (input.boundary) {
+    const check = validateBoundary(input.boundary as BoundaryGeom);
+    if (!check.ok) throw new GeometryError(check.errors);
+    warnings.push(...check.warnings);
+    out.boundaryAreaHa = Math.round(check.areaHa! * 100) / 100;
+    if (!input.boundarySource) out.boundarySource = current ? undefined : "geojson";
+    const lat = input.latitude !== undefined ? input.latitude : current?.latitude ?? null;
+    const lng = input.longitude !== undefined ? input.longitude : current?.longitude ?? null;
+    const typedCoords = input.latitude !== undefined ? input.latitude != null : current?.coordinatesSource === "informadas";
+    if (!typedCoords || lat == null || lng == null) {
+      out.latitude = Math.round(check.centroid![1] * 1e6) / 1e6;
+      out.longitude = Math.round(check.centroid![0] * 1e6) / 1e6;
+      out.coordinatesSource = "centro_do_poligono";
+    } else if (distanceToBoundaryKm([lng, lat], input.boundary as BoundaryGeom) > 5) {
+      warnings.push("As coordenadas informadas estão a mais de 5 km do polígono. Confira se são da mesma propriedade.");
+    }
+    const typedHa = input.areaHectares !== undefined ? input.areaHectares != null : current?.areaHectaresSource === "informada";
+    if (!typedHa) {
+      out.areaHectares = out.boundaryAreaHa;
+      out.areaHectaresSource = "calculada";
+    } else {
+      const ha = (input.areaHectares !== undefined ? input.areaHectares : current?.areaHectares) as number | null;
+      if (ha && Math.abs(ha - check.areaHa!) / check.areaHa! > 0.2) {
+        warnings.push(`A área informada (${ha.toLocaleString("pt-BR")} ha) difere em mais de 20 % da área calculada do polígono (${check.areaHa!.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ha).`);
+      }
+    }
+  }
+  for (const k of Object.keys(out)) if (out[k] === undefined) delete out[k];
+  return { values: out, warnings };
+}
+
+export class GeometryError extends Error {
+  constructor(readonly errors: string[]) {
+    super(errors.join(" "));
+  }
+}
 const areaCreateSchema = areaBaseSchema.strict().refine(
   (a) => (a.latitude == null) === (a.longitude == null),
   "Informe latitude e longitude juntas.",
@@ -253,21 +311,62 @@ export function registerArtemisRoutes(app: Express) {
     res.json(rows);
   }));
 
+  // Adds an existing user, or INVITES a new one (account created with an unusable
+  // password + single-use link to set it, e-mailed when SMTP is configured).
   app.post("/api/organization/members", requireOrg("admin"), handle(async (req, res) => {
-    const input = z.object({ email: z.string().trim().toLowerCase().email(), role: z.enum(ORG_ROLES) }).strict().parse(req.body);
+    const input = z.object({
+      email: z.string().trim().toLowerCase().email().max(254),
+      role: z.enum(ORG_ROLES),
+      name: z.string().trim().min(2).max(120).optional(),
+    }).strict().parse(req.body);
     if (input.role === "owner" && req.ctx.role !== "owner") {
       return res.status(403).json({ message: "Somente o proprietário pode conceder o papel de proprietário." });
     }
-    const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email));
-    if (!user) return res.status(404).json({ message: "Usuário não encontrado. Ele precisa criar uma conta antes." });
+    let [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email));
+    let invited = false;
+    if (!user) {
+      if (!input.name) return res.status(404).json({ message: "Usuário não encontrado. Informe o nome para enviar um convite.", needsName: true });
+      [user] = await db.insert(users).values({
+        email: input.email, name: input.name, firstName: input.name.split(" ")[0],
+        password: await hashPassword(crypto.randomBytes(32).toString("base64url")), // unusable until the link is used
+      }).returning({ id: users.id });
+      invited = true;
+    }
     const inserted = await db
       .insert(organizationMembers)
       .values({ organizationId: req.ctx.organizationId, userId: user.id, role: input.role })
       .onConflictDoNothing()
       .returning();
     if (inserted.length === 0) return res.status(409).json({ message: "Usuário já é membro desta organização." });
-    await audit(req, "org.member_added", { type: "user", id: user.id }, { role: input.role });
-    res.status(201).json(inserted[0]);
+    let access: { link?: string; expiresAt: Date; emailed: boolean } | undefined;
+    if (invited) {
+      const [org] = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, req.ctx.organizationId));
+      const { link, expiresAt } = await issueAccountLink(req, user.id, ADMIN_LINK_TTL_H * 3_600_000);
+      const emailed = await sendAccountEmail(input.email, "invite", link, { orgName: org?.name, expiresAt });
+      access = { expiresAt, emailed, ...(emailed ? {} : { link }) };
+    }
+    await audit(req, invited ? "org.member_invited" : "org.member_added", { type: "user", id: user.id }, { role: input.role, ...(access ? { emailed: access.emailed } : {}) });
+    res.status(201).json({ ...inserted[0], invited, access });
+  }));
+
+  // Single-use link to (re)define a member's password, for when e-mail is not available.
+  // An organisation admin may only do this for people who belong to NO other
+  // organisation (otherwise it could be used to take over someone else's account).
+  app.post("/api/organization/members/:userId/access-link", requireOrg("admin"), handle(async (req, res) => {
+    const userId = idParam(req.params.userId);
+    if (!userId) return res.status(400).json({ message: "Identificador inválido." });
+    if (userId === req.ctx.userId) return res.status(400).json({ message: "Para a sua própria senha, use Configurações → Conta." });
+    const memberships = await db.select({ organizationId: organizationMembers.organizationId, role: organizationMembers.role })
+      .from(organizationMembers).where(eq(organizationMembers.userId, userId));
+    const here = memberships.find((m) => m.organizationId === req.ctx.organizationId);
+    if (!here) return res.status(404).json({ message: "Membro não encontrado." });
+    if (memberships.length > 1) return res.status(403).json({ message: "Esta pessoa participa de outra organização. Peça a ela que use \"Esqueci minha senha\" ou contate o administrador da plataforma." });
+    if (here.role === "owner" && req.ctx.role !== "owner") return res.status(403).json({ message: "Somente o proprietário pode gerar link para outro proprietário." });
+    const [target] = await db.select({ email: users.email }).from(users).where(eq(users.id, userId));
+    const { link, expiresAt } = await issueAccountLink(req, userId, ADMIN_LINK_TTL_H * 3_600_000);
+    const emailed = await sendAccountEmail(target.email, "reset", link, { expiresAt });
+    await audit(req, "org.member_access_link", { type: "user", id: userId }, { emailed });
+    res.status(201).json({ expiresAt, emailed, ...(emailed ? {} : { link }) });
   }));
 
   app.patch("/api/organization/members/:userId", requireOrg("admin"), handle(async (req, res) => {
@@ -329,12 +428,42 @@ export function registerArtemisRoutes(app: Express) {
 
   app.post("/api/areas", requireOrg("manager"), handle(async (req, res) => {
     const input = areaCreateSchema.parse(req.body);
+    let applied;
+    try {
+      applied = applyBoundary(input);
+    } catch (err) {
+      if (err instanceof GeometryError) return res.status(422).json({ message: `Limite da propriedade inválido: ${err.message}`, errors: err.errors });
+      throw err;
+    }
     const [area] = await db
       .insert(monitoredAreas)
-      .values({ ...input, organizationId: req.ctx.organizationId, createdBy: req.ctx.userId })
+      .values({ ...(applied.values as typeof input), organizationId: req.ctx.organizationId, createdBy: req.ctx.userId })
       .returning();
-    await audit(req, "area.created", { type: "area", id: area.id }, { name: area.name });
-    res.status(201).json(area);
+    await audit(req, "area.created", { type: "area", id: area.id }, { name: area.name, boundary: Boolean(area.boundary) });
+    res.status(201).json({ ...area, warnings: applied.warnings });
+  }));
+
+  app.get("/api/areas/:id/surroundings", requireOrg(), handle(async (req, res) => {
+    const area = await loadArea(req.ctx.organizationId, idParam(req.params.id));
+    if (!area) return res.status(404).json({ message: "Área não encontrada." });
+    const q = z.object({
+      radiusKm: z.coerce.number().min(1).max(50).default(10),
+      days: z.coerce.number().int().min(1).max(31).default(7),
+    }).strict().parse(req.query);
+    const s = await areaSurroundings(req.ctx.organizationId, area, q);
+    if (!s) return res.status(422).json({ message: "Cadastre o limite (polígono) ou as coordenadas da área para ver o entorno." });
+    const recent = await db.select({
+      id: riskAnalyses.id, score: riskAnalyses.score, level: riskAnalyses.level, createdAt: riskAnalyses.createdAt,
+      engineType: riskAnalyses.engineType, calculationVersion: riskAnalyses.calculationVersion, isExperimental: riskAnalyses.isExperimental,
+    }).from(riskAnalyses)
+      .where(and(eq(riskAnalyses.areaId, area.id), eq(riskAnalyses.organizationId, req.ctx.organizationId)))
+      .orderBy(desc(riskAnalyses.createdAt)).limit(10);
+    const open = await db.select({ id: alerts.id, title: alerts.title, kind: alerts.kind, severity: alerts.severity, status: alerts.status, createdAt: alerts.createdAt })
+      .from(alerts)
+      .where(and(eq(alerts.areaId, area.id), eq(alerts.organizationId, req.ctx.organizationId), inArray(alerts.status, OPEN_STATUSES as unknown as string[])))
+      .orderBy(desc(alerts.createdAt)).limit(20);
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ area, ...s, analyses: recent, openAlerts: open });
   }));
 
   app.get("/api/areas/:id", requireOrg(), handle(async (req, res) => {
@@ -350,13 +479,20 @@ export function registerArtemisRoutes(app: Express) {
     const nextLat = input.latitude !== undefined ? input.latitude : area.latitude;
     const nextLng = input.longitude !== undefined ? input.longitude : area.longitude;
     if ((nextLat == null) !== (nextLng == null)) return res.status(400).json({ message: "Informe latitude e longitude juntas." });
+    let applied;
+    try {
+      applied = applyBoundary(input, area);
+    } catch (err) {
+      if (err instanceof GeometryError) return res.status(422).json({ message: `Limite da propriedade inválido: ${err.message}`, errors: err.errors });
+      throw err;
+    }
     const [updated] = await db
       .update(monitoredAreas)
-      .set({ ...input, updatedAt: new Date() })
+      .set({ ...(applied.values as typeof input), updatedAt: new Date() })
       .where(and(eq(monitoredAreas.id, area.id), eq(monitoredAreas.organizationId, req.ctx.organizationId)))
       .returning();
     await audit(req, "area.updated", { type: "area", id: area.id }, { fields: Object.keys(input) });
-    res.json(updated);
+    res.json({ ...updated, warnings: applied.warnings });
   }));
 
   app.delete("/api/areas/:id", requireOrg("admin"), handle(async (req, res) => {
@@ -739,6 +875,14 @@ export function registerArtemisRoutes(app: Express) {
         recommendations: a.recommendations,
       })),
       limitations: Array.from(limitations),
+      // Traceability of the most recent analysis: every input with its origin.
+      latest: analyses[0] ? {
+        id: analyses[0].id,
+        inputs: analyses[0].inputData,
+        provenance: (analyses[0].dataQuality as any)?.provenance ?? [],
+        sources: (await db.select({ sourceKey: riskAnalysisSources.sourceKey, recordCount: riskAnalysisSources.recordCount, referenceAt: riskAnalysisSources.referenceAt, detail: riskAnalysisSources.detail })
+          .from(riskAnalysisSources).where(eq(riskAnalysisSources.analysisId, analyses[0].id))),
+      } : null,
     });
   }));
 

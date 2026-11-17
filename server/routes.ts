@@ -12,6 +12,7 @@ import { registerArtemisRoutes } from "./artemis-routes";
 import { registerPublicRoutes } from "./public-routes";
 import { rateLimit, requireAuth, requireOrg, requirePlatformAdmin } from "./security";
 import { registerSisfogoRoutes } from "./sisfogo-routes";
+import { registerAdminRoutes } from "./admin-routes";
 import { audit } from "./services/audit";
 import { fetchWeatherData } from "./weather-service";
 import { normalizeOccurrenceDate } from "@shared/dates";
@@ -103,6 +104,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   registerArtemisRoutes(app);
   registerPublicRoutes(app);
   registerSisfogoRoutes(app);
+  registerAdminRoutes(app);
 
   // ── Profile ────────────────────────────────────────────────────────────────
   app.get(api.user.profile.get.path, requireAuth, async (req, res) => {

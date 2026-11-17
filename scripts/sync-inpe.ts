@@ -7,6 +7,7 @@
  * in source_sync_runs; a failed day leaves no partial rows.
  */
 import { syncInpeDay, recentUtcDays } from "../server/connectors/inpe";
+import { evaluateHotspotAlerts } from "../server/services/hotspot-alerts";
 import { pool } from "../server/db";
 
 function arg(name: string) {
@@ -31,6 +32,9 @@ async function main() {
     console.log(JSON.stringify({ source: "inpe-queimadas", ...r }));
     if (r.status === "falha") failed++;
   }
+  // Detected-condition alerts: hotspots in/near monitored properties (last 24 h).
+  const alerts = await evaluateHotspotAlerts({ windowHours: 24 });
+  console.log(JSON.stringify({ source: "hotspot-alerts", ...alerts }));
   process.exitCode = failed ? 1 : 0;
 }
 

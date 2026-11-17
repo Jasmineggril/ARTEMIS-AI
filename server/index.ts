@@ -1,4 +1,5 @@
 import { createApp, logJson } from "./app";
+import { startScheduler, stopScheduler } from "./services/scheduler";
 import { serveStatic } from "./static";
 import { runMigrations } from "./migrate";
 
@@ -33,10 +34,11 @@ export function log(message: string, source = "express") {
 
   const port = parseInt(process.env.PORT || "5000", 10);
   const host = process.env.HOST || "0.0.0.0";
-  httpServer.listen({ port, host }, () => log(`serving on ${host}:${port}`));
+  httpServer.listen({ port, host }, () => { log(`serving on ${host}:${port}`); startScheduler(); });
 
   const shutdown = (signal: string) => {
     log(`${signal} received, shutting down`);
+    stopScheduler();
     httpServer.close(() => process.exit(0));
     setTimeout(() => process.exit(1), 10_000).unref();
   };
