@@ -90,3 +90,11 @@ Corrigido nesta etapa por não funcionar de verdade: painel admin com números f
 - Monitoramento: Painel Admin (falhas 24 h, última sincronização) e `GET /api/health`.
 - Backup e restauração testados: `05_BACKUP_RECUPERACAO.md` (`scripts/ops/backup.sh`, `restore.sh`, `fingerprint.sql`).
 - Migrações: só aditivas; executor recusa arquivos inconsistentes e alterações em migrações já aplicadas; teste em cópia restaurada antes de produção (`10_BANCO_MANUTENCAO_SEGURANCA.md`).
+
+## 8. Evidências operacionais e maturidade (2026-11-17)
+
+- Telemetria própria (migração 0013): heartbeat por minuto, latência/erros por rota → `/admin/operacao`.
+- Coleta de evidências de uso: avaliação de alertas por especialista, tempo de análise, botão "Enviar opinião", questionário SUS (`/avaliacao`), validação de desfechos, exportação `/api/admin/evidence.json`.
+- Segurança 28/28 e carga sem erros: `16_SEGURANCA_DESEMPENHO.md`.
+- Metodologia do índice: `17_METODOLOGIA_RISCO.md` · Piloto: `18_PLANO_PILOTO_OPERACAO.md` · Operação: `19_RUNBOOK_PRODUCAO.md`.
+- **Maturidade avaliada: TRL 6** (`20_DOSSIE_TRL.md`). TRL 7–9 dependem de VPS, usuários reais e tempo de operação.

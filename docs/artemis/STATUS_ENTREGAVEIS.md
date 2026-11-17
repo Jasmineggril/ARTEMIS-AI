@@ -48,3 +48,16 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | Implantação e restauração documentadas | Parcial | restauração testada; implantação documentada, não executada |
 
 **A plataforma não está pronta para produção.** Ver `07_LIMITACOES_PENDENCIAS.md`.
+
+## Atualização 2026-11-17 — rumo a TRL 9
+
+| Entregável | Situação | Evidência |
+|---|---|---|
+| URL funcional (HTTPS) | Pendente — VPS/DNS | script pronto: `scripts/ops/deploy-homolog.sh` |
+| Contas reais / usuários reais | Pendente — piloto | `18_PLANO_PILOTO_OPERACAO.md` |
+| Integrações ativas (INPE, Sisfogo, Open-Meteo, IBGE) | Atendido em homologação local | `11_SISFOGO.md`, `15_PRODUTO_SITUACAO.md` |
+| Monitoramento | Atendido (instrumentação) | `/admin/operacao`, migração 0013 |
+| Evidências de uso real | Pendente — piloto | coleta pronta: opiniões, SUS, avaliação de alertas |
+| Relatório de desempenho | Atendido (laboratório) | `16_SEGURANCA_DESEMPENHO.md`, `evidencias/2026-11-17/` |
+| Documentação técnica e operacional | Atendido | `17`–`19` |
+| Dossiê TRL | Atendido — nível atual **TRL 6** | `20_DOSSIE_TRL.md` |
