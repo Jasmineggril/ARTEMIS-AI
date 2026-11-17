@@ -39,7 +39,11 @@ const shot = (p, n) => p.screenshot({ path: `${process.env.E2E_OUT ?? '/tmp'}/${
     await page.fill('#a-lng', '-47.51');
     await page.fill('#a-ha', '850');
     await page.getByRole('button', { name: 'Salvar' }).click();
-    await page.getByText('Talhão Norte').waitFor();
+    // saving a new area opens its property page
+    await page.waitForURL(/\/areas\/\d+$/);
+    await page.getByRole('heading', { name: /Talhão Norte/ }).waitFor();
+    await page.getByText('Nenhuma análise ainda.', { exact: false }).waitFor();
+    await page.goto(BASE + '/areas');
     await page.locator('[data-testid^=card-area-]', { hasText: 'Sem análise' }).waitFor();
   });
   await step('analyze area (manual, critical scenario)', async () => {

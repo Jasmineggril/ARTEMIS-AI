@@ -102,22 +102,40 @@ export function parseOpenMeteo(payload: any): RiskWeather {
   };
 }
 
+/**
+ * Up to `attempts` tries: timeouts, HTTP 429 (free plan limit, counted per
+ * egress IP) and 5xx are retried with a growing wait (Retry-After honoured,
+ * capped at 8 s). Other errors fail at once. Never returns invented values.
+ */
 export async function fetchRiskWeather(
   latitude: number,
   longitude: number,
   fetchImpl: FetchLike = fetch as unknown as FetchLike,
-  timeoutMs = 6000,
+  timeoutMs = Number(process.env.OPEN_METEO_TIMEOUT_MS ?? 10_000),
+  attempts = 3,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms)),
 ): Promise<RiskWeather> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetchImpl(buildOpenMeteoUrl(latitude, longitude), { signal: controller.signal });
-    if (!res.ok) throw new ConnectorError(`Open-Meteo respondeu HTTP ${res.status}.`, OPEN_METEO_SOURCE.key);
-    return parseOpenMeteo(await res.json());
-  } catch (err) {
-    if (err instanceof ConnectorError) throw err;
-    throw new ConnectorError("Open-Meteo indisponível ou sem resposta no tempo limite.", OPEN_METEO_SOURCE.key);
-  } finally {
-    clearTimeout(timer);
+  let last = "Open-Meteo indisponível ou sem resposta no tempo limite.";
+  for (let i = 1; i <= attempts; i++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let wait = 1000 * 3 ** (i - 1);
+    try {
+      const res = await fetchImpl(buildOpenMeteoUrl(latitude, longitude), { signal: controller.signal });
+      if (res.ok) return parseOpenMeteo(await res.json());
+      if (res.status !== 429 && res.status < 500) throw new ConnectorError(`Open-Meteo respondeu HTTP ${res.status}.`, OPEN_METEO_SOURCE.key);
+      last = res.status === 429
+        ? "Open-Meteo limitou as consultas (HTTP 429, limite do plano gratuito)."
+        : `Open-Meteo respondeu HTTP ${res.status}.`;
+      const ra = Number((res as any).headers?.get?.("retry-after"));
+      if (Number.isFinite(ra) && ra > 0) wait = ra * 1000;
+    } catch (err) {
+      if (err instanceof ConnectorError) throw err;
+      last = "Open-Meteo indisponível ou sem resposta no tempo limite.";
+    } finally {
+      clearTimeout(timer);
+    }
+    if (i < attempts) await sleep(Math.min(wait, 8000));
   }
+  throw new ConnectorError(`${last} Tentativas: ${attempts}.`, OPEN_METEO_SOURCE.key);
 }

@@ -303,7 +303,9 @@ export function buildLimitations(resolved: ResolvedInputs, engine: EngineOutput)
   } else {
     out.push("Proximidade de focos informada pelo usuário.");
   }
-  if (resolved.weather?.cached) out.push("Dados meteorológicos reaproveitados do cache local (consulta ao Open-Meteo de até 30 min atrás).");
+  if ((resolved.weather as any)?.stale) {
+    out.push(`Open-Meteo indisponível no momento da análise: usado o último valor armazenado para a coordenada, obtido em ${new Date((resolved.weather as any).fetchedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (horário de Brasília).`);
+  } else if (resolved.weather?.cached) out.push("Dados meteorológicos reaproveitados do cache local (consulta ao Open-Meteo de até 30 min atrás).");
   const h = resolved.history;
   if (h && !resolved.provenance.some((p) => p.field === "historicalOccurrences" && p.origin === "manual")) {
     out.push(`Histórico num raio de ${h.radiusKm} km: ${h.orgCount} ocorrência(s) importada(s) pela organização (todo o período importado)` +
