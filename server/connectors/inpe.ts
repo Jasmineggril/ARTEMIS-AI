@@ -16,6 +16,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import { dataSources, satelliteHotspots, sourceSyncRuns } from "@shared/schema";
+import { retryDelay, type RetryPolicy } from "./sisfogo";
 
 export const INPE_SOURCE_KEY = "inpe-queimadas";
 export const INPE_DAILY_URL = "https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil";
@@ -83,7 +84,9 @@ function num(v: string | undefined): number | null {
   return n;
 }
 
-export function parseInpeCsv(text: string): ParseResult {
+export function parseInpeCsv(text: string, fileDay?: string, now = new Date()): ParseResult {
+  // A daily file holds detections of that UTC day; allow ±1 day for edge cases.
+  const dayStart = fileDay ? Date.parse(`${fileDay}T00:00:00Z`) : NaN;
   const lines = text.replace(/^﻿/, "").split(/\r?\n/).filter((l) => l.trim() !== "");
   if (lines.length === 0) throw new Error("Arquivo do INPE vazio.");
   const header = splitCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
@@ -107,6 +110,8 @@ export function parseInpeCsv(text: string): ParseResult {
     const m = r.data_hora_gmt.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
     const detectedAt = m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] ?? 0))) : null;
     if (!detectedAt || Number.isNaN(detectedAt.getTime())) { reject("data/hora inválida"); continue; }
+    if (detectedAt.getTime() > now.getTime() + 3_600_000) { reject("data/hora no futuro"); continue; }
+    if (Number.isFinite(dayStart) && (detectedAt.getTime() < dayStart - 86_400_000 || detectedAt.getTime() >= dayStart + 2 * 86_400_000)) { reject("data fora do dia do arquivo"); continue; }
     if (!r.satelite) { reject("sem satélite"); continue; }
     const munCode = /^\d{7}$/.test(r.municipio_id ?? "") ? r.municipio_id : null;
     const risk = num(r.risco_fogo);
@@ -153,6 +158,36 @@ export const defaultFetchText: FetchText = async (url) => {
   }
 };
 
+/** Retries for network errors, timeouts and HTTP 429/5xx. 404 (file not published yet) is not retried. */
+export const INPE_RETRY: RetryPolicy = {
+  timeoutMs: 120_000, attempts: 3, baseDelayMs: Number(process.env.INPE_RETRY_BASE_MS ?? 3_000), maxDelayMs: 60_000,
+  sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+};
+const RETRYABLE_HTTP = new Set([429, 500, 502, 503, 504]);
+
+export async function fetchWithRetry(fetchText: FetchText, url: string, p: RetryPolicy = INPE_RETRY) {
+  let lastErr: unknown = null;
+  for (let attempt = 1; attempt <= p.attempts; attempt++) {
+    try {
+      const res = await fetchText(url);
+      if (!RETRYABLE_HTTP.has(res.status) || attempt === p.attempts) return { res, attempts: attempt };
+      lastErr = new Error(`INPE respondeu HTTP ${res.status}.`);
+    } catch (err) {
+      lastErr = err;
+      if (attempt === p.attempts) break;
+    }
+    await p.sleep(retryDelay(attempt, null, p));
+  }
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+  throw new Error(`${msg} (após ${p.attempts} tentativas)`);
+}
+
+/** Runs left "em_execucao" for over 30 min by a process that died: close them as failures. */
+export async function closeInterruptedInpeRuns(sourceId: number) {
+  await db.update(sourceSyncRuns).set({ status: "falha", finishedAt: new Date(), error: "Execução interrompida antes de concluir (processo encerrado)." })
+    .where(and(eq(sourceSyncRuns.sourceId, sourceId), eq(sourceSyncRuns.status, "em_execucao"), sql`${sourceSyncRuns.startedAt} < now() - interval '30 minutes'`));
+}
+
 export interface DaySyncResult {
   day: string;
   runId: number;
@@ -172,9 +207,10 @@ async function inpeSourceId(): Promise<number> {
 }
 
 /** Sync one UTC day. Each day is one transaction: a failure leaves no partial data. */
-export async function syncInpeDay(day: string, fetchText: FetchText = defaultFetchText): Promise<DaySyncResult> {
+export async function syncInpeDay(day: string, fetchText: FetchText = defaultFetchText, retry: RetryPolicy = INPE_RETRY): Promise<DaySyncResult> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error(`Dia inválido: ${day}`);
   const sourceId = await inpeSourceId();
+  await closeInterruptedInpeRuns(sourceId);
   const url = inpeDailyUrl(day);
   const [run] = await db.insert(sourceSyncRuns).values({ sourceId, params: { day, url } }).returning();
 
@@ -185,9 +221,10 @@ export async function syncInpeDay(day: string, fetchText: FetchText = defaultFet
 
   let parsed: ParseResult;
   try {
-    const res = await fetchText(url);
+    const { res, attempts } = await fetchWithRetry(fetchText, url, retry);
+    if (attempts > 1) await db.update(sourceSyncRuns).set({ params: { day, url, attempts } }).where(eq(sourceSyncRuns.id, run.id));
     if (!res.ok) return fail(res.status === 404 ? "Arquivo do dia ainda não publicado pelo INPE (404)." : `INPE respondeu HTTP ${res.status}.`);
-    parsed = parseInpeCsv(res.text);
+    parsed = parseInpeCsv(res.text, day);
   } catch (err) {
     return fail(err instanceof Error ? err.message : String(err));
   }

@@ -175,7 +175,7 @@ test("import: server re-validation downgrades physically impossible records", ()
 
 // ── INPE connector (real sample + marked synthetic invalid rows) ─────────────
 import { readFileSync } from "node:fs";
-import { parseInpeCsv, inpeDailyUrl, recentUtcDays, IBGE_UF } from "../../server/connectors/inpe";
+import { parseInpeCsv, inpeDailyUrl, recentUtcDays, IBGE_UF, fetchWithRetry } from "../../server/connectors/inpe";
 
 const INPE_SAMPLE = readFileSync(new URL("../fixtures/inpe_focos_diario_amostra.csv", import.meta.url), "utf8");
 
@@ -200,6 +200,30 @@ test("inpe: parses the real CSV format, -999 and empty values become null, UTC t
 test("inpe: unexpected header is rejected instead of guessed", () => {
   assert.throws(() => parseInpeCsv("lat,lon\n1,2\n"), /colunas ausentes/);
   assert.throws(() => parseInpeCsv(""), /vazio/);
+});
+
+test("inpe: detections dated in the future or outside the file's day are rejected with a reason", () => {
+  const now = new Date("2026-11-15T12:00:00Z");
+  const [head, l1] = INPE_SAMPLE.trim().split("\n");
+  const withDate = (id: string, d: string) => { const c = l1.split(","); c[0] = id; c[3] = d; return c.join(","); };
+  const csv = [head, withDate("a", "2026-11-15 10:00:00"), withDate("b", "2026-11-15 14:30:00"), withDate("c", "2026-11-10 10:00:00"), withDate("d", "2026-11-14 23:50:00")].join("\n");
+  const r = parseInpeCsv(csv, "2026-11-15", now);
+  assert.deepEqual(r.rows.map((x) => x.externalId).sort(), ["a", "d"]);
+  assert.deepEqual(r.rejected, { "data/hora no futuro": 1, "data fora do dia do arquivo": 1 });
+});
+
+test("inpe: fetchWithRetry retries network errors and 5xx/429 with backoff, never 404", async () => {
+  const sleeps: number[] = [];
+  const p = { timeoutMs: 1000, attempts: 3, baseDelayMs: 10, maxDelayMs: 1000, sleep: async (ms: number) => { sleeps.push(ms); } };
+  let n = 0;
+  const flaky = async () => { n++; if (n === 1) throw new Error("ECONNRESET"); if (n === 2) return { ok: false, status: 503, text: "" }; return { ok: true, status: 200, text: "ok" }; };
+  const r = await fetchWithRetry(flaky, "u", p);
+  assert.equal(r.attempts, 3); assert.equal(r.res.text, "ok"); assert.equal(sleeps.length, 2);
+  assert.ok(sleeps[1] > sleeps[0], "backoff grows");
+  n = 0; sleeps.length = 0;
+  const nf = await fetchWithRetry(async () => { n++; return { ok: false, status: 404, text: "" }; }, "u", p);
+  assert.equal(nf.res.status, 404); assert.equal(n, 1, "404 is not retried");
+  await assert.rejects(fetchWithRetry(async () => { throw new Error("timeout"); }, "u", p), /timeout \(após 3 tentativas\)/);
 });
 
 test("inpe: URL, recent days and UF table", () => {
