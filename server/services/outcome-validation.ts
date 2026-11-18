@@ -17,7 +17,8 @@
 import { sql } from "drizzle-orm";
 import { db } from "../db";
 import { monitoredAreas, type MonitoredArea } from "@shared/schema";
-import { areaShape, expandBox } from "./surroundings";
+import { areaShape } from "./surroundings";
+import { pointsNearArea } from "./spatial";
 
 export interface OutcomeOptions { from: Date; to: Date; windowDays: number; radiusKm: number; organizationId?: number }
 const LEVELS = ["baixo", "moderado", "alto", "crítico"] as const;
@@ -49,16 +50,16 @@ export async function evaluateOutcomes(o: OutcomeOptions) {
     if (!shape || !(a.level in all)) { skipped++; continue; }
     const start = new Date(a.createdAt);
     const end = new Date(start.getTime() + o.windowDays * 86_400_000);
-    const b = expandBox(shape.box, o.radiusKm);
-    const hs = (await db.execute<{ latitude: number; longitude: number }>(sql`
-      SELECT latitude, longitude FROM satellite_hotspots
-      WHERE detected_at > ${start} AND detected_at <= ${end}
-        AND latitude BETWEEN ${b.minLat} AND ${b.maxLat} AND longitude BETWEEN ${b.minLng} AND ${b.maxLng} LIMIT 2000`)).rows;
-    const ro = (await db.execute<{ latitude: number; longitude: number }>(sql`
-      SELECT f.latitude, f.longitude FROM fire_occurrences f JOIN data_sources s ON s.id = f.data_source_id
-      WHERE s.key = 'sisfogo-roi' AND f.organization_id IS NULL AND f.occurred_at > ${start} AND f.occurred_at <= ${end}
-        AND f.latitude BETWEEN ${b.minLat} AND ${b.maxLat} AND f.longitude BETWEEN ${b.minLng} AND ${b.maxLng} LIMIT 500`)).rows;
-    const hit = (rows: { latitude: number; longitude: number }[]) => rows.some((r) => shape.distance([r.longitude, r.latitude]) <= o.radiusKm);
+    const hs = await pointsNearArea<{ latitude: number; longitude: number }>(area!, {
+      table: "satellite_hotspots", radiusKm: o.radiusKm, limit: 1, columns: sql`t.latitude, t.longitude`,
+      where: sql`t.detected_at > ${start} AND t.detected_at <= ${end}`,
+    });
+    const ro = await pointsNearArea<{ latitude: number; longitude: number }>(area!, {
+      table: "fire_occurrences", radiusKm: o.radiusKm, limit: 1, columns: sql`t.latitude, t.longitude`,
+      where: sql`t.organization_id IS NULL AND t.occurred_at > ${start} AND t.occurred_at <= ${end}
+        AND t.data_source_id = (SELECT id FROM data_sources WHERE key = 'sisfogo-roi')`,
+    });
+    const hit = (q: typeof hs) => (q?.rows.length ?? 0) > 0;
     const h = hit(hs), r = hit(ro);
     for (const t of a.nearby ? [all] : [all, clean]) {
       t[a.level].n++;

@@ -26,7 +26,7 @@ from feature_engineering import input_to_array
 
 MODEL_PATH = Path(__file__).parent / "models" / "risk_classifier.joblib"
 
-MODEL_VERSION     = "1.0.0-rules"
+MODEL_VERSION     = "1.1.0-rules"
 ML_MODEL_VERSION  = "1.0.0-sklearn-rf"
 
 # Pontuações médias representativas por classe (para derivar score numérico)
@@ -89,14 +89,14 @@ def calculate_rule_score(data: RiskInput) -> int:
     # Wind
     w = data.wind_speed
     if w > 40:     score += 15
-    elif w >= 26:  score += 10
-    elif w >= 16:  score += 5
+    elif w > 25:   score += 10
+    elif w > 15:   score += 5
 
     # Rainfall (reduces score)
     r = data.recent_rainfall
     if r > 30:     score -= 15
-    elif r >= 11:  score -= 8
-    elif r >= 3:   score -= 3
+    elif r > 10:   score -= 8
+    elif r > 2:    score -= 3
 
     # Vegetation
     vc = data.vegetation_condition
@@ -184,13 +184,13 @@ def explain_factors(data: RiskInput) -> list[RiskFactor]:
         factors.append(RiskFactor(name="Vento intenso", contribution=15,
             description="Vento acima de 40 km/h propaga focos rapidamente e dificulta o combate.",
             weight="alto", value=f"{w:.0f} km/h"))
-    elif w >= 26:
+    elif w > 25:
         factors.append(RiskFactor(name="Vento forte", contribution=10,
-            description="Vento entre 26 e 40 km/h aumenta significativamente a velocidade de propagação.",
+            description="Vento acima de 25 e até 40 km/h aumenta significativamente a velocidade de propagação.",
             weight="médio", value=f"{w:.0f} km/h"))
-    elif w >= 16:
+    elif w > 15:
         factors.append(RiskFactor(name="Vento moderado", contribution=5,
-            description="Vento entre 16 e 25 km/h contribui moderadamente ao risco.",
+            description="Vento acima de 15 e até 25 km/h contribui moderadamente ao risco.",
             weight="baixo", value=f"{w:.0f} km/h"))
 
     # Rainfall
@@ -199,13 +199,13 @@ def explain_factors(data: RiskInput) -> list[RiskFactor]:
         factors.append(RiskFactor(name="Chuva recente significativa", contribution=-15,
             description="Precipitação acima de 30 mm nas últimas 72h reduz consideravelmente o risco.",
             weight="alto", value=f"{r:.0f} mm"))
-    elif r >= 11:
+    elif r > 10:
         factors.append(RiskFactor(name="Chuva recente moderada", contribution=-8,
-            description="Precipitação entre 11 e 30 mm reduz o risco de forma relevante.",
+            description="Precipitação acima de 10 e até 30 mm reduz o risco de forma relevante.",
             weight="médio", value=f"{r:.0f} mm"))
-    elif r >= 3:
+    elif r > 2:
         factors.append(RiskFactor(name="Chuva recente leve", contribution=-3,
-            description="Precipitação entre 3 e 10 mm atenua levemente o risco.",
+            description="Precipitação acima de 2 e até 10 mm atenua levemente o risco.",
             weight="baixo", value=f"{r:.0f} mm"))
 
     # Vegetation
@@ -233,10 +233,13 @@ def explain_factors(data: RiskInput) -> list[RiskFactor]:
             contrib, desc, w_label = 15, "Foco a menos de 15 km — alta probabilidade de propagação.", "alto"
         elif d <= 30:
             contrib, desc, w_label = 8, "Foco a menos de 30 km — risco moderado de propagação com ventos fortes.", "médio"
+        elif d <= 50:
+            contrib, desc, w_label = 4, "Foco ativo na região (até 50 km) — contribuição leve ao risco.", "baixo"
         else:
-            contrib, desc, w_label = 4, "Foco ativo na região — contribuição leve ao risco.", "baixo"
-        factors.append(RiskFactor(name="Foco de calor ou incêndio próximo",
-            contribution=contrib, description=desc, weight=w_label, value=f"{d:.0f} km"))
+            contrib = 0  # beyond 50 km: no contribution (matches calculate_rule_score)
+        if contrib:
+            factors.append(RiskFactor(name="Foco de calor ou incêndio próximo",
+                contribution=contrib, description=desc, weight=w_label, value=f"{d:.0f} km"))
 
     # Historical occurrences
     ho = data.historical_occurrences

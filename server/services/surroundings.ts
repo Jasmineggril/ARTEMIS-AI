@@ -11,6 +11,7 @@ import { db } from "../db";
 import { inpeFreshness } from "../connectors/inpe";
 import { distanceToBoundaryKm, haversineKm, bbox, type BoundaryGeom, type Position } from "@shared/geometry";
 import type { MonitoredArea } from "@shared/schema";
+import { pointsNearArea } from "./spatial";
 
 export interface SurroundingsOptions { radiusKm: number; days: number }
 
@@ -38,45 +39,41 @@ const iso = (col: string) => sql.raw(`to_char(${col} AT TIME ZONE 'UTC', 'YYYY-M
 export async function areaSurroundings(orgId: number, a: MonitoredArea, opts: SurroundingsOptions) {
   const shape = areaShape(a);
   if (!shape) return null;
-  const b = expandBox(shape.box, opts.radiusKm);
-  const round = (d: number) => Math.round(d * 100) / 100;
 
   // INPE hotspots (observed by satellite)
-  const hs = await db.execute<{ id: number; detectedAt: string; satellite: string; latitude: number; longitude: number; frpMw: number | null; municipality: string | null }>(sql`
-    SELECT id, ${iso("detected_at")} AS "detectedAt", satellite, latitude, longitude, frp_mw AS "frpMw", municipality
-    FROM satellite_hotspots
-    WHERE detected_at >= now() - make_interval(days => ${opts.days})
-      AND latitude BETWEEN ${b.minLat} AND ${b.maxLat} AND longitude BETWEEN ${b.minLng} AND ${b.maxLng}
-    ORDER BY detected_at DESC LIMIT 20000`);
-  const hotspots = hs.rows
-    .map((h) => ({ ...h, distanceKm: round(shape.distance([h.longitude, h.latitude])) }))
-    .filter((h) => h.distanceKm <= opts.radiusKm);
+  const hs = await pointsNearArea<{ id: number; detectedAt: string; satellite: string; latitude: number; longitude: number; frpMw: number | null; municipality: string | null }>(a, {
+    table: "satellite_hotspots", radiusKm: opts.radiusKm, limit: 20000,
+    columns: sql`t.id, ${iso("t.detected_at")} AS "detectedAt", t.satellite, t.latitude, t.longitude, t.frp_mw AS "frpMw", t.municipality`,
+    where: sql`t.detected_at >= now() - make_interval(days => ${opts.days})`,
+    orderBy: sql`t.detected_at DESC`,
+  });
+  const hotspots = hs!.rows;
   const fresh = await inpeFreshness();
 
   // Sisfogo official records
-  const ro = await db.execute<{ id: number; roiNumber: string; startedAt: string | null; latitude: number; longitude: number; burnedAreaHa: number | null; municipality: string | null }>(sql`
-    SELECT f.id, f.source_reference AS "roiNumber", ${iso("f.occurred_at")} AS "startedAt", f.latitude, f.longitude, f.affected_area AS "burnedAreaHa", f.municipality
-    FROM fire_occurrences f JOIN data_sources s ON s.id = f.data_source_id
-    WHERE s.key = 'sisfogo-roi' AND f.organization_id IS NULL AND f.source_available AND f.latitude IS NOT NULL
-      AND f.latitude BETWEEN ${b.minLat} AND ${b.maxLat} AND f.longitude BETWEEN ${b.minLng} AND ${b.maxLng}
-    ORDER BY f.occurred_at DESC NULLS LAST LIMIT 5000`);
-  const official = ro.rows
-    .map((r) => ({ ...r, distanceKm: round(shape.distance([r.longitude, r.latitude])) }))
-    .filter((r) => r.distanceKm <= opts.radiusKm);
+  const ro = await pointsNearArea<{ id: number; roiNumber: string; startedAt: string | null; latitude: number; longitude: number; burnedAreaHa: number | null; municipality: string | null }>(a, {
+    table: "fire_occurrences", radiusKm: opts.radiusKm, limit: 5000,
+    columns: sql`t.id, t.source_reference AS "roiNumber", ${iso("t.occurred_at")} AS "startedAt", t.latitude, t.longitude, t.affected_area AS "burnedAreaHa", t.municipality`,
+    where: sql`t.organization_id IS NULL AND t.source_available AND t.latitude IS NOT NULL
+      AND t.data_source_id = (SELECT id FROM data_sources WHERE key = 'sisfogo-roi')`,
+    orderBy: sql`t.occurred_at DESC NULLS LAST`,
+  });
+  const official = ro!.rows;
   const [sisSync] = (await db.execute<{ at: string | null }>(sql`
     SELECT ${iso("max(r.finished_at)")} AS at FROM source_sync_runs r JOIN data_sources s ON s.id = r.source_id
     WHERE s.key = 'sisfogo-roi' AND r.status = 'sucesso'`)).rows;
 
   // The organisation's own imported records (never other organisations')
-  const im = await db.execute<{ latitude: number; longitude: number; occurredOn: string | null }>(sql`
-    SELECT latitude, longitude, occurred_on::text AS "occurredOn" FROM fire_occurrences
-    WHERE organization_id = ${orgId} AND latitude IS NOT NULL
-      AND latitude BETWEEN ${b.minLat} AND ${b.maxLat} AND longitude BETWEEN ${b.minLng} AND ${b.maxLng} LIMIT 20000`);
-  const imported = im.rows.filter((r) => shape.distance([r.longitude, r.latitude]) <= opts.radiusKm);
+  const im = await pointsNearArea<{ latitude: number; longitude: number; occurredOn: string | null }>(a, {
+    table: "fire_occurrences", radiusKm: opts.radiusKm, limit: 20000,
+    columns: sql`t.latitude, t.longitude, t.occurred_on::text AS "occurredOn"`,
+    where: sql`t.organization_id = ${orgId} AND t.latitude IS NOT NULL`,
+  });
+  const imported = im!.rows;
 
   const within = (rows: { distanceKm: number }[], km: number) => rows.filter((r) => r.distanceKm <= km).length;
   return {
-    reference: { kind: shape.kind, radiusKm: opts.radiusKm, days: opts.days },
+    reference: { kind: shape.kind, radiusKm: opts.radiusKm, days: opts.days, spatialMode: hs!.mode },
     hotspots: {
       nature: "observado",
       note: "Detecções térmicas por satélite (INPE). Não são incêndios confirmados; o mesmo fogo pode gerar várias detecções.",
