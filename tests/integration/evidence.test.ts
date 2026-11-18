@@ -165,3 +165,30 @@ test("analysis stores the time the person took (Proof of Value: analysis time)",
   const o = await admin.get("/api/admin/operations?days=1");
   assert.equal(o.body.usage.medianAnalysisMs, 95_000);
 });
+
+test("Proof of Value: baseline timings, recommendation verdicts and indicators (insufficient sample is never a verdict)", async () => {
+  const startedAt = new Date(Date.now() - 20 * 60_000).toISOString();
+  assert.equal((await owner.post("/api/pov/baseline", { durationMs: 5_000, startedAt })).status, 400, "< 10 s rejected");
+  assert.equal((await owner.post("/api/pov/baseline", { durationMs: 3 * 3_600_000, startedAt })).status, 400, "duration longer than elapsed time");
+  const b = await owner.post("/api/pov/baseline", { durationMs: 15 * 60_000, startedAt, areaId, sourcesConsulted: ["inpe", "meteorologia"] });
+  assert.equal(b.status, 201, JSON.stringify(b.body));
+  assert.equal((await anon.post("/api/pov/baseline", { durationMs: 15 * 60_000, startedAt })).status, 401);
+  assert.equal((await owner.get("/api/pov/baseline")).body.length, 1);
+
+  const an = await owner.post(`/api/areas/${areaId}/analyses`, { inputs: { vegetationCondition: "dry", temperature: 36, humidity: 22, windSpeed: 20, recentRainfall: 0, nearbyHotspot: false }, clientDurationMs: 4 * 60_000 });
+  assert.equal(an.status, 201, JSON.stringify(an.body));
+  assert.equal((await owner.post(`/api/analyses/${an.body.id}/recommendation-evaluation`, { evaluation: "nao_pertinente" })).status, 400, "justification required");
+  assert.equal((await admin.post(`/api/analyses/${an.body.id}/recommendation-evaluation`, { evaluation: "pertinente" })).status, 404, "other organisation");
+  const ev = await owner.post(`/api/analyses/${an.body.id}/recommendation-evaluation`, { evaluation: "pertinente" });
+  assert.equal(ev.status, 200); assert.equal(ev.body.recommendationEvaluation, "pertinente");
+
+  const ops = await admin.get("/api/admin/operations?days=2");
+  const pv = ops.body.proofOfValue;
+  assert.equal(pv.timeReduction.baselineN, 1);
+  assert.equal(pv.timeReduction.baselineMedianMs, 15 * 60_000);
+  assert.ok(pv.timeReduction.platformN >= 1);
+  assert.equal(pv.timeReduction.status, "amostra_insuficiente", "1 timing is not enough to conclude");
+  assert.ok(pv.validation.recommendations.evaluated >= 1);
+  assert.equal(pv.validation.status, "amostra_insuficiente");
+  assert.ok(pv.timeReduction.pairedEvaluators >= 1, "same evaluator measured both ways");
+});

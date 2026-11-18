@@ -177,6 +177,11 @@ export const riskAnalyses = pgTable("risk_analyses", {
   areaSnapshot: json("area_snapshot"),      // area as it was at analysis time (migration 0004)
   modelVersionId: integer("model_version_id"), // migration 0007
   clientDurationMs: integer("client_duration_ms"), // migration 0013: time from opening the form to the result
+  // migration 0017: expert verdict on the recommendations
+  recommendationEvaluation: text("recommendation_evaluation"),
+  recommendationEvaluationNote: text("recommendation_evaluation_note"),
+  recommendationEvaluatedBy: integer("recommendation_evaluated_by"),
+  recommendationEvaluatedAt: timestamp("recommendation_evaluated_at", { withTimezone: true }),
 });
 
 /** Fontes de dados disponíveis */
@@ -609,4 +614,18 @@ export const municipalityBoundaries = pgTable("municipality_boundaries", {
   source: text("source").notNull(),
   sourceUrl: text("source_url"),
   loadedAt: timestamp("loaded_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Proof of Value baseline (migration 0017) ───────────────────────────────
+export const povBaselineMeasurements = pgTable("pov_baseline_measurements", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").notNull(),
+  userId: integer("user_id").notNull(),
+  areaId: integer("area_id"),
+  method: text("method").notNull().default("manual"),
+  durationMs: integer("duration_ms").notNull(),
+  sourcesConsulted: text("sources_consulted").array().notNull(),
+  note: text("note"),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

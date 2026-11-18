@@ -102,6 +102,21 @@ export default function AdminOperations() {
             <ul className="text-[11px] text-muted-foreground mt-2 list-disc list-inside">{r.outcomes.limits.map((l: string) => <li key={l}>{l}</li>)}</ul>
           </section>
 
+          {r.proofOfValue && (() => {
+            const pv = r.proofOfValue, st: Record<string, string> = { amostra_insuficiente: "amostra insuficiente — sem conclusão", meta_atingida: "meta atingida", meta_nao_atingida: "meta não atingida" };
+            const mins = (ms: number | null) => (ms == null ? "—" : `${(ms / 60000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} min`);
+            return (
+              <section aria-labelledby="pv-t" className="rounded-2xl border bg-card p-4" data-testid="ops-pov">
+                <h2 id="pv-t" className="font-semibold">Indicadores da Prova de Valor</h2>
+                <p className="text-sm mt-1"><strong>Redução do tempo de análise (meta ≥ {pv.targets.timeReductionPct} %):</strong> {pv.timeReduction.reductionPct == null ? "—" : `${pv.timeReduction.reductionPct} %`} ·
+                  manual {mins(pv.timeReduction.baselineMedianMs)} (n = {pv.timeReduction.baselineN}) × plataforma {mins(pv.timeReduction.platformMedianMs)} (n = {pv.timeReduction.platformN}; {pv.timeReduction.platformExcludedFast} abaixo de 10 s excluídas) — <em>{st[pv.timeReduction.status]}</em></p>
+                <p className="text-sm"><strong>Alertas e recomendações validados (meta ≥ {pv.targets.validatedPct} %):</strong> {pv.validation.combinedPct == null ? "—" : `${pv.validation.combinedPct} %`} ·
+                  alertas {pv.validation.alerts.pertinent}/{pv.validation.alerts.evaluated} · recomendações {pv.validation.recommendations.pertinent}/{pv.validation.recommendations.evaluated} — <em>{st[pv.validation.status]}</em></p>
+                <p className="text-xs text-muted-foreground mt-1">Linha de base registrada em <a className="underline" href="/avaliacao/linha-de-base">Avaliação → Linha de base</a>. Mínimo para conclusão: {pv.targets.minTimings} medições de cada tipo e {pv.targets.minVerdicts} avaliações. "Parcialmente pertinente" não conta como validado.</p>
+              </section>
+            );
+          })()}
+
           {r.notifications && (
             <section aria-labelledby="nt-t" className="rounded-2xl border bg-card p-4" data-testid="ops-notifications">
               <h2 id="nt-t" className="font-semibold">Notificações por e-mail</h2>
