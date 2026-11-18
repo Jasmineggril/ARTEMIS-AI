@@ -1,0 +1,54 @@
+{
+  "data": "2026-11-18",
+  "comando": "npm run test:all (TEST_DATABASE_URL=…/artemis_test; com PostGIS: TEST_SUPERUSER_URL)",
+  "ambiente": "PostgreSQL 16 + PostGIS 3.4.2 local, Node 22, Python 3.13; contêiner 4 vCPU / 16 GB",
+  "duracao_s": 28,
+  "com_postgis": {
+    "node_test_runs": [
+      {
+        "tests": 49,
+        "pass": 49,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 91,
+        "pass": 91,
+        "fail": 0,
+        "skipped": 0
+      }
+    ],
+    "pytest_passed": 109,
+    "scripts": [
+      "Resultado: 34 passaram · 0 falharam",
+      "Resultado: 10 passou, 0 falhou"
+    ]
+  },
+  "sem_postgis": {
+    "node_test_runs": [
+      {
+        "tests": 49,
+        "pass": 49,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 91,
+        "pass": 87,
+        "fail": 0,
+        "skipped": 4
+      }
+    ],
+    "pytest_passed": 109,
+    "scripts": [
+      "Resultado: 34 passaram · 0 falharam",
+      "Resultado: 10 passou, 0 falhou"
+    ]
+  },
+  "outros": {
+    "e2e_usuario_real": "10/10 (build de produção, ver e2e-usuario-real.log)",
+    "seguranca": "28/28 (seguranca-verificacoes.json)",
+    "resiliencia": "11/11 (resiliencia.json)",
+    "paridade_motores": "3 433 entradas, 0 divergências (tests/unit/engine-parity.test.ts)"
+  }
+}

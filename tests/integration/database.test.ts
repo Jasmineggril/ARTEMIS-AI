@@ -196,11 +196,11 @@ test("connection failure: API reports 503 and refuses writes, never falls back t
 
 const POSTGIS = Boolean(process.env.TEST_SUPERUSER_URL);
 
-test("0008 adds geography columns + GiST indexes when PostGIS exists", { skip: !POSTGIS && "TEST_SUPERUSER_URL não definido" }, async () => {
+test("0008/0016 add geography/geometry columns + GiST indexes when PostGIS exists", { skip: !POSTGIS && "TEST_SUPERUSER_URL não definido" }, async () => {
   const cols = await q(`SELECT table_name FROM information_schema.columns WHERE column_name='geom' ORDER BY 1`);
-  assert.deepEqual(cols.map((r) => r.table_name), ["fire_occurrences", "satellite_hotspots"]);
+  assert.deepEqual(cols.map((r) => r.table_name), ["fire_occurrences", "municipality_boundaries", "satellite_hotspots"]);
   const idx = await q(`SELECT indexname FROM pg_indexes WHERE indexdef ILIKE '%gist%' AND indexname LIKE '%geom%' ORDER BY 1`);
-  assert.equal(idx.length, 2);
+  assert.equal(idx.length, 3);
 });
 
 test("PostGIS distance agrees with the haversine fallback (within 0.5%)", { skip: !POSTGIS && "TEST_SUPERUSER_URL não definido" }, async () => {

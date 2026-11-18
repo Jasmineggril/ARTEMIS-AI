@@ -81,3 +81,10 @@ seguintes, e consolida as avaliações de especialistas sobre os alertas
 evidências (`/api/admin/evidence.json`). Só depois de volume suficiente
 (ver critérios em `18_PLANO_PILOTO_OPERACAO.md`) os limiares poderão ser recalibrados,
 com nova versão do motor e registro da mudança.
+
+## 7. Resultado da primeira validação retrospectiva (18/11/2026)
+
+4 800 casos reais (400 municípios × 12 semanas, ago–nov 2026): AUC 0,72; taxa de focos nos
+7 dias seguintes de 22 % (baixo), 55 % (moderado) e 58 % (alto). Os níveis alto e crítico são
+raros demais para este desfecho (1 % dos casos). Detalhes, limitações e proposta de revisão:
+`23_VALIDACAO_MOTOR_DADOS_REAIS.md`. Os limiares **não** foram alterados.

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json, uniqueIndex, index, date, smallint, char, bigserial } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json, jsonb, uniqueIndex, index, date, smallint, char, bigserial } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -605,7 +605,7 @@ export type NotificationDelivery = typeof notificationDeliveries.$inferSelect;
 // ─── Official municipal boundaries (migration 0016) ─────────────────────────
 export const municipalityBoundaries = pgTable("municipality_boundaries", {
   ibgeCode: char("ibge_code", { length: 7 }).primaryKey(),
-  boundary: json("boundary").notNull(),
+  boundary: jsonb("boundary").notNull(),
   minLat: doublePrecision("min_lat").notNull(), maxLat: doublePrecision("max_lat").notNull(),
   minLng: doublePrecision("min_lng").notNull(), maxLng: doublePrecision("max_lng").notNull(),
   centroidLat: doublePrecision("centroid_lat").notNull(), centroidLng: doublePrecision("centroid_lng").notNull(),

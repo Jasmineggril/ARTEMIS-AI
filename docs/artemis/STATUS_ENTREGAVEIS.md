@@ -61,3 +61,8 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | Relatório de desempenho | Atendido (laboratório) | `16_SEGURANCA_DESEMPENHO.md`, `evidencias/2026-11-17/` |
 | Documentação técnica e operacional | Atendido | `17`–`19` |
 | Dossiê TRL | Atendido — nível atual **TRL 6** | `20_DOSSIE_TRL.md` |
+
+## Atualização 2026-11-18 — operação com dados reais
+
+Quadro completo (Implementado | Testado | Evidência | Pendência | Próxima ação): `21_DIAGNOSTICO_OPERACIONAL.md` §4.
+Validação do motor com dados reais: `23`. Prova de Valor: `22`. Maturidade continua **TRL 6**.

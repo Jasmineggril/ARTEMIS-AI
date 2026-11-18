@@ -21,7 +21,7 @@ Escala usada: definições NASA/ISO 16290 adaptadas a software.
 | 3 | Prova de conceito analítica/experimental | ✅ | motor de regras + testes (`tests/risk-engine.test.ts`, `python_service/tests/`) |
 | 4 | Componentes validados em laboratório | ✅ | testes unitários e de integração (API, banco, Sisfogo, produto, evidências) |
 | 5 | Componentes validados em ambiente relevante | ✅ | conectores contra APIs reais: INPE Queimadas, Sisfogo (contrato real documentado em `11_SISFOGO.md`), Open-Meteo, IBGE |
-| 6 | Sistema/protótipo demonstrado em ambiente relevante | ✅ | E2E de usuário real com dados reais (`tests/e2e/real-user.cjs`, capturas em `capturas/produto/`), homologação HTTPS (`14_HOMOLOGACAO_HOSTINGER.md`), segurança 28/28 e carga sem erros (`16_SEGURANCA_DESEMPENHO.md`), metodologia documentada (`17_METODOLOGIA_RISCO.md`) |
+| 6 | Sistema/protótipo demonstrado em ambiente relevante | ✅ (reforçado em 18/11: 2,65 M focos reais, PostGIS, backtest com 4 800 casos reais, resiliência 11/11 — `21`, `23`, `16` §4) | E2E de usuário real com dados reais (`tests/e2e/real-user.cjs`, capturas em `capturas/produto/`), homologação HTTPS (`14_HOMOLOGACAO_HOSTINGER.md`), segurança 28/28 e carga sem erros (`16_SEGURANCA_DESEMPENHO.md`), metodologia documentada (`17_METODOLOGIA_RISCO.md`) |
 | 7 | Protótipo demonstrado em ambiente operacional | ⏳ não atingido | requer piloto na VPS — ver §3 |
 | 8 | Sistema completo e qualificado em operação | ⏳ não atingido | requer piloto concluído + correções + produção aprovada |
 | 9 | Sistema comprovado em operação real contínua | ⏳ não atingido | requer meses de operação com usuários reais |
@@ -48,9 +48,9 @@ Escala usada: definições NASA/ISO 16290 adaptadas a software.
 
 ### TRL 8 — sistema qualificado
 - [ ] Problemas S1/S2 do piloto corrigidos e reverificados.
-- [ ] Divergência Python × TypeScript (foco 5–15 km) resolvida.
+- [x] Divergência Python × TypeScript resolvida (motor 1.1.0, diferença zero em 3 433 entradas — 18/11).
 - [ ] Riscos residuais de dependências tratados (xlsx, zod 4) ou formalmente aceitos.
-- [ ] Limiares revisados com os desfechos coletados (nova versão do motor, documentada).
+- [ ] Limiares revisados com os desfechos coletados (nova versão do motor, documentada). *Primeira evidência retrospectiva em `23`; decisão pendente.*
 - [ ] Entrada em produção com **aprovação expressa** (`19_RUNBOOK_PRODUCAO.md` §2).
 - [ ] Teste de segurança externo (ou revisão independente) sem achados críticos.
 
@@ -87,3 +87,4 @@ Escala usada: definições NASA/ISO 16290 adaptadas a software.
 |---|---|---|
 | 2026-11-15 | 4 | componentes e testes de laboratório |
 | 2026-11-17 | 6 | sistema completo com dados reais, homologação reproduzível, segurança e carga, instrumentação de evidências |
+| 2026-11-18 | 6 | paridade dos motores, PostGIS, limites IBGE, notificações com registro de entrega, Prova de Valor instrumentada, backtest real, 2 falhas de resiliência corrigidas — **ainda TRL 6**: sem operação nem usuários reais |

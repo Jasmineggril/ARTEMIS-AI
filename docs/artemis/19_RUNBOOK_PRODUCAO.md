@@ -58,3 +58,15 @@ nunca apagar o banco atual antes de validar a restauração.
 - Prazos por severidade: ver `18_PLANO_PILOTO_OPERACAO.md` §6.
 - Conta bloqueada/senha: admin emite link de redefinição de uso único.
 - Pedido de exclusão de dados: tratado pelo admin, com registro em auditoria.
+
+## 7. Rotinas adicionadas em 18/11/2026
+
+| Rotina | Comando / configuração |
+|---|---|
+| Limites municipais oficiais (uma vez e a cada atualização do IBGE) | `npm run db:load-municipalities && npm run db:load-boundaries` |
+| Histórico do INPE além dos arquivos diários | `npm run sync:inpe -- --month AAAA-MM` (idempotente) |
+| Notificações de alertas | agendador interno a cada `NOTIFY_MINUTES` (padrão 5); requer `SMTP_URL` e `MAIL_FROM`; sem eles, as entregas ficam "não enviadas — e-mail não configurado" e são enviadas automaticamente quando o SMTP for configurado |
+| Reprocessar notificações agora | Admin → `POST /api/admin/notifications/process` |
+| PostGIS num banco existente | como superusuário: `CREATE EXTENSION postgis;` e depois `psql -f scripts/db/enable-postgis.sql` |
+| Validação retrospectiva mensal | `npx tsx scripts/backtest-risk.ts …` (ver `23` §7) — anexar a `evidencias/` |
+| Teste de resiliência (somente em homologação) | `tests/resilience/resilience-check.cjs` |

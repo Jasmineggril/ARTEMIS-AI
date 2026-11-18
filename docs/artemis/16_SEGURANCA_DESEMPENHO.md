@@ -53,7 +53,50 @@ Ambiente: 4 vCPU Xeon 2.1 GHz, 16 GB, autocannon 7.15.0, limitador desligado **s
 mas foram medidos numa máquina maior que a VPS prevista e sem latência de rede.
 O desempenho real será medido pela telemetria (`ops_request_metrics`) no ambiente operacional.
 
-## 4. O que estes testes **não** cobrem
+## 4. Volume real e resiliência (2026-11-18)
+
+Banco com **2 650 395 focos reais do INPE** (01/08–18/11/2026; 2,4 GB), PostGIS 3.4.2.
+Evidências: `evidencias/2026-11-18/carga-volume-real.json`, `resiliencia.json`.
+
+**Ingestão.** Mês de agosto (651 243 focos) em 109 s; setembro (777 214) em 130 s; outubro
+(931 795) em 150 s — cerca de 6 mil registros/s, cada arquivo numa transação. Reprocessar
+outubro inteiro: 0 inseridos, 0 atualizados, 931 795 inalterados (idempotente).
+
+**Consulta espacial** (área de 4 km² em Alenquer/PA, raio de 25 km, 90 dias):
+
+| Modo | Plano | Tempo |
+|---|---|---|
+| PostGIS | Bitmap Index Scan em `satellite_hotspots_geom_gix` (GiST) | 42,9 ms |
+| Reserva sem PostGIS | Bitmap Index Scan em `satellite_hotspots_lat_lng_idx` | 16,3 ms (+ distância exata na aplicação) |
+
+**Carga HTTP** (build de produção, autocannon, 15 s, 10 conexões; área no ponto com mais focos do país):
+
+| Rota | req/s | p50 | p99 | Erros |
+|---|---|---|---|---|
+| `/api/health` | 894 | 10 ms | 22 ms | 0 |
+| `/api/areas` | 1 041 | 9 ms | 17 ms | 0 |
+| `/api/areas/:id` (com conferência do município no IBGE) | 889 | 10 ms | 22 ms | 0 |
+| entorno, 7 dias (1 752 focos a até 10 km) | 73 | 136 ms | 206 ms | 0 |
+| entorno, 30 dias (**6 030 focos** a até 10 km) | 25 | 387 ms | 456 ms | 0 |
+| grade nacional de focos | 174 | 56 ms | 93 ms | 0 |
+| resumo Sisfogo | 526 | 18 ms | 33 ms | 0 |
+| `POST` análise (5 conexões) | 130 | 37 ms | 58 ms | 0 |
+
+O entorno de 30 dias no pior ponto do país é a consulta mais pesada (serializa milhares de
+detecções); fica abaixo de 0,5 s no p99.
+
+**Resiliência — 11/11** (`tests/resilience/resilience-check.cjs`):
+
+| Cenário | Resultado |
+|---|---|
+| Motor Python fora do ar | análise feita pelo motor TypeScript, registrada como tal, com a mesma pontuação (44 × 44); volta ao Python em 1 s após reiniciar |
+| Banco fora do ar | `/api/health` → 503 `database: down`; requisições → 500 controlado; **o processo não cai**; recupera-se sozinho quando o banco volta, com a sessão preservada |
+| Reinício da aplicação | volta em 1 s; login e análises preservados |
+
+Os dois primeiros problemas de banco foram **encontrados por este teste e corrigidos**: antes, o
+processo morria quando o PostgreSQL encerrava as conexões, e o health check respondia 500.
+
+## 5. O que estes testes **não** cobrem
 
 - teste de intrusão por terceiros; varredura do servidor/VPS (portas, SSH, firewall);
 - comportamento sob latência real das fontes externas (INPE, Sisfogo, Open-Meteo);
