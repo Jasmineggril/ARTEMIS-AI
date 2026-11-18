@@ -3,6 +3,7 @@
  *   INPE        every INPE_SYNC_MINUTES (default 60): today + yesterday, then hotspot alerts
  *   Sisfogo     incremental every SISFOGO_SYNC_HOURS (default 24); complete when the last
  *               complete run is older than 7 days
+ *   E-mails     alert notifications due, every NOTIFY_MINUTES (default 5)
  * Each job runs under a PostgreSQL advisory lock, so it never overlaps itself
  * or the same job started by cron/CLI. Every run is recorded in
  * source_sync_runs (visible in Fontes de Dados and in the admin panel).
@@ -12,6 +13,7 @@ import { db, pool } from "../db";
 import { syncInpeDay, recentUtcDays } from "../connectors/inpe";
 import { syncSisfogo, SisfogoBusyError } from "./sisfogo-sync";
 import { evaluateHotspotAlerts } from "./hotspot-alerts";
+import { processDeliveries } from "./notifications";
 
 const log = (e: Record<string, unknown>) => console.log(JSON.stringify({ time: new Date().toISOString(), source: "scheduler", ...e }));
 
@@ -72,6 +74,11 @@ export function startScheduler() {
   const safe = (name: string, fn: () => Promise<unknown>) => () => fn().catch((e) => log({ job: name, status: "erro", error: e instanceof Error ? e.message : String(e) }));
   const inpe = safe("inpe", runInpeCycle);
   const sis = safe("sisfogo", runSisfogoCycle);
+  const notifyMin = Math.max(1, Number(process.env.NOTIFY_MINUTES ?? 5));
+  const notify = safe("notificacoes", async () => {
+    const r = await processDeliveries();
+    if (r.claimed) log({ job: "notificacoes", result: r });
+  });
 
   // On start, catch up only what is overdue (a restart does not re-download everything).
   setTimeout(async () => {
@@ -79,9 +86,9 @@ export function startScheduler() {
     if (!i || Date.now() - i.getTime() > inpeMin * 60_000) inpe();
     if (!s || Date.now() - s.getTime() > sisH * 3_600_000) sis();
   }, 30_000).unref();
-  timers = [setInterval(inpe, inpeMin * 60_000), setInterval(sis, sisH * 3_600_000)];
+  timers = [setInterval(inpe, inpeMin * 60_000), setInterval(sis, sisH * 3_600_000), setInterval(notify, notifyMin * 60_000)];
   timers.forEach((t) => t.unref());
-  log({ status: "iniciado", inpeMinutes: inpeMin, sisfogoHours: sisH });
+  log({ status: "iniciado", inpeMinutes: inpeMin, sisfogoHours: sisH, notifyMinutes: notifyMin });
   return true;
 }
 

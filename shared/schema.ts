@@ -571,3 +571,28 @@ export const susResponses = pgTable("sus_responses", {
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ─── Alert notifications (migration 0015) ───────────────────────────────────
+export const NOTIFICATION_SEVERITIES = ["baixo", "moderado", "alto", "crítico"] as const;
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: integer("user_id").primaryKey(),
+  emailEnabled: boolean("email_enabled").notNull().default(true),
+  minSeverity: text("min_severity").notNull().default("alto"),
+  kinds: text("kinds").array().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const notificationDeliveries = pgTable("notification_deliveries", {
+  id: serial("id").primaryKey(),
+  alertId: integer("alert_id").notNull(),
+  userId: integer("user_id").notNull(),
+  organizationId: integer("organization_id").notNull(),
+  channel: text("channel").notNull().default("email"),
+  status: text("status").notNull().default("pendente"), // pendente | enviado | falha | bloqueado_configuracao
+  attempts: integer("attempts").notNull().default(0),
+  lastError: text("last_error"),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type NotificationDelivery = typeof notificationDeliveries.$inferSelect;

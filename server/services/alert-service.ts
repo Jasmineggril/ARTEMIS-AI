@@ -8,6 +8,7 @@
  */
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
+import { enqueueAlertDeliveries } from "./notifications";
 import { alerts, alertEvents, type AlertStatus, type Alert } from "@shared/schema";
 import type { RiskLevel, RiskRecommendation } from "@shared/risk-engine";
 
@@ -119,6 +120,7 @@ export async function upsertAlertFromAnalysis(params: {
       note: `Alerta emitido automaticamente a partir da análise #${params.analysisId}.`,
       userId: params.userId,
     });
+    await enqueueAlertDeliveries(tx, { id: created.id, organizationId: params.organizationId, severity, kind: created.kind ?? "risco" });
     return { alert: created, created: true };
   });
 }

@@ -10,6 +10,7 @@ import { useAuthStatus, useLogout } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
 import { PRODUCT_NAME, SUBMISSION_MODE } from "@shared/identity";
 import { resetOnboarding } from "@/hooks/use-onboarding";
+import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 
 const STORAGE_KEY = "artemis-profile-settings";
 
@@ -437,9 +438,11 @@ export default function Settings() {
               <h2 id="pref-title" className="text-xl font-semibold text-foreground">Preferências</h2>
               <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                 <li><strong className="text-foreground">Alto contraste e tamanho do texto:</strong> botão de acessibilidade no canto inferior esquerdo da tela (vale para este navegador).</li>
-                <li><strong className="text-foreground">Avisos de alertas:</strong> aparecem em Alertas Preventivos e no painel. Notificação por e-mail depende de o administrador configurar o envio de e-mail no servidor.</li>
+                <li><strong className="text-foreground">Avisos de alertas:</strong> aparecem em Alertas Preventivos e no painel; o envio por e-mail é configurado abaixo.</li>
               </ul>
             </section>
+
+            <NotificationSettings />
 
             <section className="rounded-3xl border border-border/50 bg-card p-6 shadow-sm">
               <div className="flex items-center gap-2">

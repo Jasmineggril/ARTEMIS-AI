@@ -14,6 +14,7 @@ import { rateLimit, requireAuth, requireOrg, requirePlatformAdmin } from "./secu
 import { registerSisfogoRoutes } from "./sisfogo-routes";
 import { registerAdminRoutes } from "./admin-routes";
 import { registerEvidenceRoutes } from "./evidence-routes";
+import { registerNotificationRoutes } from "./notification-routes";
 import { audit } from "./services/audit";
 import { fetchWeatherData } from "./weather-service";
 import { normalizeOccurrenceDate } from "@shared/dates";
@@ -107,6 +108,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   registerSisfogoRoutes(app);
   registerAdminRoutes(app);
   registerEvidenceRoutes(app);
+  registerNotificationRoutes(app);
 
   // ── Profile ────────────────────────────────────────────────────────────────
   app.get(api.user.profile.get.path, requireAuth, async (req, res) => {

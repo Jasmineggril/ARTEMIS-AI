@@ -13,24 +13,18 @@
  */
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "../db";
+import { hasPostgisGeom, resetSpatialCache } from "../spatial";
 import { areaShape, expandBox } from "./surroundings";
 import type { MonitoredArea } from "@shared/schema";
 
 export type SpatialMode = "postgis" | "haversine";
-let cached: { mode: SpatialMode; at: number } | null = null;
 
-/** PostGIS is used only when the extension AND the geom columns exist. Cached 60 s. */
+/** Reuses the PostGIS detector of server/spatial.ts (geom columns of migration 0008). */
 export async function spatialMode(): Promise<SpatialMode> {
   if (process.env.SPATIAL_FORCE_FALLBACK === "true") return "haversine";
-  if (cached && Date.now() - cached.at < 60_000) return cached.mode;
-  const [r] = (await db.execute<{ n: number }>(sql`
-    SELECT count(*)::int AS n FROM information_schema.columns
-    WHERE table_schema = current_schema() AND column_name = 'geom' AND table_name IN ('satellite_hotspots', 'fire_occurrences')`)).rows;
-  const mode: SpatialMode = (r?.n ?? 0) === 2 ? "postgis" : "haversine";
-  cached = { mode, at: Date.now() };
-  return mode;
+  return (await hasPostgisGeom()) ? "postgis" : "haversine";
 }
-export function resetSpatialModeCache() { cached = null; }
+export function resetSpatialModeCache() { resetSpatialCache(); }
 
 /** The area as a PostGIS geography: its boundary polygon, or its point. */
 function areaGeography(a: MonitoredArea): SQL | null {

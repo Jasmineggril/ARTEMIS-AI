@@ -102,6 +102,14 @@ export default function AdminOperations() {
             <ul className="text-[11px] text-muted-foreground mt-2 list-disc list-inside">{r.outcomes.limits.map((l: string) => <li key={l}>{l}</li>)}</ul>
           </section>
 
+          {r.notifications && (
+            <section aria-labelledby="nt-t" className="rounded-2xl border bg-card p-4" data-testid="ops-notifications">
+              <h2 id="nt-t" className="font-semibold">Notificações por e-mail</h2>
+              <p className="text-sm mt-1">Enviadas {n(r.notifications.enviado)} · aguardando {n(r.notifications.pendente)} · falharam {n(r.notifications.falha)} · não enviadas por falta de SMTP {n(r.notifications.bloqueado_configuracao)}</p>
+              <p className="text-xs text-muted-foreground">{r.notifications.smtpConfigured ? "SMTP configurado." : "SMTP não configurado neste servidor: nenhum e-mail é enviado (registrado, não simulado)."}</p>
+            </section>
+          )}
+
           <section aria-labelledby="fb-t" className="rounded-2xl border bg-card p-4">
             <h2 id="fb-t" className="font-semibold flex items-center gap-2"><MessageSquare className="w-4 h-4" aria-hidden />Avaliação dos usuários</h2>
             <p className="text-sm mt-1">SUS: {r.sus.n ? <><strong>{r.sus.mean}</strong> de média ({r.sus.n} resposta(s), mediana {r.sus.median})</> : "nenhuma resposta ainda"} · {r.sus.note}</p>

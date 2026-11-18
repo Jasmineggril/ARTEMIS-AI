@@ -13,6 +13,7 @@ import { alerts, alertEvents, monitoredAreas, type MonitoredArea } from "@shared
 import type { RiskRecommendation } from "@shared/risk-engine";
 import { areaShape } from "./surroundings";
 import { pointsNearArea } from "./spatial";
+import { enqueueAlertDeliveries } from "./notifications";
 import { OPEN_STATUSES } from "./alert-service";
 
 export interface HotspotAlertResult { areasChecked: number; alertsCreated: number; alertsUpdated: number; areasWithHotspots: number }
@@ -98,6 +99,7 @@ async function upsertHotspotAlert(
     }).returning({ id: alerts.id });
     await tx.insert(alertEvents).values({ alertId: created.id, fromStatus: null, toStatus: "novo",
       note: "Alerta emitido automaticamente após a sincronização do INPE.", userId: null });
+    await enqueueAlertDeliveries(tx, { id: created.id, organizationId: area.organizationId!, severity, kind: "foco_proximo" });
     return "created";
   });
 }
