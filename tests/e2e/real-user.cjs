@@ -175,7 +175,7 @@ if (!DB) { console.error('defina E2E_DB_URL'); process.exit(2); }
     await p2.waitForURL('**/dashboard');
     await p2.goto(BASE + `/areas/${areaId}`);
     await p2.getByTestId('section-hotspots').waitFor();
-    await p2.getByText(/Em acompanhamento|em_acompanhamento/).first().waitFor();
+    await p2.getByText(/em acompanhamento|em_acompanhamento/i).first().waitFor();
     const over = await p2.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     if (over) throw new Error('rolagem horizontal no celular');
     await p2.screenshot({ path: path.join(OUT, 'rw-10-celular.png'), fullPage: true });
