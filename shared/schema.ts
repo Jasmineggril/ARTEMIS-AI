@@ -60,6 +60,14 @@ export const alerts = pgTable("alerts", {
   occurrenceCount: integer("occurrence_count").notNull().default(1),
   isDemo: boolean("is_demo").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  // migration 0012
+  kind: text("kind").notNull().default("risco"), // risco | foco_proximo
+  evidence: json("evidence"),
+  // migration 0013: expert verdict (Proof of Value)
+  evaluation: text("evaluation"), // pertinente | parcialmente_pertinente | nao_pertinente
+  evaluationNote: text("evaluation_note"),
+  evaluatedBy: integer("evaluated_by"),
+  evaluatedAt: timestamp("evaluated_at", { withTimezone: true }),
 });
 
 export const weatherData = pgTable("weather_data", {
@@ -137,6 +145,12 @@ export const monitoredAreas = pgTable("monitored_areas", {
   vegetationCategory: text("vegetation_category"),
   boundary: json("boundary"), // GeoJSON Polygon/MultiPolygon (validated server-side)
   notes: text("notes"),
+  // migration 0012: provenance of values (informed by the user vs calculated from the polygon)
+  boundaryAreaHa: doublePrecision("boundary_area_ha"),
+  boundarySource: text("boundary_source"), // desenho | geojson | kml | kmz | shapefile
+  areaHectaresSource: text("area_hectares_source"), // informada | calculada
+  coordinatesSource: text("coordinates_source"), // informadas | centro_do_poligono
+  hotspotAlertKm: doublePrecision("hotspot_alert_km").notNull().default(5),
 });
 
 /** Análises de risco executadas */
@@ -162,6 +176,7 @@ export const riskAnalyses = pgTable("risk_analyses", {
   limitations: json("limitations"),         // string[]
   areaSnapshot: json("area_snapshot"),      // area as it was at analysis time (migration 0004)
   modelVersionId: integer("model_version_id"), // migration 0007
+  clientDurationMs: integer("client_duration_ms"), // migration 0013: time from opening the form to the result
 });
 
 /** Fontes de dados disponíveis */
@@ -209,7 +224,8 @@ export const importBatches = pgTable("import_batches", {
 /** Ocorrências de incêndio importadas */
 export const fireOccurrences = pgTable("fire_occurrences", {
   id: serial("id").primaryKey(),
-  importBatchId: integer("import_batch_id").notNull(),
+  // NULL only for official public records (migration 0011, provenance CHECK).
+  importBatchId: integer("import_batch_id"),
   occurrenceDate: text("occurrence_date"),
   occurrenceTime: text("occurrence_time"),
   municipality: text("municipality"),
@@ -233,6 +249,12 @@ export const fireOccurrences = pgTable("fire_occurrences", {
   occurredHour: smallint("occurred_hour").generatedAlwaysAs(sql`CASE WHEN occurrence_time ~ '^([01]?[0-9]|2[0-3])([:hH]|$)' THEN substring(occurrence_time from '^([0-9]{1,2})')::smallint END`),
   dedupKey: text("dedup_key").generatedAlwaysAs(sql`CASE WHEN occurrence_date IS NOT NULL THEN md5(occurrence_date || '|' || lower(btrim(coalesce(municipality, ''))) || '|' || upper(coalesce(state, '')) || '|' || coalesce(round(latitude::numeric, 3)::text, '') || '|' || coalesce(round(longitude::numeric, 3)::text, '') || '|' || lower(btrim(coalesce(occurrence_type, '')))) END`),
   municipalityIbgeCode: char("municipality_ibge_code", { length: 7 }),
+  // Official public records (migration 0011): organization_id NULL, identified by source + external id.
+  dataSourceId: integer("data_source_id"),
+  externalId: text("external_id"),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }),
+  sourceUpdatedAt: timestamp("source_updated_at", { withTimezone: true }),
+  sourceAvailable: boolean("source_available").notNull().default(true),
 });
 
 /** Official IBGE municipality list (migration 0005). */
@@ -369,6 +391,14 @@ export const sourceSyncRuns = pgTable("source_sync_runs", {
   recordsRejected: integer("records_rejected").notNull().default(0),
   rejectionReasons: json("rejection_reasons"),
   error: text("error"),
+  // migration 0011
+  trigger: text("trigger"), // cli | agendado | manual
+  triggeredBy: integer("triggered_by"),
+  pagesRead: integer("pages_read").notNull().default(0),
+  recordsUnchanged: integer("records_unchanged").notNull().default(0),
+  recordsRectified: integer("records_rectified").notNull().default(0),
+  recordsUnavailable: integer("records_unavailable").notNull().default(0),
+  progress: json("progress"),
 });
 
 /** Satellite fire detections (INPE). NOT confirmed fires. */
@@ -419,8 +449,45 @@ export const sisfogoRoiRecords = pgTable("sisfogo_roi_records", {
   firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
   syncRunId: integer("sync_run_id"),
+  // migration 0011 (contract verified against the live API)
+  sourceCreatedAt: timestamp("source_created_at", { withTimezone: true }),
+  sourceUpdatedAt: timestamp("source_updated_at", { withTimezone: true }),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  detectedAt: timestamp("detected_at", { withTimezone: true }),
+  dispatchAt: timestamp("dispatch_at", { withTimezone: true }),
+  firstAttackAt: timestamp("first_attack_at", { withTimezone: true }),
+  controlledAt: timestamp("controlled_at", { withTimezone: true }),
+  extinguishedAt: timestamp("extinguished_at", { withTimezone: true }),
+  institutionName: text("institution_name"),
+  institutionAcronym: text("institution_acronym"),
+  placeName: text("place_name"),
+  localityType: text("locality_type"),
+  areaClassification: text("area_classification"),
+  legalAmazon: boolean("legal_amazon"),
+  hadCombat: boolean("had_combat"),
+  responseLevel: text("response_level"),
+  structuresHit: text("structures_hit"),
+  contentHash: text("content_hash"),
+  revision: integer("revision").notNull().default(1),
+  unavailableSince: timestamp("unavailable_since", { withTimezone: true }),
+  lastSeenRunId: integer("last_seen_run_id"),
 });
 export type SisfogoRoiRecord = typeof sisfogoRoiRecords.$inferSelect;
+
+/** Every distinct published version of an official record (migration 0011). */
+export const sourceRecordRevisions = pgTable("source_record_revisions", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  dataSourceId: integer("data_source_id").notNull(),
+  externalId: text("external_id").notNull(),
+  revision: integer("revision").notNull(),
+  changeKind: text("change_kind").notNull(), // novo | retificado | atualizado
+  contentHash: text("content_hash").notNull(),
+  sourceUpdatedAt: timestamp("source_updated_at", { withTimezone: true }),
+  rectified: boolean("rectified"),
+  raw: json("raw").notNull(),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).notNull().defaultNow(),
+  syncRunId: integer("sync_run_id"),
+});
 
 export type SourceSyncRun = typeof sourceSyncRuns.$inferSelect;
 export type SatelliteHotspot = typeof satelliteHotspots.$inferSelect;
@@ -455,3 +522,52 @@ export const riskAnalysisSources = pgTable("risk_analysis_sources", {
 
 export type ModelVersion = typeof modelVersions.$inferSelect;
 export type RiskAnalysisSource = typeof riskAnalysisSources.$inferSelect;
+
+// ─── Operational evidence (migration 0013) ───────────────────────────────────
+
+export const opsHeartbeats = pgTable("ops_heartbeats", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  instance: text("instance").notNull(),
+  dbOk: boolean("db_ok").notNull(),
+  dbMs: integer("db_ms"),
+  riskEngineOk: boolean("risk_engine_ok").notNull(),
+  inpeFresh: boolean("inpe_fresh"),
+  sisfogoFresh: boolean("sisfogo_fresh"),
+});
+
+export const opsRequestMetrics = pgTable("ops_request_metrics", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  minute: timestamp("minute", { withTimezone: true }).notNull(),
+  route: text("route").notNull(),
+  requests: integer("requests").notNull(),
+  errors5xx: integer("errors_5xx").notNull(),
+  errors4xx: integer("errors_4xx").notNull(),
+  p50Ms: integer("p50_ms").notNull(),
+  p95Ms: integer("p95_ms").notNull(),
+  maxMs: integer("max_ms").notNull(),
+});
+
+export const userFeedback = pgTable("user_feedback", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  organizationId: integer("organization_id"),
+  page: text("page").notNull(),
+  category: text("category").notNull(), // problema | sugestao | elogio | duvida
+  rating: smallint("rating"),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("novo"), // novo | em_analise | resolvido | arquivado
+  response: text("response"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const susResponses = pgTable("sus_responses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  organizationId: integer("organization_id"),
+  answers: smallint("answers").array().notNull(),
+  score: doublePrecision("score").notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

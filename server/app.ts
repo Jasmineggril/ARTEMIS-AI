@@ -1,8 +1,9 @@
 /**
- * ARTEMIS AI — Express application factory (shared by the Node server,
- * the integration tests and the Vercel adapter).
+ * ARTEMIS AI — Express application factory (shared by the Node server and
+ * the integration tests).
  */
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import { requestMetrics } from "./services/ops-telemetry";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { createServer, type Server } from "http";
@@ -45,6 +46,7 @@ export async function createApp(): Promise<{ app: Express; httpServer: Server }>
   app.disable("x-powered-by");
 
   app.use(securityHeaders());
+  app.use(requestMetrics());
 
   const PgSession = connectPgSimple(session);
   app.use(

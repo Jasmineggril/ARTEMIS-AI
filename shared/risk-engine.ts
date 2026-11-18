@@ -332,7 +332,7 @@ function calculateScore(input: RiskInput): { score: number; factors: RiskFactor[
       hotspotPts = 20;
       factors.push({
         name: "Foco ativo muito próximo",
-        description: `Foco de incêndio a ${input.hotspotDistance} km — risco de propagação imediata.`,
+        description: `Foco de calor ou incêndio a ${input.hotspotDistance} km — risco de propagação imediata.`,
         contribution: hotspotPts,
         value: `${input.hotspotDistance} km`,
         weight: "alto",
@@ -341,7 +341,7 @@ function calculateScore(input: RiskInput): { score: number; factors: RiskFactor[
       hotspotPts = 12;
       factors.push({
         name: "Foco ativo próximo",
-        description: `Foco de incêndio a ${input.hotspotDistance} km — risco de propagação elevado.`,
+        description: `Foco de calor ou incêndio a ${input.hotspotDistance} km — risco de propagação elevado.`,
         contribution: hotspotPts,
         value: `${input.hotspotDistance} km`,
         weight: "alto",
@@ -350,7 +350,7 @@ function calculateScore(input: RiskInput): { score: number; factors: RiskFactor[
       hotspotPts = 6;
       factors.push({
         name: "Foco ativo na região",
-        description: `Foco de incêndio a ${input.hotspotDistance} km — atenção recomendada.`,
+        description: `Foco de calor ou incêndio a ${input.hotspotDistance} km — atenção recomendada.`,
         contribution: hotspotPts,
         value: `${input.hotspotDistance} km`,
         weight: "médio",

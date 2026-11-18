@@ -1,5 +1,7 @@
 # 04 — Implantação na VPS Hostinger (KVM 2)
 
+> **Homologação privada (recomendado primeiro):** depois das seções 1–4, rode `bash scripts/ops/deploy-homolog.sh` — HTTPS + senha do site, dados reais e sua conta de administradora. Situação do produto: `15_PRODUTO_SITUACAO.md`.
+
 > **Nada aqui foi executado.** Este procedimento exige a VPS, um domínio e autorização expressa. Nenhuma compra, publicação ou alteração de infraestrutura foi feita.
 
 Alvo: 2 vCPU · 8 GB RAM · 100 GB NVMe · Ubuntu 24.04 LTS · região Brasil (São Paulo), se disponível.
@@ -111,6 +113,21 @@ Focos de calor do INPE (de hora em hora) e backup diário. As linhas exatas est�
 ```bash
 docker compose --profile jobs run --rm inpe-sync node dist/sync-inpe.cjs --days 7
 ```
+
+Sisfogo (ROIs oficiais, leitura da API pública). Primeira carga = sincronização completa (≈ 5–30 min; 1.698 ROIs em 4 min no teste de 16/11/2026):
+
+```bash
+docker compose --profile jobs run --rm sisfogo-sync node dist/sync-sisfogo.cjs --mode completa --trigger agendado
+```
+
+Cron sugerido (horário do servidor; fora de pico):
+
+```
+23 4 * * *  cd ~/artemis && docker compose --profile jobs run --rm sisfogo-sync >> logs/sisfogo.log 2>&1
+47 3 * * 0  cd ~/artemis && docker compose --profile jobs run --rm sisfogo-sync node dist/sync-sisfogo.cjs --mode completa --trigger agendado >> logs/sisfogo.log 2>&1
+```
+
+Código de saída: 0 sucesso, 1 falha (registrada em `source_sync_runs`), 75 já havia outra sincronização em andamento. Se falhar no meio, `--resume` continua da página seguinte à última gravada.
 
 ## 7b. Backups
 

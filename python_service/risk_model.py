@@ -228,14 +228,14 @@ def explain_factors(data: RiskInput) -> list[RiskFactor]:
     if data.nearby_hotspot and data.hotspot_distance is not None:
         d = data.hotspot_distance
         if d <= 5:
-            contrib, desc, w_label = 20, "Foco de incêndio a menos de 5 km — risco muito elevado de propagação imediata.", "alto"
+            contrib, desc, w_label = 20, "Foco de calor ou incêndio a menos de 5 km — risco muito elevado de propagação imediata.", "alto"
         elif d <= 15:
             contrib, desc, w_label = 15, "Foco a menos de 15 km — alta probabilidade de propagação.", "alto"
         elif d <= 30:
             contrib, desc, w_label = 8, "Foco a menos de 30 km — risco moderado de propagação com ventos fortes.", "médio"
         else:
             contrib, desc, w_label = 4, "Foco ativo na região — contribuição leve ao risco.", "baixo"
-        factors.append(RiskFactor(name="Foco de incêndio próximo",
+        factors.append(RiskFactor(name="Foco de calor ou incêndio próximo",
             contribution=contrib, description=desc, weight=w_label, value=f"{d:.0f} km"))
 
     # Historical occurrences

@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/Button";
-import { Switch } from "@/components/ui/switch";
 import { useAuthStatus, useLogout } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
 import { PRODUCT_NAME, SUBMISSION_MODE } from "@shared/identity";
@@ -434,56 +433,12 @@ export default function Settings() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-border/50 bg-card p-6 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold text-foreground">Preferências</h2>
-              </div>
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-border/50 bg-background/80 p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-foreground">Receber alertas ambientais</p>
-                      <p className="text-sm text-muted-foreground">Avisos de alertas de risco (envio por e-mail ainda não disponível).</p>
-                    </div>
-                    <Switch checked={settings.alerts} onCheckedChange={handleToggle("alerts")} />
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-border/50 bg-background/80 p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-foreground">Receber notificações sobre legislação</p>
-                      <p className="text-sm text-muted-foreground">Atualizações de norma e compliance.</p>
-                    </div>
-                    <Switch checked={settings.legislation} onCheckedChange={handleToggle("legislation")} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="language">Linguagem</Label>
-                  <select
-                    id="language"
-                    value={settings.language}
-                    onChange={(event) => setSettings((current) => ({ ...current, language: event.target.value as LanguagePreference }))}
-                    className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <option value="simplificada">Simplificada</option>
-                    <option value="tecnica">Técnica</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="appearance">Aparência</Label>
-                  <select
-                    id="appearance"
-                    value={settings.appearance}
-                    onChange={(event) => setSettings((current) => ({ ...current, appearance: event.target.value as AppearancePreference }))}
-                    className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <option value="claro">Tema claro</option>
-                    <option value="escuro">Tema escuro</option>
-                    <option value="alto-contraste">Alto contraste</option>
-                  </select>
-                </div>
-              </div>
+            <section className="rounded-3xl border border-border/50 bg-card p-6 shadow-sm" aria-labelledby="pref-title">
+              <h2 id="pref-title" className="text-xl font-semibold text-foreground">Preferências</h2>
+              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                <li><strong className="text-foreground">Alto contraste e tamanho do texto:</strong> botão de acessibilidade no canto inferior esquerdo da tela (vale para este navegador).</li>
+                <li><strong className="text-foreground">Avisos de alertas:</strong> aparecem em Alertas Preventivos e no painel. Notificação por e-mail depende de o administrador configurar o envio de e-mail no servidor.</li>
+              </ul>
             </section>
 
             <section className="rounded-3xl border border-border/50 bg-card p-6 shadow-sm">
@@ -518,15 +473,6 @@ export default function Settings() {
                 <Button type="button" variant="ghost" onClick={() => logout.mutate()}>
                   <LogOut className="mr-2 h-4 w-4" /> Logout
                 </Button>
-              </div>
-              <div className="mt-4 rounded-2xl border border-border/50 bg-background/80 p-4 text-sm text-muted-foreground">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-foreground">Tema de alto contraste</p>
-                    <p>Melhora a legibilidade para uso em campo.</p>
-                  </div>
-                  <Switch checked={settings.highContrast} onCheckedChange={handleToggle("highContrast")} />
-                </div>
               </div>
             </section>
 

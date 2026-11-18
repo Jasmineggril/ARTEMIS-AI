@@ -10,7 +10,7 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { and, eq } from "drizzle-orm";
 import { db } from "./db";
-import { organizationMembers, ORG_ROLES, type OrgRole } from "@shared/schema";
+import { organizationMembers, users, ORG_ROLES, type OrgRole } from "@shared/schema";
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 
@@ -98,6 +98,11 @@ export function originCheck(): RequestHandler {
       const o = new URL(origin);
       const host = req.get("host");
       if (o.host === host || extra.includes(origin)) return next();
+      // Behind a TRUSTED reverse proxy (trust proxy > 0) the public host arrives in
+      // X-Forwarded-Host; Express exposes it as req.hostname only in that case.
+      const trusted = Number(req.app.get("trust proxy")) > 0 || req.app.get("trust proxy") === true;
+      const fwd = req.get("x-forwarded-host")?.split(",")[0].trim();
+      if (trusted && fwd && o.host === fwd) return next();
     } catch {
       /* fall through */
     }
@@ -191,4 +196,16 @@ export function requireOrg(minRole: OrgRole = "viewer"): RequestHandler {
 export function idParam(value: unknown): number | null {
   const n = Number(value);
   return Number.isInteger(n) && n > 0 && n < 2_147_483_647 ? n : null;
+}
+
+/** Platform-level administrator (users.role = 'platform_admin'). Re-checked on every request. */
+export async function requirePlatformAdmin(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.session?.userId) return res.status(401).json({ message: "Autenticação necessária." });
+    const [u] = await db.select({ role: users.role }).from(users).where(eq(users.id, req.session.userId));
+    if (u?.role !== "platform_admin") return res.status(403).json({ message: "Acesso restrito à administração da plataforma." });
+    next();
+  } catch (err) {
+    next(err);
+  }
 }

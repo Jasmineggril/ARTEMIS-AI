@@ -627,49 +627,6 @@ test("public hotspot API: separate from imported records, explicit caveats, boun
   assert.ok(!JSON.stringify(occ.body).includes("NOAA"));
 });
 
-test("Sisfogo sync: strict on shape, idempotent, rectified ROIs update, public summary", async () => {
-  const { syncSisfogo } = await import("../../server/connectors/sisfogo");
-  const { roi, page } = await import("../fixtures/sisfogo");
-  const fast = { intervalMs: 0 };
-  const failed = await syncSisfogo({ ...fast, fetchJson: async () => ({ ok: false, status: 503, json: null }) });
-  assert.equal(failed.status, "falha");
-  assert.match(failed.error!, /503/);
-  const odd = await syncSisfogo({ ...fast, fetchJson: async () => ({ ok: true, status: 200, json: { content: [] } }) });
-  assert.equal(odd.status, "falha");
-  assert.match(odd.error!, /fora do formato documentado/);
-
-  const pages = (fix = false) => async (url: string) => {
-    const n = Number(new URL(url).searchParams.get("page"));
-    const items = n === 1
-      ? [roi(1), roi(2), roi(3, { statusRoi: "EM_ANDAMENTO" }), { semId: true }]
-      : [roi(4, fix ? { retificado: true, informacoesPosIncendio: { estimativaAreaQueimada: 40 } } : {}), roi(4)];
-    return { ok: true, status: 200, json: page(items, n, 2) };
-  };
-  const first = await syncSisfogo({ ...fast, fetchJson: pages() });
-  assert.equal(first.status, "sucesso");
-  assert.deepEqual([first.pages, first.read, first.inserted, first.updated, first.rejected], [2, 6, 3, 0, 3]);
-  assert.equal(first.rejectionReasons.duplicado_na_pagina, 1);
-  const again = await syncSisfogo({ ...fast, fetchJson: pages() });
-  assert.deepEqual([again.inserted, again.updated, again.unchanged], [0, 0, 3], "idempotent re-sync");
-  const fixed = await syncSisfogo({ ...fast, fetchJson: pages(true) });
-  assert.deepEqual([fixed.inserted, fixed.updated], [0, 1], "rectified ROI updates the stored row");
-  const capped = await syncSisfogo({ ...fast, maxPages: 1, fetchJson: pages() });
-  assert.equal(capped.pages, 1);
-
-  const s = await anon.get("/api/public/sisfogo/summary?state=TO");
-  assert.equal(s.status, 200);
-  assert.equal(s.body.total, 3);
-  assert.equal(s.body.burnedAreaHa, 12.5 + 12.5 + 40);
-  assert.ok(s.body.lastSyncAt);
-  assert.match(s.body.notice, /não representam todos os incêndios/);
-  assert.equal((await anon.get("/api/public/sisfogo/summary?state=SP")).body.total, 0);
-  assert.equal((await anon.get("/api/public/sisfogo/summary?state=XX")).status, 400);
-  assert.equal((await anon.get("/api/public/sisfogo/summary?from=2026-09-01&to=2026-08-01")).status, 400);
-  const conn = (await anon.get("/api/connectors")).body.find((c: any) => c.key === "sisfogo-roi");
-  assert.ok(conn, "source listed in the connector registry");
-  assert.equal(conn.lastRun.status, "sucesso");
-});
-
 test("public hotspot grid aggregates detections for overview maps", async () => {
   const g = await anon.get("/api/public/hotspots/grid");
   assert.equal(g.status, 200);

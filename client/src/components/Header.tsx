@@ -99,13 +99,15 @@ export function Header() {
                 >
                   Página Inicial
                 </button>
-                <button
-                  onClick={() => { setLocation("/admin"); setShowMenu(false); }}
-                  className="w-full text-left px-4 py-2 hover:bg-secondary/50 text-sm"
-                  data-testid="button-admin-menu"
-                >
-                  Painel Admin
-                </button>
+                {user?.platformRole === "platform_admin" && (
+                  <button
+                    onClick={() => { setLocation("/admin"); setShowMenu(false); }}
+                    className="w-full text-left px-4 py-2 hover:bg-secondary/50 text-sm"
+                    data-testid="button-admin-menu"
+                  >
+                    Painel Admin
+                  </button>
+                )}
                 <button
                   onClick={() => { logout.mutate(); setShowMenu(false); }}
                   className="w-full text-left px-4 py-2 hover:bg-destructive/10 text-sm text-destructive flex items-center gap-2"

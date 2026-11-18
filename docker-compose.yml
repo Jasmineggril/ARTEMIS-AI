@@ -102,6 +102,14 @@ services:
       ALERT_MIN_LEVEL: ${ALERT_MIN_LEVEL:-alto}
       INPE_MAX_AGE_HOURS: ${INPE_MAX_AGE_HOURS:-6}
       WEATHER_CACHE_MINUTES: ${WEATHER_CACHE_MINUTES:-30}
+      RISK_USE_SISFOGO: ${RISK_USE_SISFOGO:-true}
+      # Automatic, monitored syncs inside the API (INPE hourly + hotspot alerts; Sisfogo daily/weekly).
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
+      INPE_SYNC_MINUTES: ${INPE_SYNC_MINUTES:-60}
+      SISFOGO_SYNC_HOURS: ${SISFOGO_SYNC_HOURS:-24}
+      SMTP_URL: ${SMTP_URL:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      SISFOGO_PAGE_SIZE: ${SISFOGO_PAGE_SIZE:-20}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     deploy: { resources: { limits: { memory: 1g, cpus: "1.0" } } }
     # `internal` (db, engine) + `edge` (Caddy and outbound HTTPS: Open-Meteo, INPE).
@@ -124,18 +132,22 @@ services:
     networks: [internal, edge]
     logging: *logging
 
-  # Sisfogo ROI sync (public Ibama API; daily is enough):
-  #   docker compose run --rm sisfogo-sync
+  # Sisfogo ROI sync (public Ibama API, read-only). Default = incremental (newest
+  # pages until 2 pages bring nothing new). Weekly complete run flags ROIs that
+  # stopped being published (docs/artemis/11_SISFOGO.md §5):
+  #   docker compose --profile jobs run --rm sisfogo-sync
+  #   docker compose --profile jobs run --rm sisfogo-sync node dist/sync-sisfogo.cjs --mode completa --trigger agendado
   sisfogo-sync:
     <<: *api-build
     profiles: ["jobs"]
-    command: ["node", "dist/sync-sisfogo.cjs"]
+    command: ["node", "dist/sync-sisfogo.cjs", "--trigger", "agendado"]
     restart: "no"
     depends_on:
       db: { condition: service_healthy }
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://artemis_app:${ARTEMIS_APP_PASSWORD}@db:5432/artemis_ai
+      SISFOGO_PAGE_SIZE: ${SISFOGO_PAGE_SIZE:-20}
     deploy: { resources: { limits: { memory: 512m, cpus: "0.5" } } }
     networks: [internal, edge]
     logging: *logging

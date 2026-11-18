@@ -118,7 +118,10 @@ Expõe **somente** ocorrências de lotes publicados explicitamente (`visibility 
 | GET | `/api/public/municipalities?state=` | municípios com registros publicados |
 | GET | `/api/public/hotspots?state=&municipality=&satellite=&from=&to=` | focos de calor do INPE (padrão: últimos 2 dias; máx. 31 dias); até 5000 pontos |
 | GET | `/api/public/hotspots/summary?…` | total, por satélite, por dia, top municípios, última sincronização e aviso de interpretação |
-| GET | `/api/public/sisfogo/summary?state=&municipality=&from=&to=` | ROIs do Sisfogo (Ibama/Prevfogo): total, área queimada estimada, período, por UF, por mês, 20 mais recentes, última sincronização e aviso de cobertura (ver `11_SISFOGO.md`) |
+| GET | `/api/public/sisfogo/summary?state=&municipality=&from=&to=` | ROIs do Sisfogo (Ibama/Prevfogo) publicados hoje: total, área queimada estimada, período, por UF, por mês, 20 mais recentes, última sincronização (e última **completa**), aviso de cobertura e de horário (ver `11_SISFOGO.md`). Sem nome de local |
+| GET | `/api/public/sisfogo/points?state=&municipality=&from=&to=&localityType=&bbox=minLng,minLat,maxLng,maxLat&limit=&offset=` | Camada do mapa: pontos dos ROIs (instantes ISO-8601 UTC), `total`, `truncated`, tipos de local disponíveis. `limit` ≤ 5.000 (padrão 2.000). Usa GiST/PostGIS quando disponível |
+| GET | `/api/connectors/sisfogo/status` | **autenticado**. Estado da integração (`operational` só após sincronização completa real), contagens, últimas 15 execuções (novos, atualizados, retificados, inválidos com motivos, indisponíveis, erro). Sem JSON bruto |
+| POST | `/api/admin/connectors/sisfogo/sync` | **administrador da plataforma**; corpo `{ "mode": "incremental" \| "completa" }`. Inicia em segundo plano: `202 { runId }`; `409` se já houver uma em andamento; 3/min; auditado (`sisfogo.sync.iniciada`) |
 | PATCH | `/api/import-batches/:id/visibility` | **admin**; `{ visibility: "publico" \| "privado", confirm: true }` (confirmação obrigatória para publicar); auditado |
 
 ## Rotas legadas mantidas

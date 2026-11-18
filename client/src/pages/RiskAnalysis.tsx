@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { format } from "date-fns";
@@ -15,6 +15,7 @@ import { AnalysisTutorial } from "@/components/AnalysisTutorial";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStatus, hasRole } from "@/hooks/use-auth";
 import { api, ApiError } from "@/lib/api";
+import { ORIGIN_LABEL, NATURE_OF, NATURE_LABEL, FIELD_LABEL } from "@/lib/data-nature";
 import { cn } from "@/lib/utils";
 import { DEMO_SCENARIOS, type RiskLevel } from "@shared/risk-engine";
 import { DECISION_SUPPORT_DISCLAIMER } from "@shared/identity";
@@ -29,16 +30,6 @@ const QUALITY = [
   { v: "", label: "Derivar automaticamente" }, { v: "poor", label: "Ruim" }, { v: "regular", label: "Regular" },
   { v: "good", label: "Boa" }, { v: "excellent", label: "Excelente" },
 ] as const;
-const FIELD_LABEL: Record<string, string> = {
-  temperature: "Temperatura", humidity: "Umidade relativa", windSpeed: "Vento", recentRainfall: "Precipitação 72 h",
-  historicalOccurrences: "Ocorrências históricas", vegetationCondition: "Vegetação", nearbyHotspot: "Foco próximo",
-};
-const ORIGIN_LABEL: Record<string, string> = {
-  manual: "informado pelo usuário", "open-meteo": "Open-Meteo (modelo numérico)",
-  "base-historica-organizacao": "ocorrências importadas (raio 10 km)",
-  "inpe-queimadas": "focos de calor do INPE (satélite)",
-  "nao-verificado": "não verificado (dados do INPE indisponíveis)",
-};
 
 interface Factor { name: string; contribution: number; description: string; weight: string; value: string }
 interface Recommendation { priority: string; action: string; rationale: string }
@@ -132,6 +123,8 @@ export default function RiskAnalysisPage() {
   const initialArea = Number(new URLSearchParams(window.location.search).get("area")) || null;
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  // Proof of Value: time from opening the form to the result (sent with the analysis)
+  const formOpenedAt = useRef(Date.now());
   const [areaId, setAreaId] = useState<number | null>(initialArea);
   const [result, setResult] = useState<ResultView | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -192,6 +185,7 @@ export default function RiskAnalysisPage() {
         const body = {
           useLiveWeather: form.useLiveWeather,
           notes: form.notes.trim() || undefined,
+          clientDurationMs: Math.min(Date.now() - formOpenedAt.current, 86_400_000),
           inputs: Object.fromEntries(Object.entries({
             ...values,
             hotspotDistance: form.nearbyHotspot === "sim" ? values.hotspotDistance : undefined,
@@ -202,6 +196,7 @@ export default function RiskAnalysisPage() {
           }).filter(([, v]) => v !== undefined)),
         };
         const stored = await api<StoredAnalysis & { alert: ResultView["alert"] }>("POST", `/api/areas/${areaId}/analyses`, body);
+        formOpenedAt.current = Date.now();
         setResult(fromStored(stored, area?.name));
         qc.invalidateQueries({ queryKey: ["/api/areas"] });
         qc.invalidateQueries({ queryKey: ["/api/alerts"] });
@@ -411,10 +406,23 @@ export default function RiskAnalysisPage() {
                       <li key={s.key}>• {s.name}{s.referenceAt && ` — referência ${format(new Date(s.referenceAt), "dd/MM/yyyy HH:mm")} UTC`}{s.licence && <span className="text-xs text-muted-foreground"> ({s.licence})</span>}</li>
                     ))}
                   </ul>
-                  <table className="w-full text-xs"><caption className="sr-only">Procedência por variável</caption>
-                    <thead><tr className="text-left text-muted-foreground"><th className="py-1">Variável</th><th>Origem</th></tr></thead>
-                    <tbody>{result.provenance?.map((p) => <tr key={p.field} className="border-t"><td className="py-1">{FIELD_LABEL[p.field] ?? p.field}</td><td>{ORIGIN_LABEL[p.origin] ?? p.origin}</td></tr>)}</tbody>
+                  <table className="w-full text-xs" data-testid="table-provenance"><caption className="sr-only">Procedência por variável</caption>
+                    <thead><tr className="text-left text-muted-foreground"><th className="py-1">Variável</th><th>Natureza</th><th>Origem</th></tr></thead>
+                    <tbody>
+                      {result.provenance?.map((p, i) => {
+                        const n = NATURE_LABEL[NATURE_OF[p.origin] ?? "informado"];
+                        return <tr key={`${p.field}-${i}`} className="border-t"><td className="py-1">{FIELD_LABEL[p.field] ?? p.field}</td>
+                          <td><span title={n.help} className={cn("inline-block rounded-full border px-2 py-0.5 text-[11px] font-medium", n.cls)}>{n.label}</span></td>
+                          <td>{ORIGIN_LABEL[p.origin] ?? p.origin}</td></tr>;
+                      })}
+                      <tr className="border-t"><td className="py-1 font-medium">Índice e nível de risco</td>
+                        <td><span className="inline-block rounded-full border px-2 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-900 border-emerald-300">Calculado</span></td>
+                        <td>resultado do motor de análise de risco a partir das variáveis acima</td></tr>
+                    </tbody>
                   </table>
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    <b>Informado</b>: digitado, não verificado · <b>Estimativa</b>: modelo, não medição local · <b>Observado</b>: satélite, não é incêndio confirmado ·
+                    <b> Registro oficial</b>: Sisfogo · <b>Calculado</b>: resultado do modelo, com as limitações abaixo.</p>
                 </section>
               )}
 

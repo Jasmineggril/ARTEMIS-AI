@@ -9,6 +9,7 @@ import { z } from "zod";
 import { calculateRisk, type RiskInput, type RiskFactor, type RiskRecommendation, type RiskLevel } from "@shared/risk-engine";
 import { DECISION_SUPPORT_DISCLAIMER } from "@shared/identity";
 import { fetchRiskWeather, OPEN_METEO_SOURCE, type FetchLike, type RiskWeather } from "../connectors/open-meteo";
+import type { HistoryContext } from "./history-context";
 
 export const analysisRequestSchema = z.object({
   useLiveWeather: z.boolean().default(false),
@@ -27,10 +28,12 @@ export const analysisRequestSchema = z.object({
     })
     .strict(),
   notes: z.string().max(2000).optional(),
+  /** ms from opening the analysis form to submitting it (Proof of Value: analysis time). */
+  clientDurationMs: z.number().int().min(0).max(86_400_000).optional(),
 });
 export type AnalysisRequest = z.infer<typeof analysisRequestSchema>;
 
-type FieldOrigin = "manual" | "open-meteo" | "base-historica-organizacao" | "inpe-queimadas" | "nao-verificado";
+type FieldOrigin = "manual" | "open-meteo" | "base-historica-organizacao" | "sisfogo-roi" | "inpe-queimadas" | "nao-verificado";
 
 export interface Provenance {
   field: string;
@@ -92,6 +95,8 @@ export interface ResolvedInputs {
   hotspotOrigin: "manual" | "inpe-queimadas" | "nao-verificado";
   connectorError?: string;
   qualityLabel: string;
+  /** Breakdown of historicalOccurrences when it came from the database. */
+  history: HistoryContext | null;
 }
 
 /**
@@ -103,7 +108,7 @@ export async function resolveInputs(
   area: { latitude: number | null; longitude: number | null },
   historicalCount: number | null,
   fetchImpl?: FetchLike,
-  ctx: { hotspots?: HotspotContext | null; weatherProvider?: WeatherProvider } = {},
+  ctx: { hotspots?: HotspotContext | null; weatherProvider?: WeatherProvider; history?: HistoryContext | null } = {},
 ): Promise<ResolvedInputs> {
   const i = req.inputs;
   const provenance: Provenance[] = [];
@@ -159,6 +164,9 @@ export async function resolveInputs(
   } else if (historicalCount !== null) {
     historical = historicalCount;
     provenance.push({ field: "historicalOccurrences", origin: "base-historica-organizacao" });
+    if (ctx.history?.officialIncluded && ctx.history.officialCount > 0) {
+      provenance.push({ field: "historicalOccurrences", origin: "sisfogo-roi", referenceAt: ctx.history.officialLastCompleteAt?.toISOString() });
+    }
   } else {
     historical = 0;
   }
@@ -213,7 +221,7 @@ export async function resolveInputs(
   };
 
   const qualityLabel = { poor: "ruim", regular: "regular", good: "boa", excellent: "excelente" }[quality];
-  return { engineInput, pythonPayload, provenance, weather, hotspots: hs, hotspotOrigin, connectorError, qualityLabel };
+  return { engineInput, pythonPayload, provenance, weather, hotspots: hs, hotspotOrigin, connectorError, qualityLabel, history: ctx.history ?? null };
 }
 
 function runTsEngine(input: RiskInput, engineType: string): EngineOutput {
@@ -297,7 +305,18 @@ export function buildLimitations(resolved: ResolvedInputs, engine: EngineOutput)
   } else {
     out.push("Proximidade de focos informada pelo usuário.");
   }
-  if (resolved.weather?.cached) out.push("Dados meteorológicos reaproveitados do cache local (consulta ao Open-Meteo de até 30 min atrás).");
+  if ((resolved.weather as any)?.stale) {
+    out.push(`Open-Meteo indisponível no momento da análise: usado o último valor armazenado para a coordenada, obtido em ${new Date((resolved.weather as any).fetchedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (horário de Brasília).`);
+  } else if (resolved.weather?.cached) out.push("Dados meteorológicos reaproveitados do cache local (consulta ao Open-Meteo de até 30 min atrás).");
+  const h = resolved.history;
+  if (h && !resolved.provenance.some((p) => p.field === "historicalOccurrences" && p.origin === "manual")) {
+    out.push(`Histórico num raio de ${h.radiusKm} km: ${h.orgCount} ocorrência(s) importada(s) pela organização (todo o período importado)` +
+      (h.officialIncluded
+        ? ` e ${h.officialCount} ROI(s) oficial(is) do Sisfogo${h.officialRange ? ` (${h.officialRange.first} a ${h.officialRange.last})` : ""}` +
+          `${h.duplicatesExcluded ? `; ${h.duplicatesExcluded} ROI(s) já importado(s) pela organização não foram contados de novo` : ""}. ` +
+          "O Sisfogo cobre apenas os órgãos aderentes e só publica ROIs finalizados."
+        : `. Registros oficiais do Sisfogo não considerados: ${h.officialReason}.`));
+  }
   out.push("Focos de calor detectados por satélite não equivalem a incêndios confirmados.");
   out.push(DECISION_SUPPORT_DISCLAIMER);
   return out;
@@ -322,6 +341,12 @@ export function buildDataSources(resolved: ResolvedInputs) {
   }
   if (resolved.provenance.some((p) => p.origin === "base-historica-organizacao")) {
     sources.push({ key: "fire_occurrences", name: "Ocorrências históricas importadas pela organização (raio de 10 km)" });
+  }
+  if (resolved.provenance.some((p) => p.origin === "sisfogo-roi")) {
+    sources.push({
+      key: "sisfogo-roi", name: "Sisfogo — Registros de Ocorrência de Incêndio finalizados (Ibama/Prevfogo), raio de 10 km",
+      referenceAt: resolved.history?.officialLastCompleteAt?.toISOString(), url: "https://sisfogo.sistema.gov.br",
+    });
   }
   return sources;
 }

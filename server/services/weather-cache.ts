@@ -9,11 +9,13 @@ import { db } from "../db";
 import { weatherData } from "@shared/schema";
 import { fetchRiskWeather, OPEN_METEO_SOURCE, type RiskWeather } from "../connectors/open-meteo";
 
-export type CachedWeather = RiskWeather & { cached: boolean; fetchedAt: string };
+export type CachedWeather = RiskWeather & { cached: boolean; fetchedAt: string; stale?: boolean };
 
-export async function getRiskWeatherCached(latitude: number, longitude: number): Promise<CachedWeather> {
-  const ttlMin = Number(process.env.WEATHER_CACHE_MINUTES ?? 30);
-  const since = new Date(Date.now() - ttlMin * 60_000);
+/** When the API fails, a stored value up to this old may be used — stated in the analysis limitations. */
+const STALE_MAX_MIN = Number(process.env.WEATHER_STALE_MAX_MINUTES ?? 180);
+
+async function lookup(latitude: number, longitude: number, maxAgeMin: number) {
+  const since = new Date(Date.now() - maxAgeMin * 60_000);
   const [hit] = await db
     .select()
     .from(weatherData)
@@ -34,7 +36,20 @@ export async function getRiskWeatherCached(latitude: number, longitude: number):
       source: OPEN_METEO_SOURCE.key, cached: true, fetchedAt: hit.fetchedAt.toISOString(),
     };
   }
-  const w = await fetchRiskWeather(latitude, longitude);
+  return null;
+}
+
+export async function getRiskWeatherCached(latitude: number, longitude: number): Promise<CachedWeather> {
+  const fresh = await lookup(latitude, longitude, Number(process.env.WEATHER_CACHE_MINUTES ?? 30));
+  if (fresh) return fresh;
+  let w: RiskWeather;
+  try {
+    w = await fetchRiskWeather(latitude, longitude);
+  } catch (err) {
+    const old = await lookup(latitude, longitude, STALE_MAX_MIN);
+    if (old) return { ...old, stale: true };
+    throw err;
+  }
   const fetchedAt = new Date();
   try {
     await db.insert(weatherData).values({

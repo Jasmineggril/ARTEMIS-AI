@@ -10,10 +10,11 @@
  */
 import type { Express, Response } from "express";
 import { z } from "zod";
-import { and, eq, gte, lte, sql, desc, type SQL } from "drizzle-orm";
+import { and, eq, gte, lte, sql, desc, isNull, type SQL } from "drizzle-orm";
 import { db } from "./db";
 import { fireOccurrences, importBatches, organizations, satelliteHotspots, sourceSyncRuns, dataSources, sisfogoRoiRecords } from "@shared/schema";
 import { rateLimit } from "./security";
+import { hasPostgisGeom } from "./spatial";
 import { BR_STATES } from "@shared/br-states";
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -73,6 +74,26 @@ export const sisfogoFilterSchema = z.object({
   municipality: z.string().trim().min(2).max(120).optional(),
   from: date.optional(),
   to: date.optional(),
+}).refine((f) => !f.from || !f.to || f.from <= f.to, "Data inicial posterior à final.");
+
+const bboxParam = z.string().max(120).transform((v, ctx) => {
+  const n = v.split(",").map(Number);
+  const [minLng, minLat, maxLng, maxLat] = n;
+  if (n.length !== 4 || !n.every(Number.isFinite) || minLng >= maxLng || minLat >= maxLat || minLat < -90 || maxLat > 90 || minLng < -180 || maxLng > 180) {
+    ctx.addIssue({ code: "custom", message: "bbox inválido (minLng,minLat,maxLng,maxLat)." });
+    return z.NEVER;
+  }
+  return n as [number, number, number, number];
+});
+export const sisfogoPointsSchema = z.object({
+  state: z.string().trim().toUpperCase().refine((s) => (BR_STATES as readonly string[]).includes(s), "UF inválida.").optional(),
+  municipality: z.string().trim().min(2).max(120).optional(),
+  from: date.optional(),
+  to: date.optional(),
+  localityType: z.string().trim().min(2).max(120).optional(),
+  bbox: bboxParam.optional(),
+  limit: z.coerce.number().int().min(1).max(5000).default(2000),
+  offset: z.coerce.number().int().min(0).max(1_000_000).default(0),
 }).refine((f) => !f.from || !f.to || f.from <= f.to, "Data inicial posterior à final.");
 
 export const hotspotFilterSchema = z.object({
@@ -178,7 +199,9 @@ export function registerPublicRoutes(app: Express) {
   }));
 
 
-  // ── Sisfogo (Ibama/Prevfogo) ROI records (migration 0010) ──────────────
+  // ── Sisfogo (Ibama/Prevfogo) ROI records (migrations 0010/0011) ─────────
+  // Only ROIs the source currently publishes; dates are Brasília-time dates of the
+  // published UTC start instant. Free-text place names are never exposed here.
   app.get("/api/public/sisfogo/summary", limiter, handle(async (req, res) => {
     const f = sisfogoFilterSchema.parse(req.query);
     const t = sisfogoRoiRecords;
@@ -187,6 +210,7 @@ export function registerPublicRoutes(app: Express) {
       f.municipality ? sql`lower(${t.municipality}) = lower(${f.municipality})` : undefined,
       f.from ? gte(t.startedOn, f.from) : undefined,
       f.to ? lte(t.startedOn, f.to) : undefined,
+      isNull(t.unavailableSince),
     );
     const [agg] = await db.select({
       total: sql<number>`count(*)::int`,
@@ -200,16 +224,69 @@ export function registerPublicRoutes(app: Express) {
     const byMonth = await db.select({ month: sql<string>`to_char(${t.startedOn}, 'YYYY-MM')`, n: sql<number>`count(*)::int` })
       .from(t).where(and(c, sql`${t.startedOn} is not null`)).groupBy(sql`1`).orderBy(sql`1`);
     const recent = await db.select({
-      roiNumber: t.roiNumber, startedOn: t.startedOn, municipality: t.municipality, state: t.state,
-      biome: t.biome, burnedAreaHa: t.burnedAreaHa, vegetation: t.vegetation,
-    }).from(t).where(c).orderBy(sql`${t.startedOn} desc nulls last`).limit(20);
-    const [last] = await db.select({ at: sql<string | null>`max(${sourceSyncRuns.finishedAt})` })
+      roiNumber: t.roiNumber, startedOn: t.startedOn, startedAt: t.startedAt, extinguishedAt: t.extinguishedAt,
+      municipality: t.municipality, state: t.state, biome: t.biome, localityType: t.localityType,
+      burnedAreaHa: t.burnedAreaHa, vegetation: t.vegetation, rectified: t.rectified,
+    }).from(t).where(c).orderBy(sql`${t.startedAt} desc nulls last`).limit(20);
+    const [last] = await db.select({ at: sql<string | null>`to_char(max(${sourceSyncRuns.finishedAt}) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')` })
       .from(sourceSyncRuns).innerJoin(dataSources, eq(dataSources.id, sourceSyncRuns.sourceId))
       .where(and(eq(dataSources.key, "sisfogo-roi"), eq(sourceSyncRuns.status, "sucesso")));
+    const [complete] = await db.select({ at: sql<string | null>`to_char(max(${sourceSyncRuns.finishedAt}) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')` })
+      .from(sourceSyncRuns).innerJoin(dataSources, eq(dataSources.id, sourceSyncRuns.sourceId))
+      .where(and(eq(dataSources.key, "sisfogo-roi"), eq(sourceSyncRuns.status, "sucesso"),
+        sql`${sourceSyncRuns.params}->>'mode' = 'completa'`, sql`${sourceSyncRuns.progress}->>'stoppedBecause' = 'fim_da_lista'`));
     res.setHeader("Cache-Control", "public, max-age=300");
     res.json({
-      ...agg, byState, byMonth, recent, lastSyncAt: last?.at ?? null,
+      ...agg, byState, byMonth, recent, lastSyncAt: last?.at ?? null, lastCompleteSyncAt: complete?.at ?? null,
+      timeNote: "Datas no horário de Brasília, convertidas do instante UTC publicado pelo Sisfogo.",
       notice: "Registros de Ocorrência de Incêndio (ROI) finalizados e publicados pelo Ibama/Prevfogo no Sisfogo. Cobrem apenas os órgãos que aderiram ao Sisfogo — não representam todos os incêndios do país. Área queimada é estimativa informada no registro.",
+      source: { name: "Ibama/Prevfogo — Sisfogo", url: "https://sisfogo.sistema.gov.br" },
+    });
+  }));
+
+  // Map layer: official Sisfogo ROIs as points (bounded window, paginated). Same
+  // filters as the summary plus locality type and a bounding box; free-text place
+  // names are never returned.
+  app.get("/api/public/sisfogo/points", limiter, handle(async (req, res) => {
+    const f = sisfogoPointsSchema.parse(req.query);
+    // Filter on fire_occurrences (lat/lng index, or GiST on geom with PostGIS); join the mirror for display fields.
+    const conds: SQL[] = [
+      sql`s.key = 'sisfogo-roi'`, sql`f.organization_id IS NULL`, sql`f.source_available`, sql`f.latitude IS NOT NULL`,
+    ];
+    if (f.state) conds.push(sql`f.state = ${f.state}`);
+    if (f.municipality) conds.push(sql`lower(f.municipality) = lower(${f.municipality})`);
+    if (f.from) conds.push(sql`f.occurred_on >= ${f.from}`);
+    if (f.to) conds.push(sql`f.occurred_on <= ${f.to}`);
+    if (f.localityType) conds.push(sql`m.locality_type = ${f.localityType}`);
+    if (f.bbox) {
+      const [minLng, minLat, maxLng, maxLat] = f.bbox;
+      conds.push(await hasPostgisGeom()
+        ? sql`f.geom && ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)::geography`
+        : sql`f.latitude BETWEEN ${minLat} AND ${maxLat} AND f.longitude BETWEEN ${minLng} AND ${maxLng}`);
+    }
+    const where = sql.join(conds, sql` AND `);
+    const from = sql`FROM fire_occurrences f JOIN data_sources s ON s.id = f.data_source_id
+      JOIN sisfogo_roi_records m ON m.source_id = f.data_source_id AND m.external_id = f.external_id`;
+    const totalRes = await db.execute<{ total: number }>(sql`SELECT count(*)::int AS total ${from} WHERE ${where}`);
+    const total = Number(totalRes.rows[0]?.total ?? 0);
+    const pts = await db.execute<Record<string, unknown>>(sql`
+      SELECT f.id, f.source_reference AS "roiNumber",
+             to_char(f.occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS "startedAt", f.occurred_on::text AS "startedOn",
+             to_char(m.extinguished_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS "extinguishedAt", f.latitude, f.longitude, f.municipality, f.state, m.biome,
+             m.locality_type AS "localityType", f.affected_area AS "burnedAreaHa", m.rectified, m.revision
+      ${from} WHERE ${where}
+      ORDER BY f.occurred_at DESC NULLS LAST, f.id DESC LIMIT ${f.limit} OFFSET ${f.offset}`);
+    const points = pts.rows;
+    const t = sisfogoRoiRecords;
+    const types = await db.selectDistinct({ v: t.localityType }).from(t).where(and(isNull(t.unavailableSince), sql`${t.localityType} IS NOT NULL`)).orderBy(t.localityType);
+    const [complete] = await db.select({ at: sql<string | null>`to_char(max(${sourceSyncRuns.finishedAt}) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')` })
+      .from(sourceSyncRuns).innerJoin(dataSources, eq(dataSources.id, sourceSyncRuns.sourceId))
+      .where(and(eq(dataSources.key, "sisfogo-roi"), eq(sourceSyncRuns.status, "sucesso"),
+        sql`${sourceSyncRuns.params}->>'mode' = 'completa'`, sql`${sourceSyncRuns.progress}->>'stoppedBecause' = 'fim_da_lista'`));
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.json({
+      total, limit: f.limit, offset: f.offset, truncated: f.offset + points.length < total,
+      points, localityTypes: types.map((x) => x.v), lastCompleteSyncAt: complete?.at ?? null,
       source: { name: "Ibama/Prevfogo — Sisfogo", url: "https://sisfogo.sistema.gov.br" },
     });
   }));

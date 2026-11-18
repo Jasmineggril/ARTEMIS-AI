@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 import { PRODUCT_NAME, DECISION_SUPPORT_DISCLAIMER, SUBMISSION_MODE } from "@shared/identity";
 import type { MonitoredArea, AlertStatus } from "@shared/schema";
 import { Link } from "wouter";
+import { ORIGIN_LABEL, NATURE_OF, NATURE_LABEL, FIELD_LABEL, formatInput } from "@/lib/data-nature";
 
 type AreaRow = MonitoredArea & { latestAnalysis: { createdAt: string } | null };
 import type { RiskLevel } from "@shared/risk-engine";
@@ -24,6 +25,8 @@ interface AreaReport {
   area: MonitoredArea;
   summary: { analyses: number; experimental: number; scoreMin: number | null; scoreMax: number | null; scoreAvg: number | null; distribution: Record<RiskLevel, number>; qualityLevels: Record<string, number> };
   sources: { key: string; name: string; count: number }[];
+  latest: { id: number; inputs: Record<string, unknown> | null; provenance: { field: string; origin: string }[];
+    sources: { sourceKey: string; recordCount: number | null; referenceAt: string | null; detail: Record<string, unknown> | null }[] } | null;
   engines: { engine: string; count: number }[];
   analyses: { id: number; createdAt: string; score: number; level: RiskLevel; engineType: string; isExperimental: boolean; topFactors: string[] }[];
   alerts: { id: number; createdAt: string; severity: string; status: AlertStatus; occurrenceCount: number; recommendations: { priority: string; action: string }[] | null }[];
@@ -45,6 +48,8 @@ export default function Reports() {
   // Default: the area with the most recent analysis (an empty report is not a useful first view).
   useEffect(() => {
     if (areaId || !areas.length) return;
+    const wanted = Number(new URLSearchParams(window.location.search).get("area"));
+    if (wanted && areas.some((a) => a.id === wanted)) return setAreaId(wanted);
     const analysed = areas.filter((a) => a.latestAnalysis).sort((a, b) => Date.parse(b.latestAnalysis!.createdAt) - Date.parse(a.latestAnalysis!.createdAt));
     setAreaId((analysed[0] ?? areas[0]).id);
   }, [areas, areaId]);
@@ -170,6 +175,25 @@ export default function Reports() {
             </>
           )}
 
+          {r.latest && (
+            <section aria-labelledby="s-trace" className="break-inside-avoid mb-6" data-testid="section-trace">
+              <h2 id="s-trace" className="font-semibold mb-2">Rastreabilidade da análise mais recente (#{r.latest.id})</h2>
+              <table className="w-full text-sm"><caption className="sr-only">Variáveis, valores e origem</caption>
+                <thead><tr className="text-left text-xs text-muted-foreground"><th className="py-1 pr-2">Variável</th><th className="pr-2">Valor</th><th className="pr-2">Natureza</th><th>Origem</th></tr></thead>
+                <tbody>{r.latest.provenance.map((p, i) => (
+                  <tr key={`${p.field}-${i}`} className="border-t"><td className="py-1 pr-2">{FIELD_LABEL[p.field] ?? p.field}</td>
+                    <td className="pr-2 whitespace-nowrap">{formatInput(p.field, r.latest!.inputs)}</td>
+                    <td className="pr-2">{NATURE_LABEL[NATURE_OF[p.origin] ?? "informado"].label}</td><td>{ORIGIN_LABEL[p.origin] ?? p.origin}</td></tr>))}
+                  <tr className="border-t"><td className="py-1 pr-2">Índice e nível</td><td className="pr-2">—</td><td className="pr-2">Calculado</td><td>motor de análise de risco</td></tr>
+                </tbody>
+              </table>
+              {r.latest.sources.length > 0 && (
+                <ul className="text-xs text-muted-foreground mt-2 space-y-0.5">{r.latest.sources.map((s) => (
+                  <li key={s.sourceKey}>{s.sourceKey}: {s.recordCount ?? "—"} registro(s){s.referenceAt ? ` · dados de ${new Date(s.referenceAt).toLocaleString("pt-BR")}` : ""}
+                    {s.detail && (s.detail as any).radiusKm ? ` · raio ${(s.detail as any).radiusKm} km` : ""}{s.detail && (s.detail as any).windowHours ? ` · janela ${(s.detail as any).windowHours} h` : ""}</li>))}</ul>
+              )}
+            </section>
+          )}
           <section aria-labelledby="s-lim" className="break-inside-avoid rounded-xl bg-amber-50 text-amber-950 border border-amber-200 p-4">
             <h3 id="s-lim" className="font-semibold mb-2">Limitações metodológicas</h3>
             <ul className="list-disc list-inside text-xs space-y-1">

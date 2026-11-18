@@ -29,7 +29,7 @@ O prompt mestre sugere `apps/web`, `apps/api`, `services/risk-engine`. A estrutu
 | Sugerido | Atual |
 |---|---|
 | `apps/web/` | `client/` |
-| `apps/api/` | `server/` (+ `api/` adaptador Vercel legado) |
+| `apps/api/` | `server/` |
 | `services/risk-engine/` | `python_service/` |
 | `packages/shared/` | `shared/` (schema Drizzle, motor TS, UFs, datas, identidade) |
 | `database/` | `migrations/` |
