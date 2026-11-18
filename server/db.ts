@@ -58,6 +58,14 @@ const createFallbackDb = () => {
 };
 
 export const pool = databaseUrl ? new Pool(poolConfig) : undefined;
+// An idle client whose connection the server closes (restart, failover,
+// "terminating connection due to administrator command") emits 'error' on the
+// pool. Without a listener Node treats it as uncaught and the whole API dies.
+// The pool discards that client by itself; we only log it. Queries in flight
+// fail with an error handled by the route (HTTP 5xx) and the next ones reconnect.
+pool?.on("error", (err) => {
+  console.error(JSON.stringify({ time: new Date().toISOString(), level: "error", msg: "db_pool_client_error", err: err.message }));
+});
 export const db: NodePgDatabase<typeof schema> = databaseUrl
   ? drizzle(pool as pg.Pool, { schema })
   : (createFallbackDb() as NodePgDatabase<typeof schema>);

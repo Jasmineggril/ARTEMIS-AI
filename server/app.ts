@@ -49,7 +49,7 @@ export async function createApp(): Promise<{ app: Express; httpServer: Server }>
   app.use(requestMetrics());
 
   const PgSession = connectPgSimple(session);
-  app.use(
+  const sessionMiddleware =
     session({
       name: "artemis.sid",
       // table created by migration 0009 (runtime role has no CREATE privilege)
@@ -64,8 +64,10 @@ export async function createApp(): Promise<{ app: Express; httpServer: Server }>
         sameSite: "lax",
         secure: isProd && process.env.COOKIE_SECURE !== "false",
       },
-    }),
-  );
+    });
+  // The health check must answer even when the session store (the database) is
+  // down — it is what reports that the database is down.
+  app.use((req, res, next) => (req.path === "/api/health" ? next() : sessionMiddleware(req, res, next)));
 
   app.use(originCheck());
   app.use(express.json({ limit: "15mb" })); // import batches of up to 50k rows

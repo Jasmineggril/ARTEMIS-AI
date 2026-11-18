@@ -1,0 +1,39 @@
+{
+  "experimental": true,
+  "warning": "Experimento de uma única temporada (ago–nov 2026), pontos em centros de municípios; NÃO substitui o motor de regras e não está em produção.",
+  "split": {
+    "train_dates_until": "2026-09-22",
+    "test_dates_from": "2026-09-30",
+    "n_train": 2000,
+    "n_test": 2400,
+    "prevalence_train": 0.343,
+    "prevalence_test": 0.351
+  },
+  "test": {
+    "rules_engine": {
+      "roc_auc": 0.783,
+      "alerts": 814,
+      "precision": 0.639,
+      "recall": 0.617,
+      "f1": 0.628
+    },
+    "logistic_regression": {
+      "roc_auc": 0.789,
+      "brier": 0.1849,
+      "alerts": 814,
+      "precision": 0.647,
+      "recall": 0.625,
+      "f1": 0.636
+    },
+    "alert_rate_used": 0.339
+  },
+  "standardised_coefficients": {
+    "temperature": 0.023,
+    "humidity": -0.218,
+    "wind": 0.099,
+    "rain72": 0.031,
+    "hotspot_near": 0.09,
+    "hotspot_inv_km": 0.623,
+    "history": -0.044
+  }
+}
