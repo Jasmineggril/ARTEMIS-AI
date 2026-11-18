@@ -22,3 +22,13 @@ BEGIN
     RAISE NOTICE '0008: PostGIS ativo — colunas geom e índices GiST criados.';
   END IF;
 END $$;
+
+-- 0016: municipal boundaries (only if the table exists)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'postgis') AND to_regclass('municipality_boundaries') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE municipality_boundaries ADD COLUMN IF NOT EXISTS geom geometry(MultiPolygon, 4326)
+             GENERATED ALWAYS AS (ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON(boundary::text), 4326))) STORED';
+    EXECUTE 'CREATE INDEX IF NOT EXISTS municipality_boundaries_geom_gix ON municipality_boundaries USING gist (geom)';
+  END IF;
+END $$;

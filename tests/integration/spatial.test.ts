@@ -103,3 +103,23 @@ test("PostGIS: the ST_DWithin query uses the GiST index on a large table", { ski
     WHERE ST_DWithin(t.geom, ST_GeomFromGeoJSON($1)::geography, 5000)`, [JSON.stringify(square)])).rows.map((r) => r["QUERY PLAN"]).join("\n");
   assert.match(plan, /satellite_hotspots_geom_gix/, plan);
 });
+
+test("municipality lookup: official boundary contains the point (PostGIS and fallback agree); divergence is reported", async () => {
+  const { municipalityAt, checkDeclaredMunicipality } = await import("../../server/services/municipality-lookup");
+  // Controlled municipality: a 0.2° square around the test property.
+  await c.query(`INSERT INTO municipalities (ibge_code, name, state, name_normalized) VALUES ('5200000', 'Município Teste', 'GO', 'municipio teste') ON CONFLICT DO NOTHING`);
+  const sq = { type: "Polygon", coordinates: [[[-47.6, -14.2], [-47.4, -14.2], [-47.4, -14.0], [-47.6, -14.0], [-47.6, -14.2]]] };
+  await c.query(`INSERT INTO municipality_boundaries (ibge_code, boundary, min_lat, max_lat, min_lng, max_lng, centroid_lat, centroid_lng, area_km2, quality)
+    VALUES ('5200000', $1, -14.2, -14.0, -47.6, -47.4, -14.1, -47.5, 474, 'minima') ON CONFLICT DO NOTHING`, [JSON.stringify(sq)]);
+  for (const force of SU ? [false, true] : [true]) {
+    process.env.SPATIAL_FORCE_FALLBACK = force ? "true" : "false";
+    const hit = await municipalityAt(-14.1255, -47.5055);
+    assert.equal(hit?.ibgeCode, "5200000", `force=${force}`);
+    assert.equal(hit?.method, force ? "poligono" : "postgis");
+    assert.equal(await municipalityAt(-3.1, -60.0), null, "outside every loaded boundary");
+    assert.equal((await checkDeclaredMunicipality(-14.1255, -47.5055, { municipality: "municipio  TESTE", state: "go" })).status, "confere");
+    const d = await checkDeclaredMunicipality(-14.1255, -47.5055, { municipality: "Outra Cidade", state: "GO" });
+    assert.equal(d.status, "diverge"); assert.match(d.message, /Município Teste\/GO/);
+  }
+  process.env.SPATIAL_FORCE_FALLBACK = "false";
+});

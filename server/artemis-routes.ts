@@ -27,6 +27,7 @@ import {
 import { getRiskWeatherCached } from "./services/weather-cache";
 import { inpeFreshness } from "./connectors/inpe";
 import { hasPostgisGeom } from "./spatial";
+import { checkDeclaredMunicipality } from "./services/municipality-lookup";
 import { historyContext, type HistoryContext } from "./services/history-context";
 import { areaSurroundings } from "./services/surroundings";
 import { upsertAlertFromAnalysis, transitionAlert, TransitionError, shouldAlert, allowedTransitions, OPEN_STATUSES } from "./services/alert-service";
@@ -440,7 +441,10 @@ export function registerArtemisRoutes(app: Express) {
       .values({ ...(applied.values as typeof input), organizationId: req.ctx.organizationId, createdBy: req.ctx.userId })
       .returning();
     await audit(req, "area.created", { type: "area", id: area.id }, { name: area.name, boundary: Boolean(area.boundary) });
-    res.status(201).json({ ...area, warnings: applied.warnings });
+    const municipalityCheck = area.latitude != null && area.longitude != null
+      ? await checkDeclaredMunicipality(area.latitude, area.longitude, area).catch(() => null) : null;
+    const warnings = [...(applied.warnings ?? []), ...(municipalityCheck?.status === "diverge" ? [municipalityCheck.message] : [])];
+    res.status(201).json({ ...area, warnings, municipalityCheck });
   }));
 
   app.get("/api/areas/:id/surroundings", requireOrg(), handle(async (req, res) => {
@@ -469,7 +473,9 @@ export function registerArtemisRoutes(app: Express) {
   app.get("/api/areas/:id", requireOrg(), handle(async (req, res) => {
     const area = await loadArea(req.ctx.organizationId, idParam(req.params.id));
     if (!area) return res.status(404).json({ message: "Área não encontrada." });
-    res.json(area);
+    const municipalityCheck = area.latitude != null && area.longitude != null
+      ? await checkDeclaredMunicipality(area.latitude, area.longitude, area).catch(() => null) : null;
+    res.json({ ...area, municipalityCheck });
   }));
 
   app.patch("/api/areas/:id", requireOrg("manager"), handle(async (req, res) => {

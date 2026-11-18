@@ -28,6 +28,7 @@
     "sync:sisfogo": "tsx scripts/sync-sisfogo.ts",
     "admin:create": "tsx scripts/ops/create-admin.ts",
     "db:load-municipalities": "tsx scripts/load-ibge-municipalities.ts",
+    "db:load-boundaries": "tsx scripts/load-ibge-boundaries.ts",
     "test:e2e": "node tests/e2e/flow.cjs",
     "test:a11y": "node tests/e2e/a11y.cjs"
   },

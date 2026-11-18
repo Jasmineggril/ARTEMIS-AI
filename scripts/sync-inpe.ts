@@ -3,10 +3,11 @@
  *   npm run sync:inpe                 -> today + yesterday (UTC) — schedule hourly via cron
  *   npm run sync:inpe -- --days 7     -> last 7 days
  *   npm run sync:inpe -- --from 2026-11-01 --to 2026-11-10   (backfill, max 62 days)
+ *   npm run sync:inpe -- --month 2026-09                   (whole month from INPE's monthly file)
  * Exit code 1 if any day failed (cron can alert on it). Failures are recorded
  * in source_sync_runs; a failed day leaves no partial rows.
  */
-import { syncInpeDay, recentUtcDays } from "../server/connectors/inpe";
+import { syncInpeDay, syncInpeMonth, recentUtcDays } from "../server/connectors/inpe";
 import { evaluateHotspotAlerts } from "../server/services/hotspot-alerts";
 import { pool } from "../server/db";
 
@@ -16,6 +17,13 @@ function arg(name: string) {
 }
 
 async function main() {
+  const month = arg("month");
+  if (month) {
+    const r = await syncInpeMonth(month);
+    console.log(JSON.stringify({ source: "inpe-queimadas", mode: "mensal", ...r }));
+    process.exitCode = r.status === "falha" ? 1 : 0;
+    return;
+  }
   let days: string[];
   const from = arg("from"), to = arg("to");
   if (from && to) {

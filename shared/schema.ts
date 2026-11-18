@@ -596,3 +596,17 @@ export const notificationDeliveries = pgTable("notification_deliveries", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 export type NotificationDelivery = typeof notificationDeliveries.$inferSelect;
+
+// ─── Official municipal boundaries (migration 0016) ─────────────────────────
+export const municipalityBoundaries = pgTable("municipality_boundaries", {
+  ibgeCode: char("ibge_code", { length: 7 }).primaryKey(),
+  boundary: json("boundary").notNull(),
+  minLat: doublePrecision("min_lat").notNull(), maxLat: doublePrecision("max_lat").notNull(),
+  minLng: doublePrecision("min_lng").notNull(), maxLng: doublePrecision("max_lng").notNull(),
+  centroidLat: doublePrecision("centroid_lat").notNull(), centroidLng: doublePrecision("centroid_lng").notNull(),
+  areaKm2: doublePrecision("area_km2").notNull(),
+  quality: text("quality").notNull(),
+  source: text("source").notNull(),
+  sourceUrl: text("source_url"),
+  loadedAt: timestamp("loaded_at", { withTimezone: true }).notNull().defaultNow(),
+});
