@@ -1,0 +1,76 @@
+{
+  "ambiente": "build de produção local, PostgreSQL 16 + PostGIS, 3,2 M observações INMET",
+  "data": "2026-11-18T18:05:48.122Z",
+  "rotas": {
+    "lista-estacoes": {
+      "url": "/api/weather-stations",
+      "req_por_s": 188,
+      "p50": 52,
+      "p99": 87,
+      "max": 193,
+      "2xx": 1877,
+      "nao_2xx": 0,
+      "erros": 0
+    },
+    "status-fonte": {
+      "url": "/api/connectors/inmet/status",
+      "req_por_s": 4016,
+      "p50": 2,
+      "p99": 6,
+      "max": 40,
+      "2xx": 40145,
+      "nao_2xx": 0,
+      "erros": 0
+    },
+    "serie-diaria-30d": {
+      "url": "/api/weather-stations/A001/daily?from=2026-10-02&to=2026-10-31",
+      "req_por_s": 1094,
+      "p50": 8,
+      "p99": 15,
+      "max": 21,
+      "2xx": 10937,
+      "nao_2xx": 0,
+      "erros": 0
+    },
+    "serie-diaria-1ano": {
+      "url": "/api/weather-stations/A001/daily?from=2026-01-01&to=2026-10-31",
+      "req_por_s": 423,
+      "p50": 22,
+      "p99": 42,
+      "max": 69,
+      "2xx": 4655,
+      "nao_2xx": 0,
+      "erros": 0
+    },
+    "horaria-7d": {
+      "url": "/api/weather-stations/A001/hourly?from=2026-10-25&to=2026-10-31",
+      "req_por_s": 683,
+      "p50": 14,
+      "p99": 25,
+      "max": 70,
+      "2xx": 6830,
+      "nao_2xx": 0,
+      "erros": 0
+    },
+    "comparacao": {
+      "url": "/api/weather-stations/A001/compare?aFrom=2026-09-02&aTo=2026-10-01&bFrom=2026-10-02&bTo=2026-10-31",
+      "req_por_s": 835,
+      "p50": 11,
+      "p99": 22,
+      "max": 44,
+      "2xx": 8352,
+      "nao_2xx": 0,
+      "erros": 0
+    },
+    "fma-90d": {
+      "url": "/api/weather-stations/A001/fma?from=2026-08-01&to=2026-10-31",
+      "req_por_s": 563,
+      "p50": 16,
+      "p99": 29,
+      "max": 36,
+      "2xx": 5633,
+      "nao_2xx": 0,
+      "erros": 0
+    }
+  }
+}

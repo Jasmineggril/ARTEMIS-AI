@@ -1,0 +1,1157 @@
+
+📋 Cenário 1 — Baixo risco
+  ✓ Cenário baixo: score deve estar entre 0 e 24
+  ✓ Cenário baixo: nível deve ser 'baixo'
+  ✓ Cenário baixo: deve ter recomendações de monitoramento
+
+📋 Cenário 2 — Moderado
+  ✓ Cenário moderado: score deve estar entre 25 e 49
+  ✓ Cenário moderado: nível deve ser 'moderado'
+  ✓ Cenário moderado: deve ter fator de temperatura ou umidade
+
+📋 Cenário 3 — Alto risco
+  ✓ Cenário alto: score deve estar entre 50 e 74
+  ✓ Cenário alto: nível deve ser 'alto'
+  ✓ Cenário alto: deve ter recomendação urgente
+
+📋 Cenário 4 — Risco crítico
+  ✓ Cenário crítico: score deve estar entre 75 e 100
+  ✓ Cenário crítico: nível deve ser 'crítico'
+  ✓ Cenário crítico: deve ter recomendação imediata
+  ✓ Cenário crítico: deve ter múltiplos fatores identificados
+
+📋 Estabilidade e determinismo
+  ✓ Motor é determinístico: mesma entrada produz mesmo score
+  ✓ Score mínimo nunca é negativo
+  ✓ Score máximo nunca excede 100
+  ✓ calculationVersion está presente no resultado
+  ✓ calculatedAt é um ISO 8601 válido
+  ✓ isSimulated é preservado corretamente
+
+📋 Validação de entradas
+  ✓ Deve lançar erro se temperatura estiver ausente
+  ✓ Deve lançar erro se umidade for maior que 100
+  ✓ Deve lançar erro se umidade for negativa
+  ✓ Deve lançar erro se vento for negativo
+  ✓ Deve lançar erro se vegetationCondition for inválido
+  ✓ validateRiskInput: retorna erros para entrada vazia
+  ✓ validateRiskInput: retorna válido para cenário correto
+
+📋 Classificação de nível
+  ✓ scoreToLevel(0) = 'baixo'
+  ✓ scoreToLevel(24) = 'baixo'
+  ✓ scoreToLevel(25) = 'moderado'
+  ✓ scoreToLevel(49) = 'moderado'
+  ✓ scoreToLevel(50) = 'alto'
+  ✓ scoreToLevel(74) = 'alto'
+  ✓ scoreToLevel(75) = 'crítico'
+  ✓ scoreToLevel(100) = 'crítico'
+
+──────────────────────────────────────────────────
+Resultado: 34 passaram · 0 falharam
+✅ Todos os testes passaram!
+
+
+🔐 Testes de Autenticação
+
+📋 hashPassword
+  ✓ cria um hash bcrypt ($2b$ prefix)
+  ✓ hash não contém a senha em texto plano
+  ✓ hashes distintos para a mesma senha (salt aleatório)
+
+📋 verifyPassword — bcrypt
+  ✓ senha correta retorna true
+  ✓ senha errada retorna false
+  ✓ string vazia retorna false
+
+📋 verifyPassword — SHA-256 legado
+  ✓ hash SHA-256 correto retorna true
+  ✓ hash SHA-256 errado retorna false
+  ✓ após validação SHA-256, upgradeHash é chamado com hash bcrypt
+  ✓ falha no upgradeHash não propaga erro
+
+──────────────────────────────────────────────────
+Resultado: 10 passou, 0 falhou
+
+TAP version 13
+# [db] localhost:5432/artemis_ai (origem: default-dev)
+# Subtest: open-meteo: parses current values and sums only the last 72 h up to the reference time
+ok 1 - open-meteo: parses current values and sums only the last 72 h up to the reference time
+  ---
+  duration_ms: 1.083066
+  type: 'test'
+  ...
+# Subtest: open-meteo: rejects missing current block, out-of-range values and incomplete series
+ok 2 - open-meteo: rejects missing current block, out-of-range values and incomplete series
+  ---
+  duration_ms: 0.48709
+  type: 'test'
+  ...
+# Subtest: open-meteo: HTTP errors and network failures become ConnectorError (no invented data)
+ok 3 - open-meteo: HTTP errors and network failures become ConnectorError (no invented data)
+  ---
+  duration_ms: 8013.758984
+  type: 'test'
+  ...
+# Subtest: open-meteo: URL requests km/h wind and 3 past days
+ok 4 - open-meteo: URL requests km/h wind and 3 past days
+  ---
+  duration_ms: 0.42131
+  type: 'test'
+  ...
+# Subtest: risk-service: manual values win over live data; live fills only gaps, with provenance
+ok 5 - risk-service: manual values win over live data; live fills only gaps, with provenance
+  ---
+  duration_ms: 5.707877
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"Error: python invalid score"}
+# {"level":"warn","msg":"python_engine_unavailable","err":"Error: off"}
+# Subtest: risk-service: missing values with failing source → MissingInputError carrying the connector error
+ok 6 - risk-service: missing values with failing source → MissingInputError carrying the connector error
+  ---
+  duration_ms: 4006.09953
+  type: 'test'
+  ...
+# Subtest: risk-service: Python response is normalised; ML synthetic is flagged experimental
+ok 7 - risk-service: Python response is normalised; ML synthetic is flagged experimental
+  ---
+  duration_ms: 3.546991
+  type: 'test'
+  ...
+# Subtest: risk-service: level normalisation and distance
+ok 8 - risk-service: level normalisation and distance
+  ---
+  duration_ms: 0.306796
+  type: 'test'
+  ...
+# Subtest: alerts: transition table
+ok 9 - alerts: transition table
+  ---
+  duration_ms: 0.979546
+  type: 'test'
+  ...
+# Subtest: security: role hierarchy
+ok 10 - security: role hierarchy
+  ---
+  duration_ms: 0.286242
+  type: 'test'
+  ...
+# Subtest: security: rate limiter blocks after max hits per window
+ok 11 - security: rate limiter blocks after max hits per window
+  ---
+  duration_ms: 0.494919
+  type: 'test'
+  ...
+# Subtest: csv: quotes separators and neutralises formulas
+ok 12 - csv: quotes separators and neutralises formulas
+  ---
+  duration_ms: 0.264442
+  type: 'test'
+  ...
+# Subtest: geojson: accepts closed Polygon, rejects open ring and invalid coordinates
+ok 13 - geojson: accepts closed Polygon, rejects open ring and invalid coordinates
+  ---
+  duration_ms: 1.80259
+  type: 'test'
+  ...
+# Subtest: import: server re-validation downgrades physically impossible records
+ok 14 - import: server re-validation downgrades physically impossible records
+  ---
+  duration_ms: 0.327175
+  type: 'test'
+  ...
+# Subtest: inpe: parses the real CSV format, -999 and empty values become null, UTC timestamps
+ok 15 - inpe: parses the real CSV format, -999 and empty values become null, UTC timestamps
+  ---
+  duration_ms: 1.099794
+  type: 'test'
+  ...
+# Subtest: inpe: unexpected header is rejected instead of guessed
+ok 16 - inpe: unexpected header is rejected instead of guessed
+  ---
+  duration_ms: 0.143049
+  type: 'test'
+  ...
+# Subtest: inpe: detections dated in the future or outside the file's day are rejected with a reason
+ok 17 - inpe: detections dated in the future or outside the file's day are rejected with a reason
+  ---
+  duration_ms: 0.324763
+  type: 'test'
+  ...
+# Subtest: inpe: fetchWithRetry retries network errors and 5xx/429 with backoff, never 404
+ok 18 - inpe: fetchWithRetry retries network errors and 5xx/429 with backoff, never 404
+  ---
+  duration_ms: 0.427094
+  type: 'test'
+  ...
+# Subtest: inpe: URL, recent days and UF table
+ok 19 - inpe: URL, recent days and UF table
+  ---
+  duration_ms: 0.197865
+  type: 'test'
+  ...
+# Subtest: db-url: DATABASE_URL wins, Supabase is legacy and refused in production
+ok 20 - db-url: DATABASE_URL wins, Supabase is legacy and refused in production
+  ---
+  duration_ms: 0.597506
+  type: 'test'
+  ...
+# Subtest: risk-service: hotspot proximity — manual wins, fresh INPE data is used, stale data is flagged
+ok 21 - risk-service: hotspot proximity — manual wins, fresh INPE data is used, stale data is flagged
+  ---
+  duration_ms: 0.595036
+  type: 'test'
+  ...
+# \# paridade verificada em 3433 entradas
+# Subtest: Python and TypeScript rule engines agree on score, level and factor sum
+ok 22 - Python and TypeScript rule engines agree on score, level and factor sum
+  ---
+  duration_ms: 466.770051
+  type: 'test'
+  ...
+# Subtest: area of a ~1 km² square is ~100 ha (spherical calculation)
+ok 23 - area of a ~1 km² square is ~100 ha (spherical calculation)
+  ---
+  duration_ms: 0.798419
+  type: 'test'
+  ...
+# Subtest: holes are subtracted; multipolygons add up
+ok 24 - holes are subtracted; multipolygons add up
+  ---
+  duration_ms: 0.190884
+  type: 'test'
+  ...
+# Subtest: bow-tie is detected as self-intersecting; a square is not
+ok 25 - bow-tie is detected as self-intersecting; a square is not
+  ---
+  duration_ms: 0.168288
+  type: 'test'
+  ...
+# Subtest: validateBoundary: open ring, outside Brazil, swapped lat/lng, crossing edges and tiny areas are refused
+ok 26 - validateBoundary: open ring, outside Brazil, swapped lat/lng, crossing edges and tiny areas are refused
+  ---
+  duration_ms: 0.760841
+  type: 'test'
+  ...
+# Subtest: centroid falls inside the square; distances to the boundary
+ok 27 - centroid falls inside the square; distances to the boundary
+  ---
+  duration_ms: 0.299139
+  type: 'test'
+  ...
+# [db] localhost:5432/artemis_ai (origem: default-dev)
+# Subtest: inmet: parses the REAL file — header, UTC hours, decimal comma, units kept
+ok 28 - inmet: parses the REAL file — header, UTC hours, decimal comma, units kept
+  ---
+  duration_ms: 2.744594
+  type: 'test'
+  ...
+# Subtest: inmet: missing values (-9999, empty), extremes and inconsistencies → null + flags; rows without any measure are dropped
+ok 29 - inmet: missing values (-9999, empty), extremes and inconsistencies → null + flags; rows without any measure are dropped
+  ---
+  duration_ms: 0.851414
+  type: 'test'
+  ...
+# Subtest: inmet: duplicated hours, impossible/future times, wrong year and the pre-2019 time format
+ok 30 - inmet: duplicated hours, impossible/future times, wrong year and the pre-2019 time format
+  ---
+  duration_ms: 0.283383
+  type: 'test'
+  ...
+# Subtest: inmet: malformed files are refused with a clear reason
+ok 31 - inmet: malformed files are refused with a clear reason
+  ---
+  duration_ms: 0.590756
+  type: 'test'
+  ...
+# Subtest: inmet: REAL station list parsed; invalid entries rejected; time zones by state
+ok 32 - inmet: REAL station list parsed; invalid entries rejected; time zones by state
+  ---
+  duration_ms: 0.447915
+  type: 'test'
+  ...
+# Subtest: inmet: download retries network errors and 5xx, not 404; gives up with the attempt count
+ok 33 - inmet: download retries network errors and 5xx, not 404; gives up with the attempt count
+  ---
+  duration_ms: 0.503431
+  type: 'test'
+  ...
+# Subtest: FMA (Soares 1972): rain factors, classes, accumulation, reset by rain, gaps and missing data
+ok 34 - FMA (Soares 1972): rain factors, classes, accumulation, reset by rain, gaps and missing data
+  ---
+  duration_ms: 0.405603
+  type: 'test'
+  ...
+# Subtest: representativeness thresholds and descriptive statistics
+ok 35 - representativeness thresholds and descriptive statistics
+  ---
+  duration_ms: 0.302911
+  type: 'test'
+  ...
+# [db] localhost:5432/artemis_ai (origem: default-dev)
+# [migrate] Migração já aplicada foi alterada depois: 0001_a.sql. Crie uma nova migração em vez de editar.
+# Subtest: the repository's own migrations pass the guard
+ok 36 - the repository's own migrations pass the guard
+  ---
+  duration_ms: 1.063711
+  type: 'test'
+  ...
+# Subtest: two branches each adding their own 0004 are refused before anything runs
+ok 37 - two branches each adding their own 0004 are refused before anything runs
+  ---
+  duration_ms: 0.706726
+  type: 'test'
+  ...
+# Subtest: BOM and Latin-1 double-encoded text (e.g. 'concluÃ­do') are refused
+ok 38 - BOM and Latin-1 double-encoded text (e.g. 'concluÃ­do') are refused
+  ---
+  duration_ms: 0.680512
+  type: 'test'
+  ...
+# Subtest: file names must follow NNNN_name.sql
+ok 39 - file names must follow NNNN_name.sql
+  ---
+  duration_ms: 0.313673
+  type: 'test'
+  ...
+# Subtest: an applied migration edited afterwards is detected (fails unless MIGRATION_ALLOW_CHANGED=1)
+ok 40 - an applied migration edited afterwards is detected (fails unless MIGRATION_ALLOW_CHANGED=1)
+  ---
+  duration_ms: 1.93831
+  type: 'test'
+  ...
+# Subtest: Open-Meteo: 429 then success is retried, honouring Retry-After (capped)
+ok 41 - Open-Meteo: 429 then success is retried, honouring Retry-After (capped)
+  ---
+  duration_ms: 1.850509
+  type: 'test'
+  ...
+# Subtest: Open-Meteo: persistent 429 fails with a clear message after N attempts; 400 is not retried
+ok 42 - Open-Meteo: persistent 429 fails with a clear message after N attempts; 400 is not retried
+  ---
+  duration_ms: 1.051573
+  type: 'test'
+  ...
+# Subtest: Open-Meteo: timeout is retried and reported
+ok 43 - Open-Meteo: timeout is retried and reported
+  ---
+  duration_ms: 41.115793
+  type: 'test'
+  ...
+# [db] localhost:5432/artemis_ai (origem: default-dev)
+# Subtest: origin check: same host passes; foreign origin blocked; X-Forwarded-Host only behind a trusted proxy
+ok 44 - origin check: same host passes; foreign origin blocked; X-Forwarded-Host only behind a trusted proxy
+  ---
+  duration_ms: 49.667611
+  type: 'test'
+  ...
+# Subtest: contract: every real ROI in the fixture normalizes, dates read from datasIncendio
+ok 45 - contract: every real ROI in the fixture normalizes, dates read from datasIncendio
+  ---
+  duration_ms: 2.00968
+  type: 'test'
+  ...
+# Subtest: contract: all five fire stages are kept distinct; absent stages stay NULL
+ok 46 - contract: all five fire stages are kept distinct; absent stages stay NULL
+  ---
+  duration_ms: 1.398325
+  type: 'test'
+  ...
+# Subtest: dates: UTC instants only; no zone → not guessed; Brasília parts derived from the instant
+ok 47 - dates: UTC instants only; no zone → not guessed; Brasília parts derived from the instant
+  ---
+  duration_ms: 0.612529
+  type: 'test'
+  ...
+# Subtest: identification: no UUID, bad UUID, no ROI number or not FINALIZADO are rejected; nothing is invented
+ok 48 - identification: no UUID, bad UUID, no ROI number or not FINALIZADO are rejected; nothing is invented
+  ---
+  duration_ms: 0.259346
+  type: 'test'
+  ...
+# Subtest: location: missing/partial/out-of-Brazil coordinates become NULL (never 0); invalid UF dropped
+ok 49 - location: missing/partial/out-of-Brazil coordinates become NULL (never 0); invalid UF dropped
+  ---
+  duration_ms: 1.020089
+  type: 'test'
+  ...
+# Subtest: burned area: estimate kept as published (ha); negative or non-numeric dropped with a warning
+ok 50 - burned area: estimate kept as published (ha); negative or non-numeric dropped with a warning
+  ---
+  duration_ms: 0.428571
+  type: 'test'
+  ...
+# Subtest: content hash is key-order independent and changes with content
+ok 51 - content hash is key-order independent and changes with content
+  ---
+  duration_ms: 0.497555
+  type: 'test'
+  ...
+# Subtest: page envelope: strict contract with informative errors
+ok 52 - page envelope: strict contract with informative errors
+  ---
+  duration_ms: 0.540036
+  type: 'test'
+  ...
+# Subtest: URL: 1-based pages, size clamped to 1..50, base URL restricted to Ibama hosts (SSRF)
+ok 53 - URL: 1-based pages, size clamped to 1..50, base URL restricted to Ibama hosts (SSRF)
+  ---
+  duration_ms: 0.435845
+  type: 'test'
+  ...
+# Subtest: HTTP: 429 honours Retry-After, 502 retried with backoff, then succeeds
+ok 54 - HTTP: 429 honours Retry-After, 502 retried with backoff, then succeeds
+  ---
+  duration_ms: 0.811968
+  type: 'test'
+  ...
+# Subtest: HTTP: timeout aborts and retries; gives up after N attempts with a clear message
+ok 55 - HTTP: timeout aborts and retries; gives up after N attempts with a clear message
+  ---
+  duration_ms: 150.093083
+  type: 'test'
+  ...
+# Subtest: HTTP: 400/404 and contract errors are not retried
+ok 56 - HTTP: 400/404 and contract errors are not retried
+  ---
+  duration_ms: 0.553372
+  type: 'test'
+  ...
+# Subtest: backoff delay is capped and Retry-After dates are understood
+ok 57 - backoff delay is capped and Retry-After dates are understood
+  ---
+  duration_ms: 0.225367
+  type: 'test'
+  ...
+1..57
+# tests 57
+# suites 0
+# pass 57
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12751.421513
+TAP version 13
+# Subtest: health reports database ok and degraded engine without leaking data
+ok 1 - health reports database ok and degraded engine without leaking data
+  ---
+  duration_ms: 1435.597193
+  type: 'test'
+  ...
+# Subtest: signup rejects weak password and missing privacy consent
+ok 2 - signup rejects weak password and missing privacy consent
+  ---
+  duration_ms: 29.369541
+  type: 'test'
+  ...
+# Subtest: signup creates user + organization (owner) and an authenticated session
+ok 3 - signup creates user + organization (owner) and an authenticated session
+  ---
+  duration_ms: 654.50828
+  type: 'test'
+  ...
+# Subtest: duplicate e-mail signup is refused
+ok 4 - duplicate e-mail signup is refused
+  ---
+  duration_ms: 4.539725
+  type: 'test'
+  ...
+# Subtest: session cookie is HttpOnly and SameSite=Lax
+ok 5 - session cookie is HttpOnly and SameSite=Lax
+  ---
+  duration_ms: 312.435747
+  type: 'test'
+  ...
+# Subtest: login with wrong password returns 401 with generic message
+ok 6 - login with wrong password returns 401 with generic message
+  ---
+  duration_ms: 280.37514
+  type: 'test'
+  ...
+# Subtest: auth status answers 200 null for anonymous visitors (no console noise)
+ok 7 - auth status answers 200 null for anonymous visitors (no console noise)
+  ---
+  duration_ms: 3.706317
+  type: 'test'
+  ...
+# Subtest: protected endpoints require authentication
+ok 8 - protected endpoints require authentication
+  ---
+  duration_ms: 10.980396
+  type: 'test'
+  ...
+# Subtest: profile update cannot escalate role (strict schema)
+ok 9 - profile update cannot escalate role (strict schema)
+  ---
+  duration_ms: 7.775246
+  type: 'test'
+  ...
+# Subtest: cross-origin state-changing request is blocked
+ok 10 - cross-origin state-changing request is blocked
+  ---
+  duration_ms: 4.149246
+  type: 'test'
+  ...
+# Subtest: area validation: invalid UF, lonely coordinate and open polygon are rejected
+ok 11 - area validation: invalid UF, lonely coordinate and open polygon are rejected
+  ---
+  duration_ms: 30.038718
+  type: 'test'
+  ...
+# Subtest: organization can register an area with a valid polygon
+ok 12 - organization can register an area with a valid polygon
+  ---
+  duration_ms: 37.00557
+  type: 'test'
+  ...
+# Subtest: analysis without meteorological data and without live source → 422, nothing invented
+ok 13 - analysis without meteorological data and without live source → 422, nothing invented
+  ---
+  duration_ms: 22.56025
+  type: 'test'
+  ...
+# Subtest: live weather failure is reported, not masked (integration recovery)
+ok 14 - live weather failure is reported, not masked (integration recovery)
+  ---
+  duration_ms: 4046.735136
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: critical analysis is executed, explained, stored and creates one alert
+ok 15 - critical analysis is executed, explained, stored and creates one alert
+  ---
+  duration_ms: 44.963153
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: re-analysis at same level de-duplicates the open alert
+ok 16 - re-analysis at same level de-duplicates the open alert
+  ---
+  duration_ms: 34.828132
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: low-risk analysis does not create an alert
+ok 17 - low-risk analysis does not create an alert
+  ---
+  duration_ms: 14.363163
+  type: 'test'
+  ...
+# Subtest: alert lifecycle transitions are enforced and recorded
+ok 18 - alert lifecycle transitions are enforced and recorded
+  ---
+  duration_ms: 37.461277
+  type: 'test'
+  ...
+# Subtest: import batch re-validates on server and never drops records silently
+ok 19 - import batch re-validates on server and never drops records silently
+  ---
+  duration_ms: 30.014467
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: imported occurrences feed the historical factor of the next analysis
+ok 20 - imported occurrences feed the historical factor of the next analysis
+  ---
+  duration_ms: 18.653521
+  type: 'test'
+  ...
+# Subtest: organization isolation: Bob cannot read or change Alice's data
+ok 21 - organization isolation: Bob cannot read or change Alice's data
+  ---
+  duration_ms: 70.933216
+  type: 'test'
+  ...
+# Subtest: roles: a viewer member can read but not create areas or change alerts
+ok 22 - roles: a viewer member can read but not create areas or change alerts
+  ---
+  duration_ms: 66.29114
+  type: 'test'
+  ...
+# Subtest: dashboard summary reflects stored data with sources
+ok 23 - dashboard summary reflects stored data with sources
+  ---
+  duration_ms: 15.120605
+  type: 'test'
+  ...
+# Subtest: CSV report export works and neutralises formula injection
+ok 24 - CSV report export works and neutralises formula injection
+  ---
+  duration_ms: 22.07601
+  type: 'test'
+  ...
+# Subtest: area report aggregates the period with sources, alerts and limitations
+ok 25 - area report aggregates the period with sources, alerts and limitations
+  ---
+  duration_ms: 36.080139
+  type: 'test'
+  ...
+# Subtest: insights aggregate only the caller's organization
+ok 26 - insights aggregate only the caller's organization
+  ---
+  duration_ms: 17.026211
+  type: 'test'
+  ...
+# Subtest: Consulta Pública: only explicitly published batches are public, sanitised and filterable
+ok 27 - Consulta Pública: only explicitly published batches are public, sanitised and filterable
+  ---
+  duration_ms: 78.817804
+  type: 'test'
+  ...
+# Subtest: re-importing the same occurrences counts them as duplicates (cross-batch), never stores twice
+ok 28 - re-importing the same occurrences counts them as duplicates (cross-batch), never stores twice
+  ---
+  duration_ms: 22.079288
+  type: 'test'
+  ...
+# Subtest: an import that fails midway is rolled back completely (no partial batch)
+ok 29 - an import that fails midway is rolled back completely (no partial batch)
+  ---
+  duration_ms: 261.368543
+  type: 'test'
+  ...
+# Subtest: pagination: limit/offset with X-Total-Count, body stays an array
+ok 30 - pagination: limit/offset with X-Total-Count, body stays an array
+  ---
+  duration_ms: 53.270403
+  type: 'test'
+  ...
+# Subtest: imports resolve the official IBGE municipality code when the list is loaded
+ok 31 - imports resolve the official IBGE municipality code when the list is loaded
+  ---
+  duration_ms: 19.65447
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: analysis without hotspot info and without INPE data flags proximity as NOT verified
+ok 32 - analysis without hotspot info and without INPE data flags proximity as NOT verified
+  ---
+  duration_ms: 13.605679
+  type: 'test'
+  ...
+# Subtest: INPE sync: failure is recorded without rows; success is idempotent; real changes are updates
+ok 33 - INPE sync: failure is recorded without rows; success is idempotent; real changes are updates
+  ---
+  duration_ms: 51.580403
+  type: 'test'
+  ...
+# Subtest: public hotspot API: separate from imported records, explicit caveats, bounded range
+ok 34 - public hotspot API: separate from imported records, explicit caveats, bounded range
+  ---
+  duration_ms: 12.511636
+  type: 'test'
+  ...
+# Subtest: public hotspot grid aggregates detections for overview maps
+ok 35 - public hotspot grid aggregates detections for overview maps
+  ---
+  duration_ms: 9.01653
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: analysis infers nearby hotspot from fresh INPE data and records full traceability
+ok 36 - analysis infers nearby hotspot from fresh INPE data and records full traceability
+  ---
+  duration_ms: 26.760154
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: weather cache: a recent Open-Meteo value for the same coordinate is reused (no API call)
+ok 37 - weather cache: a recent Open-Meteo value for the same coordinate is reused (no API call)
+  ---
+  duration_ms: 39.996414
+  type: 'test'
+  ...
+# Subtest: critical operations are written to the audit log
+ok 38 - critical operations are written to the audit log
+  ---
+  duration_ms: 4.784078
+  type: 'test'
+  ...
+# Subtest: password reset: same response for unknown e-mail, single-use token
+ok 39 - password reset: same response for unknown e-mail, single-use token
+  ---
+  duration_ms: 566.022302
+  type: 'test'
+  ...
+# Subtest: logout invalidates the session
+ok 40 - logout invalidates the session
+  ---
+  duration_ms: 10.548591
+  type: 'test'
+  ...
+# Subtest: unknown API route returns JSON 404
+ok 41 - unknown API route returns JSON 404
+  ---
+  duration_ms: 1.692119
+  type: 'test'
+  ...
+# Subtest: 0004 aborts and changes nothing when an orphan reading exists
+ok 42 - 0004 aborts and changes nothing when an orphan reading exists
+  ---
+  duration_ms: 972.854496
+  type: 'test'
+  ...
+# Subtest: 0004/0005 preserve legacy rows, clear dangling nullable refs and keep instants
+ok 43 - 0004/0005 preserve legacy rows, clear dangling nullable refs and keep instants
+  ---
+  duration_ms: 328.019562
+  type: 'test'
+  ...
+# Subtest: foreign keys enforce the documented delete rules
+ok 44 - foreign keys enforce the documented delete rules
+  ---
+  duration_ms: 14.350432
+  type: 'test'
+  ...
+# Subtest: check constraints reject impossible values
+ok 45 - check constraints reject impossible values
+  ---
+  duration_ms: 6.58132
+  type: 'test'
+  ...
+# Subtest: generated columns and per-organization de-duplication
+ok 46 - generated columns and per-organization de-duplication
+  ---
+  duration_ms: 11.521215
+  type: 'test'
+  ...
+# Subtest: schema drift: every column declared in shared/schema.ts exists in the database with the declared type family
+ok 47 - schema drift: every column declared in shared/schema.ts exists in the database with the declared type family
+  ---
+  duration_ms: 15.862127
+  type: 'test'
+  ...
+# Subtest: connection failure: API reports 503 and refuses writes, never falls back to memory
+ok 48 - connection failure: API reports 503 and refuses writes, never falls back to memory
+  ---
+  duration_ms: 851.58
+  type: 'test'
+  ...
+# Subtest: 0008/0016/0018 add geography/geometry columns + GiST indexes when PostGIS exists
+ok 49 - 0008/0016/0018 add geography/geometry columns + GiST indexes when PostGIS exists
+  ---
+  duration_ms: 4.642012
+  type: 'test'
+  ...
+# Subtest: PostGIS distance agrees with the haversine fallback (within 0.5%)
+ok 50 - PostGIS distance agrees with the haversine fallback (within 0.5%)
+  ---
+  duration_ms: 11.653404
+  type: 'test'
+  ...
+# Subtest: request metrics: per-minute route groups without ids, p95 and errors are stored
+ok 51 - request metrics: per-minute route groups without ids, p95 and errors are stored
+  ---
+  duration_ms: 1889.924729
+  type: 'test'
+  ...
+# Subtest: heartbeat writes the real state; availability counts missing minutes as downtime
+ok 52 - heartbeat writes the real state; availability counts missing minutes as downtime
+  ---
+  duration_ms: 57.433759
+  type: 'test'
+  ...
+# Subtest: expert verdict on an alert: rules, history, organisation scope
+ok 53 - expert verdict on an alert: rules, history, organisation scope
+  ---
+  duration_ms: 34.454869
+  type: 'test'
+  ...
+# Subtest: feedback and SUS: stored with the person and organisation; SUS score computed per Brooke
+ok 54 - feedback and SUS: stored with the person and organisation; SUS score computed per Brooke
+  ---
+  duration_ms: 39.383774
+  type: 'test'
+  ...
+# Subtest: retrospective validation: later hotspot counted for the analysis level; persistence cases separated
+ok 55 - retrospective validation: later hotspot counted for the analysis level; persistence cases separated
+  ---
+  duration_ms: 20.877823
+  type: 'test'
+  ...
+# Subtest: operations report and evidence export: platform admin only, dated, audited
+ok 56 - operations report and evidence export: platform admin only, dated, audited
+  ---
+  duration_ms: 44.088994
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: analysis stores the time the person took (Proof of Value: analysis time)
+ok 57 - analysis stores the time the person took (Proof of Value: analysis time)
+  ---
+  duration_ms: 35.720923
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: Proof of Value: baseline timings, recommendation verdicts and indicators (insufficient sample is never a verdict)
+ok 58 - Proof of Value: baseline timings, recommendation verdicts and indicators (insufficient sample is never a verdict)
+  ---
+  duration_ms: 71.168823
+  type: 'test'
+  ...
+# Subtest: yearly archive: ingested with raw traceability; daily aggregates match an independent computation
+ok 59 - yearly archive: ingested with raw traceability; daily aggregates match an independent computation
+  ---
+  duration_ms: 2148.772794
+  type: 'test'
+  ...
+# Subtest: identical archive is not reprocessed; a changed archive only updates/inserts what changed
+ok 60 - identical archive is not reprocessed; a changed archive only updates/inserts what changed
+  ---
+  duration_ms: 84.958249
+  type: 'test'
+  ...
+# Subtest: interrupted run with the same archive is resumed; failures are recorded, nothing invented
+ok 61 - interrupted run with the same archive is resumed; failures are recorded, nothing invented
+  ---
+  duration_ms: 38.84626
+  type: 'test'
+  ...
+# Subtest: property linkage: distance to the boundary, representativeness, isolation; public endpoints validate input
+ok 62 - property linkage: distance to the boundary, representativeness, isolation; public endpoints validate input
+  ---
+  duration_ms: 55.954761
+  type: 'test'
+  ...
+# Subtest: risk engine: a fresh INMET observation is used and labelled; a stale one is not
+ok 63 - risk engine: a fresh INMET observation is used and labelled; a stale one is not
+  ---
+  duration_ms: 54.937006
+  type: 'test'
+  ...
+# Subtest: preferences: defaults, validation and update
+ok 64 - preferences: defaults, validation and update
+  ---
+  duration_ms: 1741.655372
+  type: 'test'
+  ...
+# Subtest: hotspot alert creates one delivery; without SMTP it is BLOCKED, never 'sent'
+ok 65 - hotspot alert creates one delivery; without SMTP it is BLOCKED, never 'sent'
+  ---
+  duration_ms: 43.754599
+  type: 'test'
+  ...
+# Subtest: once SMTP exists, the blocked delivery is sent; the alert log shows it
+ok 66 - once SMTP exists, the blocked delivery is sent; the alert log shows it
+  ---
+  duration_ms: 28.568268
+  type: 'test'
+  ...
+# Subtest: send errors are retried with backoff, then marked as failure after 5 attempts
+ok 67 - send errors are retried with backoff, then marked as failure after 5 attempts
+  ---
+  duration_ms: 50.981217
+  type: 'test'
+  ...
+# Subtest: property with a drawn boundary: area and point are CALCULATED from the polygon, with provenance
+ok 68 - property with a drawn boundary: area and point are CALCULATED from the polygon, with provenance
+  ---
+  duration_ms: 2100.891564
+  type: 'test'
+  ...
+# Subtest: informed values are kept and flagged when they disagree with the polygon
+ok 69 - informed values are kept and flagged when they disagree with the polygon
+  ---
+  duration_ms: 21.794921
+  type: 'test'
+  ...
+# Subtest: invalid geometry is refused with an explanation (422), nothing stored
+ok 70 - invalid geometry is refused with an explanation (422), nothing stored
+  ---
+  duration_ms: 9.045313
+  type: 'test'
+  ...
+# Subtest: surroundings: observed hotspots by distance to the boundary, official records, own imports
+ok 71 - surroundings: observed hotspots by distance to the boundary, official records, own imports
+  ---
+  duration_ms: 33.713388
+  type: 'test'
+  ...
+# Subtest: detected hotspot opens ONE alert per property per day, updates it, respects the configured distance
+ok 72 - detected hotspot opens ONE alert per property per day, updates it, respects the configured distance
+  ---
+  duration_ms: 54.459328
+  type: 'test'
+  ...
+# Subtest: platform admin panel: real counts, restricted access, users with last login
+ok 73 - platform admin panel: real counts, restricted access, users with last login
+  ---
+  duration_ms: 18.06336
+  type: 'test'
+  ...
+# Subtest: invitation: new person gets an account + single-use link; can define password and sign in
+ok 74 - invitation: new person gets an account + single-use link; can define password and sign in
+  ---
+  duration_ms: 1175.497154
+  type: 'test'
+  ...
+# Subtest: access link: org admin only for people in no other organisation; platform admin for anyone
+ok 75 - access link: org admin only for people in no other organisation; platform admin for anyone
+  ---
+  duration_ms: 36.140031
+  type: 'test'
+  ...
+# Subtest: self-service reset: honest message without e-mail; sends the link when SMTP is configured
+ok 76 - self-service reset: honest message without e-mail; sends the link when SMTP is configured
+  ---
+  duration_ms: 311.663248
+  type: 'test'
+  ...
+# Subtest: unreachable API: retried, run recorded as failed, nothing written
+ok 77 - unreachable API: retried, run recorded as failed, nothing written
+  ---
+  duration_ms: 1937.541712
+  type: 'test'
+  ...
+# Subtest: unexpected response shape fails loudly, naming the fields received
+ok 78 - unexpected response shape fails loudly, naming the fields received
+  ---
+  duration_ms: 6.52989
+  type: 'test'
+  ...
+# Subtest: first complete sync: official rows land in fire_occurrences with explicit provenance
+ok 79 - first complete sync: official rows land in fire_occurrences with explicit provenance
+  ---
+  duration_ms: 50.399365
+  type: 'test'
+  ...
+# Subtest: re-import is idempotent: nothing inserted, no new revisions
+ok 80 - re-import is idempotent: nothing inserted, no new revisions
+  ---
+  duration_ms: 16.747534
+  type: 'test'
+  ...
+# Subtest: rectified ROI: new revision kept, previous version preserved, occurrence updated
+ok 81 - rectified ROI: new revision kept, previous version preserved, occurrence updated
+  ---
+  duration_ms: 34.080806
+  type: 'test'
+  ...
+# Subtest: ROI missing from a complete run is flagged unavailable (never deleted) and comes back
+ok 82 - ROI missing from a complete run is flagged unavailable (never deleted) and comes back
+  ---
+  duration_ms: 82.600364
+  type: 'test'
+  ...
+# Subtest: a source glitch (most ROIs missing) does not flag anything unavailable
+ok 83 - a source glitch (most ROIs missing) does not flag anything unavailable
+  ---
+  duration_ms: 91.342156
+  type: 'test'
+  ...
+# Subtest: incremental mode stops after consecutive pages with nothing new; limits are honoured
+ok 84 - incremental mode stops after consecutive pages with nothing new; limits are honoured
+  ---
+  duration_ms: 53.999863
+  type: 'test'
+  ...
+# Subtest: failure mid-run keeps stored pages; --resume continues after the last stored page
+ok 85 - failure mid-run keeps stored pages; --resume continues after the last stored page
+  ---
+  duration_ms: 31.642948
+  type: 'test'
+  ...
+# Subtest: a page is all-or-nothing: an error inside the page transaction rolls everything back
+ok 86 - a page is all-or-nothing: an error inside the page transaction rolls everything back
+  ---
+  duration_ms: 11.631261
+  type: 'test'
+  ...
+# Subtest: only one sync at a time (advisory lock); a crashed run is closed by the next one
+ok 87 - only one sync at a time (advisory lock); a crashed run is closed by the next one
+  ---
+  duration_ms: 30.087093
+  type: 'test'
+  ...
+# Subtest: organisation isolation: official rows never appear in an organisation's data or published imports
+ok 88 - organisation isolation: official rows never appear in an organisation's data or published imports
+  ---
+  duration_ms: 24.617974
+  type: 'test'
+  ...
+# Subtest: status and manual sync endpoints: auth, platform-admin only, audited, no raw data
+ok 89 - status and manual sync endpoints: auth, platform-admin only, audited, no raw data
+  ---
+  duration_ms: 105.916713
+  type: 'test'
+  ...
+# Subtest: public summary: filters, Brasília dates, no free-text place names
+ok 90 - public summary: filters, Brasília dates, no free-text place names
+  ---
+  duration_ms: 21.533507
+  type: 'test'
+  ...
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# {"level":"warn","msg":"python_engine_unavailable","err":"TypeError: fetch failed"}
+# Subtest: risk analysis: nearby official ROIs counted with provenance; own imports not double counted; switchable
+ok 91 - risk analysis: nearby official ROIs counted with provenance; own imports not double counted; switchable
+  ---
+  duration_ms: 122.010856
+  type: 'test'
+  ...
+# Subtest: map layer endpoint: bbox (PostGIS or lat/lng), pagination, locality filter, no place names
+ok 92 - map layer endpoint: bbox (PostGIS or lat/lng), pagination, locality filter, no place names
+  ---
+  duration_ms: 39.414894
+  type: 'test'
+  ...
+# Subtest: fallback: polygon distance is to the boundary (0 inside) and the 5 km limit is respected
+ok 93 - fallback: polygon distance is to the boundary (0 inside) and the 5 km limit is respected
+  ---
+  duration_ms: 1216.478301
+  type: 'test'
+  ...
+# Subtest: PostGIS: same points and distances as the fallback (within 1 %: PostGIS uses the WGS84 spheroid, the fallback a sphere), polygon and point areas
+ok 94 - PostGIS: same points and distances as the fallback (within 1 %: PostGIS uses the WGS84 spheroid, the fallback a sphere), polygon and point areas
+  ---
+  duration_ms: 23.889194
+  type: 'test'
+  ...
+# Subtest: PostGIS: the ST_DWithin query uses the GiST index on a large table
+ok 95 - PostGIS: the ST_DWithin query uses the GiST index on a large table
+  ---
+  duration_ms: 1023.133969
+  type: 'test'
+  ...
+# Subtest: municipality lookup: official boundary contains the point (PostGIS and fallback agree); divergence is reported
+ok 96 - municipality lookup: official boundary contains the point (PostGIS and fallback agree); divergence is reported
+  ---
+  duration_ms: 15.885458
+  type: 'test'
+  ...
+1..96
+# tests 96
+# suites 0
+# pass 96
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10078.992625
+/usr/local/lib/python3.13/site-packages/pytest_asyncio/plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /home/user/ARTEMIS-AI/python_service
+plugins: asyncio-1.5.0, anyio-4.15.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 109 items
+
+tests/test_api.py::test_health_status_ok PASSED                          [  0%]
+tests/test_api.py::test_health_service_name PASSED                       [  1%]
+tests/test_api.py::test_analyze_risk_returns_200 PASSED                  [  2%]
+tests/test_api.py::test_analyze_risk_has_required_fields PASSED          [  3%]
+tests/test_api.py::test_analyze_risk_score_in_range PASSED               [  4%]
+tests/test_api.py::test_analyze_risk_level_valid PASSED                  [  5%]
+tests/test_api.py::test_analyze_risk_confidence_in_range PASSED          [  6%]
+tests/test_api.py::test_analyze_risk_model_type_present PASSED           [  7%]
+tests/test_api.py::test_analyze_risk_dataset_type_present PASSED         [  8%]
+tests/test_api.py::test_analyze_risk_factors_not_empty PASSED            [  9%]
+tests/test_api.py::test_analyze_risk_recommendations_not_empty PASSED    [ 10%]
+tests/test_api.py::test_analyze_risk_factor_fields PASSED                [ 11%]
+tests/test_api.py::test_analyze_risk_recommendation_fields PASSED        [ 11%]
+tests/test_api.py::test_missing_temperature_returns_422 PASSED           [ 12%]
+tests/test_api.py::test_invalid_humidity_negative_returns_422 PASSED     [ 13%]
+tests/test_api.py::test_invalid_humidity_over_100_returns_422 PASSED     [ 14%]
+tests/test_api.py::test_invalid_wind_negative_returns_422 PASSED         [ 15%]
+tests/test_api.py::test_empty_body_returns_422 PASSED                    [ 16%]
+tests/test_api.py::test_critical_risk_high_score PASSED                  [ 17%]
+tests/test_api.py::test_critical_risk_level_not_low PASSED               [ 18%]
+tests/test_engine_mode.py::test_default_mode_is_rule_engine PASSED       [ 19%]
+tests/test_engine_mode.py::test_invalid_mode_falls_back_to_rules PASSED  [ 20%]
+tests/test_engine_mode.py::test_ml_mode_is_flagged_experimental PASSED   [ 21%]
+tests/test_engine_mode.py::test_model_info_warns_synthetic PASSED        [ 22%]
+tests/test_engine_mode.py::test_cors_closed_by_default PASSED            [ 22%]
+tests/test_model.py::test_low_score_range PASSED                         [ 23%]
+tests/test_model.py::test_low_level PASSED                               [ 24%]
+tests/test_model.py::test_low_confidence_positive PASSED                 [ 25%]
+tests/test_model.py::test_moderate_level PASSED                          [ 26%]
+tests/test_model.py::test_high_score_range PASSED                        [ 27%]
+tests/test_model.py::test_high_level PASSED                              [ 28%]
+tests/test_model.py::test_critical_score_range PASSED                    [ 29%]
+tests/test_model.py::test_critical_level PASSED                          [ 30%]
+tests/test_model.py::test_score_never_out_of_range[50-5-80] PASSED       [ 31%]
+tests/test_model.py::test_score_never_out_of_range[5-99-0] PASSED        [ 32%]
+tests/test_model.py::test_score_never_out_of_range[30-50-20] PASSED      [ 33%]
+tests/test_model.py::test_classify_risk[0-baixo] PASSED                  [ 33%]
+tests/test_model.py::test_classify_risk[24-baixo] PASSED                 [ 34%]
+tests/test_model.py::test_classify_risk[25-moderado] PASSED              [ 35%]
+tests/test_model.py::test_classify_risk[49-moderado] PASSED              [ 36%]
+tests/test_model.py::test_classify_risk[50-alto] PASSED                  [ 37%]
+tests/test_model.py::test_classify_risk[74-alto] PASSED                  [ 38%]
+tests/test_model.py::test_classify_risk[75-critico] PASSED               [ 39%]
+tests/test_model.py::test_classify_risk[100-critico] PASSED              [ 40%]
+tests/test_model.py::test_factors_not_empty_for_critical PASSED          [ 41%]
+tests/test_model.py::test_factors_have_required_fields PASSED            [ 42%]
+tests/test_model.py::test_recommendations_for_all_levels PASSED          [ 43%]
+tests/test_model.py::test_recommendation_priorities_valid PASSED         [ 44%]
+tests/test_model.py::test_critical_has_immediate_action PASSED           [ 44%]
+tests/test_model.py::test_analyze_risk_output_fields PASSED              [ 45%]
+tests/test_model.py::test_fallback_to_rules_runs_without_error PASSED    [ 46%]
+tests/test_model.py::test_ml_model_predict_if_available PASSED           [ 47%]
+tests/test_risk_model.py::test_low_score_range PASSED                    [ 48%]
+tests/test_risk_model.py::test_low_level PASSED                          [ 49%]
+tests/test_risk_model.py::test_low_has_recommendations PASSED            [ 50%]
+tests/test_risk_model.py::test_moderate_score_range PASSED               [ 51%]
+tests/test_risk_model.py::test_moderate_level PASSED                     [ 52%]
+tests/test_risk_model.py::test_moderate_has_factors PASSED               [ 53%]
+tests/test_risk_model.py::test_high_score_range PASSED                   [ 54%]
+tests/test_risk_model.py::test_high_level PASSED                         [ 55%]
+tests/test_risk_model.py::test_high_has_urgent_recommendations PASSED    [ 55%]
+tests/test_risk_model.py::test_critical_score_range PASSED               [ 56%]
+tests/test_risk_model.py::test_critical_level PASSED                     [ 57%]
+tests/test_risk_model.py::test_critical_multiple_factors PASSED          [ 58%]
+tests/test_risk_model.py::test_critical_has_immediate_recommendations PASSED [ 59%]
+tests/test_risk_model.py::test_determinism PASSED                        [ 60%]
+tests/test_risk_model.py::test_score_never_negative PASSED               [ 61%]
+tests/test_risk_model.py::test_score_never_exceeds_100 PASSED            [ 62%]
+tests/test_risk_model.py::test_calculated_at_is_iso8601 PASSED           [ 63%]
+tests/test_risk_model.py::test_model_type_present PASSED                 [ 64%]
+tests/test_risk_model.py::test_model_version_present PASSED              [ 65%]
+tests/test_risk_model.py::test_humidity_above_100_raises PASSED          [ 66%]
+tests/test_risk_model.py::test_humidity_negative_raises PASSED           [ 66%]
+tests/test_risk_model.py::test_wind_negative_raises PASSED               [ 67%]
+tests/test_risk_model.py::test_validate_input_empty PASSED               [ 68%]
+tests/test_risk_model.py::test_validate_input_valid PASSED               [ 69%]
+tests/test_risk_model.py::test_classify_risk[0-baixo] PASSED             [ 70%]
+tests/test_risk_model.py::test_classify_risk[24-baixo] PASSED            [ 71%]
+tests/test_risk_model.py::test_classify_risk[25-moderado] PASSED         [ 72%]
+tests/test_risk_model.py::test_classify_risk[49-moderado] PASSED         [ 73%]
+tests/test_risk_model.py::test_classify_risk[50-alto] PASSED             [ 74%]
+tests/test_risk_model.py::test_classify_risk[74-alto] PASSED             [ 75%]
+tests/test_risk_model.py::test_classify_risk[75-critico] PASSED          [ 76%]
+tests/test_risk_model.py::test_classify_risk[100-critico] PASSED         [ 77%]
+tests/test_risk_model.py::test_recommendations_generated_for_all_levels PASSED [ 77%]
+tests/test_risk_model.py::test_fallback_to_rules_when_no_model PASSED    [ 78%]
+tests/test_validation.py::test_missing_temperature_raises PASSED         [ 79%]
+tests/test_validation.py::test_missing_humidity_raises PASSED            [ 80%]
+tests/test_validation.py::test_missing_wind_speed_raises PASSED          [ 81%]
+tests/test_validation.py::test_humidity_negative_raises PASSED           [ 82%]
+tests/test_validation.py::test_humidity_over_100_raises PASSED           [ 83%]
+tests/test_validation.py::test_wind_negative_raises PASSED               [ 84%]
+tests/test_validation.py::test_rainfall_negative_raises PASSED           [ 85%]
+tests/test_validation.py::test_historical_negative_raises PASSED         [ 86%]
+tests/test_validation.py::test_hotspot_distance_negative_raises PASSED   [ 87%]
+tests/test_validation.py::test_humidity_zero_valid PASSED                [ 88%]
+tests/test_validation.py::test_humidity_100_valid PASSED                 [ 88%]
+tests/test_validation.py::test_wind_zero_valid PASSED                    [ 89%]
+tests/test_validation.py::test_rainfall_zero_valid PASSED                [ 90%]
+tests/test_validation.py::test_historical_zero_valid PASSED              [ 91%]
+tests/test_validation.py::test_validate_input_returns_empty_for_valid PASSED [ 92%]
+tests/test_validation.py::test_validate_input_is_list PASSED             [ 93%]
+tests/test_validation.py::test_analyze_extreme_low_risk PASSED           [ 94%]
+tests/test_validation.py::test_analyze_extreme_critical PASSED           [ 95%]
+tests/test_validation.py::test_analyze_hotspot_none_distance PASSED      [ 96%]
+tests/test_validation.py::test_analyze_defaults_work PASSED              [ 97%]
+tests/test_validation.py::test_result_has_calculated_at PASSED           [ 98%]
+tests/test_validation.py::test_result_is_simulated_false_by_default PASSED [ 99%]
+tests/test_validation.py::test_result_is_simulated_true_when_set PASSED  [100%]
+
+============================= 109 passed in 1.33s ==============================

@@ -32,3 +32,13 @@ BEGIN
     EXECUTE 'CREATE INDEX IF NOT EXISTS municipality_boundaries_geom_gix ON municipality_boundaries USING gist (geom)';
   END IF;
 END $$;
+
+-- 0018: INMET weather stations (only if the table exists)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'postgis') AND to_regclass('weather_stations') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE weather_stations ADD COLUMN IF NOT EXISTS geom geography(Point, 4326)
+             GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography) STORED';
+    EXECUTE 'CREATE INDEX IF NOT EXISTS weather_stations_geom_gix ON weather_stations USING gist (geom)';
+  END IF;
+END $$;

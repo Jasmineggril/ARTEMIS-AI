@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json, jsonb, uniqueIndex, index, date, smallint, char, bigserial } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json, jsonb, uniqueIndex, index, date, smallint, char, bigserial, real } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -628,4 +628,71 @@ export const povBaselineMeasurements = pgTable("pov_baseline_measurements", {
   note: text("note"),
   startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── INMET weather stations (migration 0018) ────────────────────────────────
+export const weatherStations = pgTable("weather_stations", {
+  id: serial("id").primaryKey(),
+  sourceId: integer("source_id").notNull(),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  state: char("state", { length: 2 }),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  altitudeM: doublePrecision("altitude_m"),
+  stationType: text("station_type"),
+  status: text("status"),
+  utcOffsetHours: smallint("utc_offset_hours").notNull().default(-3),
+  operationStart: timestamp("operation_start", { withTimezone: true }),
+  operationEnd: timestamp("operation_end", { withTimezone: true }),
+  registry: jsonb("registry"),
+  firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type WeatherStation = typeof weatherStations.$inferSelect;
+export const weatherStationObservations = pgTable("weather_station_observations", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  stationId: integer("station_id").notNull(),
+  observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+  temperatureC: real("temperature_c"),
+  temperatureMaxC: real("temperature_max_c"),
+  temperatureMinC: real("temperature_min_c"),
+  dewPointC: real("dew_point_c"),
+  humidityPct: real("humidity_pct"),
+  humidityMinPct: real("humidity_min_pct"),
+  windSpeedMs: real("wind_speed_ms"),
+  windGustMs: real("wind_gust_ms"),
+  windDirectionDeg: smallint("wind_direction_deg"),
+  precipitationMm: real("precipitation_mm"),
+  pressureHpa: real("pressure_hpa"),
+  radiationKjM2: real("radiation_kj_m2"),
+  qualityFlags: text("quality_flags").array().notNull(),
+  rawFileSha256: char("raw_file_sha256", { length: 64 }),
+  rawFileName: text("raw_file_name"),
+  rawLine: integer("raw_line"),
+  syncRunId: integer("sync_run_id"),
+  firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const weatherStationDaily = pgTable("weather_station_daily", {
+  stationId: integer("station_id").notNull(),
+  day: date("day").notNull(),
+  hoursObserved: smallint("hours_observed").notNull(),
+  hoursTemperature: smallint("hours_temperature").notNull(),
+  hoursHumidity: smallint("hours_humidity").notNull(),
+  hoursPrecipitation: smallint("hours_precipitation").notNull(),
+  temperatureMeanC: real("temperature_mean_c"),
+  temperatureMaxC: real("temperature_max_c"),
+  temperatureMinC: real("temperature_min_c"),
+  humidityMeanPct: real("humidity_mean_pct"),
+  humidityMinPct: real("humidity_min_pct"),
+  humidity13hPct: real("humidity_13h_pct"),
+  temperature13hC: real("temperature_13h_c"),
+  windMeanMs: real("wind_mean_ms"),
+  windMaxMs: real("wind_max_ms"),
+  wind13hMs: real("wind_13h_ms"),
+  gustMaxMs: real("gust_max_ms"),
+  precipitationMm: real("precipitation_mm"),
+  flaggedHours: smallint("flagged_hours").notNull().default(0),
+  computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
 });

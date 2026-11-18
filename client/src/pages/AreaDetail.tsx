@@ -5,6 +5,7 @@
  */
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AreaWeather } from "@/components/inmet/AreaWeather";
 import { Link, useLocation, useRoute } from "wouter";
 import { format } from "date-fns";
 import { MapContainer, TileLayer, Polygon, Circle, CircleMarker, Popup, useMap } from "react-leaflet";
@@ -202,6 +203,8 @@ export default function AreaDetail() {
           {hasRole(user, "manager") && <Link href="/data-import" className="text-sm underline mt-2 inline-block">Importar histórico</Link>}
         </section>
       </div>
+
+      <div className="mt-4"><AreaWeather areaId={a.id} /></div>
 
       {data.analyses.length > 0 && (
         <section className="rounded-2xl border bg-card p-4 mt-4" aria-labelledby="hist-t">

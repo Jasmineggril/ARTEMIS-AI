@@ -70,3 +70,13 @@ nunca apagar o banco atual antes de validar a restauração.
 | PostGIS num banco existente | como superusuário: `CREATE EXTENSION postgis;` e depois `psql -f scripts/db/enable-postgis.sql` |
 | Validação retrospectiva mensal | `npx tsx scripts/backtest-risk.ts …` (ver `23` §7) — anexar a `evidencias/` |
 | Teste de resiliência (somente em homologação) | `tests/resilience/resilience-check.cjs` |
+
+## 8. INMET (18/11/2026)
+
+| Rotina | Comando / configuração |
+|---|---|
+| Cadastro + ano corrente (o agendador faz diariamente) | `npm run sync:inmet` · `INMET_SYNC_HOURS` (padrão 24) · `INMET_SYNC_ENABLED=false` desativa |
+| Anos anteriores | `npm run sync:inmet -- --year 2025` |
+| Arquivos brutos preservados | `INMET_RAW_DIR` (padrão `data/raw/inmet`); incluir no backup ou em armazenamento externo |
+| Rede necessária | `apitempo.inmet.gov.br`, `portal.inmet.gov.br` |
+| Verificação de consistência | `python -I scripts/inmet_consistency.py <zip> <url-da-api> saida.json` |
