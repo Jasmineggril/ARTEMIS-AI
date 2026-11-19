@@ -13,6 +13,8 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/migrations ./migrations
 COPY --from=build --chown=node:node /app/package.json ./package.json
+# INMET raw archives (named volume inherits this ownership when first created)
+RUN mkdir -p /app/data/raw/inmet && chown -R node:node /app/data
 USER node
 EXPOSE 5000
 # Health check with Node itself (no curl/apt in the runtime image)

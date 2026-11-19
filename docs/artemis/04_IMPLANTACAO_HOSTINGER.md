@@ -1,5 +1,7 @@
 # 04 — Implantação na VPS Hostinger (KVM 2)
 
+> **Guia passo a passo para quem vai executar na VPS:** `25_GUIA_IMPLANTACAO_HOMOLOGACAO.md` (ensaiado em 19/11/2026).
+
 > **Homologação privada (recomendado primeiro):** depois das seções 1–4, rode `bash scripts/ops/deploy-homolog.sh` — HTTPS + senha do site, dados reais e sua conta de administradora. Situação do produto: `15_PRODUTO_SITUACAO.md`.
 
 > **Nada aqui foi executado.** Este procedimento exige a VPS, um domínio e autorização expressa. Nenhuma compra, publicação ou alteração de infraestrutura foi feita.
@@ -14,6 +16,7 @@ Alvo: 2 vCPU · 8 GB RAM · 100 GB NVMe · Ubuntu 24.04 LTS · região Brasil (S
 | API Node | 1 GB | 1.0 |
 | Motor de risco | 768 MB | 0.75 |
 | Caddy | 256 MB | — |
+| Carga do INMET (`inmet-sync`, sob demanda) | 1,5 GB (pico medido: 304 MB) | 1.0 |
 | **Total** | **~4 GB**, sobra para o SO, cache e picos | |
 
 **Banco local ou gerenciado?** Para a fase piloto, PostgreSQL no próprio Compose: custo zero adicional e latência mínima; exige backups externos (abaixo). Migrar para um serviço gerenciado quando houver exigência de alta disponibilidade ou equipe sem rotina de operação.

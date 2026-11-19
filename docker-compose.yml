@@ -107,12 +107,19 @@ services:
       SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
       INPE_SYNC_MINUTES: ${INPE_SYNC_MINUTES:-60}
       SISFOGO_SYNC_HOURS: ${SISFOGO_SYNC_HOURS:-24}
+      # INMET: station registry + current-year archive daily (downloaded only when INMET updates it)
+      INMET_SYNC_HOURS: ${INMET_SYNC_HOURS:-24}
+      INMET_SYNC_ENABLED: ${INMET_SYNC_ENABLED:-true}
+      INMET_RAW_DIR: /app/data/raw/inmet
+      NOTIFY_MINUTES: ${NOTIFY_MINUTES:-5}
       SMTP_URL: ${SMTP_URL:-}
       MAIL_FROM: ${MAIL_FROM:-}
       SISFOGO_PAGE_SIZE: ${SISFOGO_PAGE_SIZE:-20}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - inmet_raw:/app/data/raw/inmet
     deploy: { resources: { limits: { memory: 1g, cpus: "1.0" } } }
-    # `internal` (db, engine) + `edge` (Caddy and outbound HTTPS: Open-Meteo, INPE).
+    # `internal` (db, engine) + `edge` (Caddy and outbound HTTPS: Open-Meteo, INPE, INMET).
     networks: [internal, edge]
     logging: *logging
 
@@ -152,6 +159,26 @@ services:
     networks: [internal, edge]
     logging: *logging
 
+  # INMET yearly archives (official station observations). Heavier than the other jobs:
+  #   docker compose --profile jobs run --rm inmet-sync                      # registry + current year
+  #   docker compose --profile jobs run --rm inmet-sync node dist/sync-inmet.cjs --year 2025
+  inmet-sync:
+    <<: *api-build
+    profiles: ["jobs"]
+    command: ["node", "dist/sync-inmet.cjs"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://artemis_app:${ARTEMIS_APP_PASSWORD}@db:5432/artemis_ai
+      INMET_RAW_DIR: /app/data/raw/inmet
+    volumes:
+      - inmet_raw:/app/data/raw/inmet
+    deploy: { resources: { limits: { memory: 1536m, cpus: "1.0" } } }
+    networks: [internal, edge]
+    logging: *logging
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -170,6 +197,7 @@ services:
 
 volumes:
   pgdata:
+  inmet_raw:
   caddy_data:
   caddy_config:
 

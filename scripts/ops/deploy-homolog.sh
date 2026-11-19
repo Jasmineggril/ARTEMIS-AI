@@ -8,7 +8,8 @@
 #   2. creates/completes .env: generates database/session secrets only where empty;
 #   3. creates the site password (user "avaliacao") — shown ONCE, stored only as a hash;
 #   4. builds and starts the stack with HTTPS (Caddy/Let's Encrypt) + password;
-#   5. loads real data: IBGE municipalities, INPE (2 days), Sisfogo (complete);
+#   5. loads real data: IBGE municipalities + official boundaries, INPE (2 days), Sisfogo (complete),
+#      INMET stations + current-year archive;
 #   6. creates your platform-administrator account and prints a single-use link to set the password.
 # Production (public, no site password) is a separate step that needs your approval.
 set -euo pipefail
@@ -85,22 +86,26 @@ done
 "${DC[@]}" ps
 [ "${st:-}" = "healthy" ] || die "API não ficou saudável. Veja: ${DC[*]} logs api migrate"
 
-say "5/6 Dados reais (IBGE, INPE, Sisfogo)"
-"${DC[@]}" --profile jobs run --rm inpe-sync node dist/load-municipalities.cjs || echo "Aviso: carga do IBGE falhou (a plataforma funciona sem ela; tente de novo depois)."
-"${DC[@]}" --profile jobs run --rm inpe-sync node dist/sync-inpe.cjs --days 2 || echo "Aviso: INPE falhou nesta tentativa; a rotina horária tentará de novo."
-"${DC[@]}" --profile jobs run --rm sisfogo-sync node dist/sync-sisfogo.cjs --mode completa --trigger agendado || echo "Aviso: Sisfogo falhou nesta tentativa; a rotina diária tentará de novo."
+say "5/6 Dados reais (IBGE, INPE, Sisfogo, INMET)"
+"${DC[@]}" --profile jobs run --rm --no-deps inpe-sync node dist/load-municipalities.cjs || echo "Aviso: carga do IBGE falhou (a plataforma funciona sem ela; tente de novo depois)."
+"${DC[@]}" --profile jobs run --rm --no-deps inpe-sync node dist/load-boundaries.cjs || echo "Aviso: limites municipais do IBGE falharam (tente de novo depois)."
+"${DC[@]}" --profile jobs run --rm --no-deps inpe-sync node dist/sync-inpe.cjs --days 2 || echo "Aviso: INPE falhou nesta tentativa; a rotina horária tentará de novo."
+"${DC[@]}" --profile jobs run --rm --no-deps sisfogo-sync node dist/sync-sisfogo.cjs --mode completa --trigger agendado || echo "Aviso: Sisfogo falhou nesta tentativa; a rotina diária tentará de novo."
+echo "INMET: cadastro de estações e arquivo do ano corrente (~80 MB; leva alguns minutos)…"
+"${DC[@]}" --profile jobs run --rm --no-deps inmet-sync || echo "Aviso: INMET falhou nesta tentativa; a rotina diária tentará de novo."
 
 say "6/6 Sua conta de administradora/administrador da plataforma"
 read -rp "Seu e-mail: " admin_email
 read -rp "Seu nome: " admin_name
 read -rp "Nome da organização: " admin_org
-"${DC[@]}" run --rm api node dist/create-admin.cjs --email "$admin_email" --name "$admin_name" --org "$admin_org" --base "https://$dom"
+"${DC[@]}" run --rm --no-deps api node dist/create-admin.cjs --email "$admin_email" --name "$admin_name" --org "$admin_org" --base "https://$dom"
 
 say "Pronto"
 cat <<EOF
 Acesse: https://$dom  (primeiro o navegador pede usuário/senha do site; depois, o login da plataforma)
 Use o link acima para definir a sua senha da plataforma (vale 72 h, uso único).
-Sincronizações automáticas: INPE de hora em hora (com alertas de focos), Sisfogo diário e completo semanal.
+Sincronizações automáticas: INPE de hora em hora (com alertas de focos), Sisfogo diário e completo semanal,
+INMET diário (só baixa quando o INMET atualiza o arquivo do ano).
 Acompanhe em: Painel Admin e Fontes de Dados.
 Monitoramento:  ${DC[*]} ps | docker stats --no-stream | df -h /
 Logs:           ${DC[*]} logs --since 1h api

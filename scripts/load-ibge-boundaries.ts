@@ -67,6 +67,6 @@ async function main() {
   console.log(JSON.stringify({ source: "ibge-malhas", quality, received: features.length, stored: rows.length, rejected: rejected.length, rejectedSample: rejected.slice(0, 5), municipalitiesWithoutBoundary: missing }));
 }
 
-if (process.argv[1]?.includes("load-ibge-boundaries")) {
+if (/load-(ibge-)?boundaries/.test(process.argv[1] ?? "")) {
   main().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exitCode = 1; }).finally(() => pool?.end());
 }
