@@ -1,0 +1,265 @@
+{
+  "day": "2026-11-21",
+  "officialFile": "rf21.nc",
+  "sampledPixels": 20000,
+  "missingPrecipDaysOnServer": [
+    "2026-10-28",
+    "2026-10-23",
+    "2026-07-25"
+  ],
+  "recentFirePixels3d": 17633,
+  "results": {
+    "UR % · janela até o dia · FU -0.008 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0302,
+      "within001Pct": 57.8,
+      "within005Pct": 80.4,
+      "sameClassPct": 86.8,
+      "semFocoRecente": {
+        "pixels": 19614,
+        "mae": 0.03,
+        "within001Pct": 58.1,
+        "sameClassPct": 87
+      }
+    },
+    "UR % · janela até o dia · FU -0.008 · sem fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0424,
+      "within001Pct": 52.2,
+      "within005Pct": 72.8,
+      "sameClassPct": 81.4,
+      "semFocoRecente": {
+        "pixels": 19614,
+        "mae": 0.0424,
+        "within001Pct": 52.4,
+        "sameClassPct": 81.6
+      }
+    },
+    "UR % · janela até o dia · FU -0.006 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0162,
+      "within001Pct": 68.9,
+      "within005Pct": 90.1,
+      "sameClassPct": 93,
+      "semFocoRecente": {
+        "pixels": 19614,
+        "mae": 0.0162,
+        "within001Pct": 68.9,
+        "sameClassPct": 93
+      }
+    },
+    "UR % · janela até o dia · FU -0.006 · sem fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0262,
+      "within001Pct": 61.7,
+      "within005Pct": 83,
+      "sameClassPct": 88.4,
+      "semFocoRecente": {
+        "pixels": 19614,
+        "mae": 0.0264,
+        "within001Pct": 61.7,
+        "sameClassPct": 88.4
+      }
+    },
+    "UR fração · janela até o dia · FU -0.008 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0261,
+      "within001Pct": 58.9,
+      "within005Pct": 78.1,
+      "sameClassPct": 88.9,
+      "semFocoRecente": {
+        "pixels": 19614,
+        "mae": 0.0261,
+        "within001Pct": 58.7,
+        "sameClassPct": 88.9
+      }
+    },
+    "UR fração · janela até o dia · FU -0.008 · sem fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0186,
+      "within001Pct": 62.3,
+      "within005Pct": 86.2,
+      "sameClassPct": 92.5,
+      "semFocoRecente": {
+        "pixels": 19614,
+        "mae": 0.0185,
+        "within001Pct": 62.2,
+        "sameClassPct": 92.5
+      }
+    },
+    "UR fração · janela até o dia · FU -0.006 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0262,
+      "within001Pct": 58.8,
+      "within005Pct": 78.1,
+      "sameClassPct": 88.8,
+      "semFocoRecente": {
+        "pixels": 19614,
+        "mae": 0.0262,
+        "within001Pct": 58.7,
+        "sameClassPct": 88.8
+      }
+    },
+    "UR fração · janela até o dia · FU -0.006 · sem fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0186,
+      "within001Pct": 62.2,
+      "within005Pct": 86.1,
+      "sameClassPct": 92.5,
+      "semFocoRecente": {
+        "pixels": 19614,
+        "mae": 0.0186,
+        "within001Pct": 62.2,
+        "sameClassPct": 92.5
+      }
+    }
+  },
+  "bestVariant": "UR % · janela até o dia · FU -0.006 · com fatores 2.2",
+  "examples": [
+    {
+      "lat": -15.77500000358912,
+      "lon": -72.33980180610374,
+      "veg": 3,
+      "elev": 2913.0087890625,
+      "tC": 20.17,
+      "rh": 33.5,
+      "pse": 95.45,
+      "oficial": 0.95,
+      "artemis": 0.8496,
+      "focoRecente": false
+    },
+    {
+      "lat": -2.145000003589118,
+      "lon": -52.36980180610372,
+      "veg": 7,
+      "elev": 21.82378387451172,
+      "tC": 36.88,
+      "rh": 35.3,
+      "pse": 100.52,
+      "oficial": 1,
+      "artemis": 0.9826,
+      "focoRecente": true
+    },
+    {
+      "lat": -13.795000003589124,
+      "lon": -45.86980180610372,
+      "veg": 3,
+      "elev": 762.2803344726562,
+      "tC": 23.36,
+      "rh": 76.5,
+      "pse": 0.35,
+      "oficial": 0,
+      "artemis": 0,
+      "focoRecente": false
+    },
+    {
+      "lat": -10.38500000358912,
+      "lon": -58.08980180610373,
+      "veg": 1,
+      "elev": 198.60000610351562,
+      "tC": 35.53,
+      "rh": 36,
+      "pse": 20.46,
+      "oficial": 0.86,
+      "artemis": 0.8083,
+      "focoRecente": false
+    },
+    {
+      "lat": -10.665000003589121,
+      "lon": -54.19980180610372,
+      "veg": 7,
+      "elev": 299.136474609375,
+      "tC": 30.35,
+      "rh": 55.3,
+      "pse": 3.38,
+      "oficial": 0,
+      "artemis": 0.0016,
+      "focoRecente": false
+    },
+    {
+      "lat": 4.424999996410882,
+      "lon": -59.12980180610373,
+      "veg": 7,
+      "elev": 533.82275390625,
+      "tC": 31.83,
+      "rh": 46.6,
+      "pse": 71.51,
+      "oficial": 0.71,
+      "artemis": 0.5772,
+      "focoRecente": false
+    },
+    {
+      "lat": -14.52500000358912,
+      "lon": -54.69980180610372,
+      "veg": 1,
+      "elev": 455.45220947265625,
+      "tC": 31.85,
+      "rh": 47.4,
+      "pse": 8.21,
+      "oficial": 0.19,
+      "artemis": 0.1578,
+      "focoRecente": false
+    },
+    {
+      "lat": -5.905000003589123,
+      "lon": -45.86980180610372,
+      "veg": 7,
+      "elev": 199.69683837890625,
+      "tC": 33.39,
+      "rh": 41.3,
+      "pse": 24.54,
+      "oficial": 0.11,
+      "artemis": 0.0951,
+      "focoRecente": false
+    },
+    {
+      "lat": 1.6649999964108773,
+      "lon": -71.07980180610372,
+      "veg": 7,
+      "elev": 215.42286682128906,
+      "tC": 32.59,
+      "rh": 55.5,
+      "pse": 2.67,
+      "oficial": 0,
+      "artemis": 0.001,
+      "focoRecente": false
+    },
+    {
+      "lat": -5.965000003589118,
+      "lon": -67.76980180610373,
+      "veg": 7,
+      "elev": 83.35890197753906,
+      "tC": 36.06,
+      "rh": 39.1,
+      "pse": 12.93,
+      "oficial": 0.03,
+      "artemis": 0.0289,
+      "focoRecente": false
+    },
+    {
+      "lat": -9.335000003589123,
+      "lon": -40.83980180610372,
+      "veg": 4,
+      "elev": 456.41162109375,
+      "tC": 33.29,
+      "rh": 33.1,
+      "pse": 47.73,
+      "oficial": 0.79,
+      "artemis": 0.7325,
+      "focoRecente": false
+    },
+    {
+      "lat": -17.965000003589118,
+      "lon": -39.93980180610373,
+      "veg": 7,
+      "elev": 72.03467559814453,
+      "tC": 28.24,
+      "rh": 69.2,
+      "pse": 2,
+      "oficial": 0,
+      "artemis": 0.0005,
+      "focoRecente": false
+    }
+  ],
+  "durationS": 19
+}
