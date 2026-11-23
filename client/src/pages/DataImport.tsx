@@ -351,7 +351,7 @@ export default function DataImport() {
       {/* Header */}
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">Módulo de importação</p>
-        <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
+        <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground flex items-center gap-2">
           <Upload className="w-7 h-7 text-primary" />
           Importação de Ocorrências
         </h1>
@@ -368,7 +368,7 @@ export default function DataImport() {
       </header>
 
       {/* Stepper */}
-      <div className="flex items-center gap-2 mb-8">
+      <div className="flex flex-wrap items-center gap-2 mb-8">
         {STEP_LABELS.map((label, i) => (
           <div key={label} className="flex items-center gap-2">
             <div className={cn(
@@ -377,7 +377,7 @@ export default function DataImport() {
             )}>
               {i < step ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
             </div>
-            <span className={cn("text-sm font-medium", i === step ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+            <span className={cn("text-sm font-medium", i === step ? "text-foreground" : "text-muted-foreground hidden sm:inline")}>{label}</span>
             {i < STEP_LABELS.length - 1 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
           </div>
         ))}
@@ -469,7 +469,7 @@ export default function DataImport() {
               <h2 className="font-semibold text-foreground text-sm">Mapeamento de colunas</h2>
               <span className="text-xs text-muted-foreground">(associe cada campo do sistema a uma coluna do arquivo)</span>
             </div>
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {SYSTEM_FIELDS.map(field => (
                 <div key={field.key} className="flex items-center gap-2">
                   <label className="text-xs text-muted-foreground w-40 shrink-0">{field.label}</label>
@@ -561,11 +561,11 @@ export default function DataImport() {
                     <tr key={r.index} className="border-t border-border/20 hover:bg-secondary/10">
                       <td className="px-3 py-1.5 text-muted-foreground">{r.index + 2}</td>
                       <td className="px-3 py-1.5"><StatusBadge status={r.status} /></td>
-                      <td className="px-3 py-1.5 text-foreground">{r.mapped.occurrenceDate ?? "—"}</td>
-                      <td className="px-3 py-1.5 text-foreground">{r.mapped.municipality ?? "—"}</td>
+                      <td className="px-3 py-1.5 text-foreground whitespace-nowrap">{r.mapped.occurrenceDate ?? "—"}</td>
+                      <td className="px-3 py-1.5 text-foreground whitespace-nowrap">{r.mapped.municipality ?? "—"}</td>
                       <td className="px-3 py-1.5 text-foreground">{r.mapped.state ?? "—"}</td>
                       <td className="px-3 py-1.5">{r.mapped.latitude != null ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> : <XCircle className="w-3.5 h-3.5 text-muted-foreground" />}</td>
-                      <td className="px-3 py-1.5 text-yellow-700">{r.issues.join("; ") || "—"}</td>
+                      <td className="px-3 py-1.5 text-yellow-700 min-w-[180px]">{r.issues.join("; ") || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -573,9 +573,9 @@ export default function DataImport() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setStep(1)}>Revisar mapeamento</Button>
-            <Button onClick={saveImport} disabled={saving} className="flex-1">
+            <Button onClick={saveImport} disabled={saving} className="sm:flex-1">
               {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Download className="w-4 h-4 mr-2" /> Confirmar e importar</>}
             </Button>
           </div>

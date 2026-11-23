@@ -393,6 +393,28 @@ export default function Settings() {
           });
           return;
         }
+      } else if (user.source === "api") {
+        const response = await fetch("/api/auth/password", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            currentPassword: passwordForm.currentPassword,
+            newPassword: passwordForm.newPassword,
+          }),
+        });
+
+        if (!response.ok) {
+          const data = (await response.json().catch(() => ({}))) as { message?: string };
+          toast({
+            title: data.message === "Senha atual incorreta" ? "Senha atual incorreta" : "Erro ao alterar senha",
+            description: data.message === "Senha atual incorreta"
+              ? "A senha atual informada não corresponde à sua conta."
+              : data.message ?? "Não foi possível alterar a senha.",
+            variant: "destructive",
+          });
+          return;
+        }
       } else {
         const result = changeLocalPassword({
           email: user.email,
@@ -433,7 +455,7 @@ export default function Settings() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">Configurações</p>
-              <h1 className="mt-2 text-3xl font-bold text-foreground">{SUBMISSION_MODE ? "Seu perfil" : `Seu perfil ${PRODUCT_NAME}`}</h1>
+              <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-foreground">{SUBMISSION_MODE ? "Seu perfil" : `Seu perfil ${PRODUCT_NAME}`}</h1>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 Ajuste seus dados, preferências de alerta e aparência para manter o ambiente da plataforma consistente com sua rotina.
               </p>
@@ -446,7 +468,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <div className="rounded-3xl border border-border/50 bg-card p-6 shadow-sm">
             <div className="flex flex-col items-center gap-4 text-center">
               <Avatar className="h-28 w-28 border border-border/50">
@@ -491,7 +513,7 @@ export default function Settings() {
                 <UserRound className="h-5 w-5 text-primary" />
                 <h2 className="text-xl font-semibold text-foreground">Perfil</h2>
               </div>
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Nome</Label>
                   <Input id="fullName" value={settings.fullName} onChange={handleInputChange("fullName")} placeholder="Seu nome" />
@@ -534,7 +556,7 @@ export default function Settings() {
                 <Bell className="h-5 w-5 text-primary" />
                 <h2 className="text-xl font-semibold text-foreground">Preferências</h2>
               </div>
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="rounded-2xl border border-border/50 bg-background/80 p-4">
                   <div className="flex items-center justify-between gap-2">
                     <div>
@@ -586,7 +608,7 @@ export default function Settings() {
                 <ShieldCheck className="h-5 w-5 text-primary" />
                 <h2 className="text-xl font-semibold text-foreground">Conta</h2>
               </div>
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
                 <Input
                   type="password"
                   placeholder="Senha atual"

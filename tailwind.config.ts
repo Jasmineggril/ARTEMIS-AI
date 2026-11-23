@@ -39,6 +39,22 @@ export default {
           foreground: "#e8f5e9",
           border: "#2d5a27",
         },
+        /* Tokens usados pelos componentes shadcn/ui e pelas páginas
+           (text-muted-foreground, bg-popover, bg-destructive, ring-ring…).
+           Sem eles o Tailwind não gera essas classes. Valores em client/src/index.css. */
+        muted: {
+          DEFAULT: "hsl(var(--muted) / <alpha-value>)",
+          foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
+          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover) / <alpha-value>)",
+          foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
+        },
+        ring: "hsl(var(--ring) / <alpha-value>)",
       },
       fontFamily: {
         /* Usando fontes que transmitem natureza e tecnologia simultaneamente */

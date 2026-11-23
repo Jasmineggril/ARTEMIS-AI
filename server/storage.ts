@@ -1,11 +1,11 @@
-import { db } from "./db";
+import { db, isConnectionError } from "./db";
 import {
   users, sensors, readings, alerts, weatherData, userStats, denuncias, achievements,
   type InsertSensor, type InsertReading, type InsertAlert, type InsertWeatherData, type InsertUser, type InsertUserStats,
   type Sensor, type Reading, type Alert, type WeatherData, type User, type UserStats,
   type InsertDenuncia, type Denuncia, type InsertAchievement, type Achievement
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -59,10 +59,6 @@ const fallbackState: FallbackState = {
   achievements: [],
 };
 
-function isDatabaseError(error: unknown) {
-  return error instanceof Error && /ECONNREFUSED|timeout|database|relation|does not exist|connect/i.test(error.message);
-}
-
 function createUserRecord(input: InsertUser): User {
   return {
     id: fallbackState.users.length + 1,
@@ -81,32 +77,51 @@ function createUserRecord(input: InsertUser): User {
 
 export class DatabaseStorage implements IStorage {
   private useFallback = false;
+  /** Becomes true after the first successful query. */
+  private databaseConfirmed = false;
 
   private logFallback(reason: unknown) {
     this.useFallback = true;
-    console.warn("Falling back to in-memory storage:", reason instanceof Error ? reason.message : String(reason));
+    console.warn(
+      "[storage] Banco de dados indisponível — usando armazenamento em memória (os dados serão perdidos ao reiniciar):",
+      reason instanceof Error ? reason.message : String(reason),
+    );
   }
 
+  /**
+   * Runs a database operation. The in-memory fallback is used only when the
+   * database has been unreachable since startup (demo mode without a DB).
+   * Once the database has answered at least once, errors are propagated
+   * normally instead of silently switching storage — a transient failure or a
+   * bad request must never make existing users and data "disappear".
+   */
   private async runWithFallback<T>(operation: () => Promise<T>, fallback: () => T): Promise<T> {
     if (this.useFallback) {
       return fallback();
     }
 
     try {
-      return await operation();
+      const result = await operation();
+      this.databaseConfirmed = true;
+      return result;
     } catch (error) {
-      this.logFallback(error);
-      return fallback();
+      if (!this.databaseConfirmed && isConnectionError(error)) {
+        this.logFallback(error);
+        return fallback();
+      }
+      throw error;
     }
   }
 
+  /** Case-insensitive lookup (emails are stored normalized, but older rows may not be). */
   async getUserByEmail(email: string): Promise<User | undefined> {
+    const normalized = email.trim().toLowerCase();
     return this.runWithFallback(
       async () => {
-        const [user] = await db.select().from(users).where(eq(users.email, email));
+        const [user] = await db.select().from(users).where(sql`lower(${users.email}) = ${normalized}`);
         return user;
       },
-      () => fallbackState.users.find((user) => user.email === email)
+      () => fallbackState.users.find((user) => user.email.toLowerCase() === normalized)
     );
   }
 

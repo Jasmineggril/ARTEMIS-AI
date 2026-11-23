@@ -115,13 +115,13 @@ function ProtocolSection({ level }: { level: RiskLevel }) {
       >
         <div className="flex items-center gap-3">
           <RiskBadge level={level} size="md" />
-          <span className="font-semibold text-foreground">Protocolo de {level.charAt(0).toUpperCase() + level.slice(1)} Risco</span>
+          <span className="font-semibold text-foreground">Protocolo de Risco {level.charAt(0).toUpperCase() + level.slice(1)}</span>
         </div>
         {open ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
       </button>
 
       {open && (
-        <div className="border-t border-border/30 p-5 grid md:grid-cols-2 gap-6">
+        <div className="border-t border-border/30 p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" style={{ color: riskLevelColor(level) }} />
@@ -170,7 +170,7 @@ export default function Prevention() {
   return (
     <Layout>
       <header className="mb-8">
-        <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
+        <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground flex items-center gap-2">
           <ShieldCheck className="w-8 h-8 text-primary" />
           Protocolos de Prevenção
         </h1>
@@ -201,7 +201,7 @@ export default function Prevention() {
           <Info className="w-5 h-5 text-primary" />
           Boas práticas gerais
         </h2>
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {BEST_PRACTICES.map(p => (
             <div key={p.title} className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
               <h3 className="font-semibold text-foreground mb-2 text-sm">{p.title}</h3>

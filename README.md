@@ -121,7 +121,7 @@ PostgreSQL (Drizzle ORM)
 
 **Frontend:** React 18 · TypeScript 5.6 · Vite 7 · Tailwind CSS · shadcn/ui · Leaflet · Recharts · TanStack Query · Wouter
 
-**Backend:** Node.js 20 · Express 4 · Drizzle ORM · bcrypt · PostgreSQL 16
+**Backend:** Node.js 22 · Express 4 · Drizzle ORM · bcrypt · PostgreSQL 16
 
 **Camada analítica:** Python 3.12 · FastAPI · Scikit-learn · Pandas · NumPy · Pydantic · Joblib · Pytest
 
@@ -129,39 +129,53 @@ PostgreSQL (Drizzle ORM)
 
 ## 9. Como Executar
 
+> Passo a passo completo (Windows, macOS e Linux), teste no celular e hospedagem na Hostinger:
+> **[docs/GUIA_EXECUCAO_E_HOSPEDAGEM.md](docs/GUIA_EXECUCAO_E_HOSPEDAGEM.md)**
+
 ### Pré-requisitos
 
-- Node.js 20+
-- Python 3.12+
-- PostgreSQL 16+
+- Node.js 22 LTS (mínimo 20.19)
+- PostgreSQL 14+ (local ou na nuvem — ex.: Supabase/Neon)
+- Python 3.12+ (opcional — só para o serviço de ML)
 
 ### Instalação
 
 ```bash
-# Instalar dependências Node.js
 npm install
-
-# Instalar dependências Python
-pip install -r python_service/requirements.txt
 ```
+
+Copie `.env.example` para `.env` e preencha `DATABASE_URL` e `SESSION_SECRET`.
 
 ### Variáveis de Ambiente
 
 | Variável | Descrição | Obrigatória |
 |---|---|---|
-| `DATABASE_URL` | URL de conexão com PostgreSQL | Sim |
-| `SESSION_SECRET` | Segredo das sessões | Sim |
+| `DATABASE_URL` | URL de conexão com PostgreSQL | Sim (sem ela o app roda em modo demonstração, com dados só em memória) |
+| `SESSION_SECRET` | Segredo das sessões de login | Sim em produção |
+| `PORT` | Porta HTTP (padrão 5000) | Não |
 | `PYTHON_SERVICE_URL` | URL do FastAPI (padrão: http://127.0.0.1:8000) | Não |
-| `VITE_SUBMISSION_MODE` | true = modo anônimo de submissão | Não |
+| `OPENAI_API_KEY` | Assistente de IA (sem chave responde offline) | Não |
+| `SEED_DEMO_DATA` | `false` desativa os dados de demonstração | Não |
+| `VITE_SUBMISSION_MODE` | true = modo anônimo de submissão (definir antes do build) | Não |
+| `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | Login via Supabase Auth (opcional; definir antes do build) | Não |
 
 ### Executar
 
 ```bash
-# Frontend + Backend Express (porta 5000)
+# Frontend + Backend Express (http://localhost:5000)
 npm run dev
 
-# Serviço Python FastAPI (porta 8000)
+# (Opcional) Serviço Python FastAPI (porta 8000)
 cd python_service && uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+As tabelas são criadas automaticamente na primeira execução (pasta `migrations/`), junto com dados de demonstração e a conta **demo@ceres.ai / Demo123!**.
+
+### Produção
+
+```bash
+npm run build
+npm start
 ```
 
 ---
@@ -241,21 +255,24 @@ Nenhum registro é descartado silenciosamente.
 # Verificação TypeScript (0 erros)
 npm run check
 
-# Testes do motor de risco TypeScript (35 aprovados)
-npm run test:risk
+# Testes TypeScript: motor de risco (34), autenticação (10) e armazenamento (11)
+npm test
 
 # Build de produção
 npm run build
 
 # Testes Python (104 aprovados)
 pytest python_service/tests -v
+
+# Teste de importação dos arquivos de exemplo (CSV, XLSX, XLS)
+python tests/import-data.test.py
 ```
 
 ---
 
 ## 15. Segurança
 
-- Senhas com bcrypt (salt rounds: 10)
+- Senhas com bcrypt (salt rounds: 12)
 - Sessões httpOnly + sameSite
 - Proteção de rotas (frontend + backend)
 - Variáveis sensíveis via variáveis de ambiente

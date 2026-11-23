@@ -27,6 +27,9 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
+  // Read VITE_* variables from the .env in the project root (the same file the
+  // server uses) — by default Vite would only look inside client/.
+  envDir: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,

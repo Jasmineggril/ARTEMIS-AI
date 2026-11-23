@@ -158,7 +158,7 @@ export default function Alerts() {
     <Layout>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground flex items-center gap-3">
           <Bell className="w-8 h-8 text-primary" />
           Central de Alertas
         </h1>

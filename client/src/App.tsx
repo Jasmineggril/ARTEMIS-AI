@@ -3,29 +3,43 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useAuthStatus } from "@/hooks/use-auth";
 import Home from "@/pages/Home";
-import Dashboard from "@/pages/Dashboard";
-import Sensors from "@/pages/Sensors";
-import SensorDetails from "@/pages/SensorDetails";
-import Alerts from "@/pages/Alerts";
-import Reports from "@/pages/Reports";
-import Admin from "@/pages/Admin";
-import Login from "@/pages/Login";
-import Signup from "@/pages/Signup";
-import ResetPassword from "@/pages/ResetPassword";
-import CeresMaps from "@/pages/CeresMaps";
-import CeresInsights from "@/pages/CeresInsights";
-import RiskAnalysis from "@/pages/RiskAnalysis";
-import Areas from "@/pages/Areas";
-import Prevention from "@/pages/Prevention";
-import Settings from "@/pages/Settings";
-import Help from "@/pages/Help";
-import DataImport from "@/pages/DataImport";
-import DataSources from "@/pages/DataSources";
-import NotFound from "@/pages/not-found";
 import { OnboardingTour } from "@/components/OnboardingTour";
+
+// Pages are loaded on demand: the first visit (especially on mobile networks)
+// downloads only the code of the page being opened.
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Sensors = lazy(() => import("@/pages/Sensors"));
+const SensorDetails = lazy(() => import("@/pages/SensorDetails"));
+const Alerts = lazy(() => import("@/pages/Alerts"));
+const Reports = lazy(() => import("@/pages/Reports"));
+const Admin = lazy(() => import("@/pages/Admin"));
+const Login = lazy(() => import("@/pages/Login"));
+const Signup = lazy(() => import("@/pages/Signup"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const CeresMaps = lazy(() => import("@/pages/CeresMaps"));
+const CeresInsights = lazy(() => import("@/pages/CeresInsights"));
+const RiskAnalysis = lazy(() => import("@/pages/RiskAnalysis"));
+const Areas = lazy(() => import("@/pages/Areas"));
+const Prevention = lazy(() => import("@/pages/Prevention"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const Help = lazy(() => import("@/pages/Help"));
+const DataImport = lazy(() => import("@/pages/DataImport"));
+const DataSources = lazy(() => import("@/pages/DataSources"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
+function FullPageSpinner({ label }: { label: string }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#F5F7F8" }}>
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#0F5132", borderTopColor: "transparent" }} />
+        <p className="text-sm text-gray-500">{label}</p>
+      </div>
+    </div>
+  );
+}
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { data: user, isLoading } = useAuthStatus();
@@ -38,14 +52,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   }, [user, isLoading, setLocation]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F5F7F8" }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#0F5132", borderTopColor: "transparent" }} />
-          <p className="text-sm text-gray-500">Verificando acesso...</p>
-        </div>
-      </div>
-    );
+    return <FullPageSpinner label="Verificando acesso..." />;
   }
 
   if (!user) return null;
@@ -62,23 +69,23 @@ function Router() {
       {/* Public — analysis page accessible without login */}
       <Route path="/simulacao" component={RiskAnalysis} />
       <Route path="/risk-analysis" component={RiskAnalysis} />
-      <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
-      <Route path="/sensors" component={() => <ProtectedRoute component={Sensors} />} />
-      <Route path="/sensors/:id" component={() => <ProtectedRoute component={SensorDetails} />} />
-      <Route path="/alerts" component={() => <ProtectedRoute component={Alerts} />} />
-      <Route path="/reports" component={() => <ProtectedRoute component={Reports} />} />
-      <Route path="/admin" component={() => <ProtectedRoute component={Admin} />} />
-      <Route path="/maps" component={() => <ProtectedRoute component={CeresMaps} />} />
-      <Route path="/insights" component={() => <ProtectedRoute component={CeresInsights} />} />
-      <Route path="/areas" component={() => <ProtectedRoute component={Areas} />} />
-      <Route path="/prevention" component={() => <ProtectedRoute component={Prevention} />} />
-      <Route path="/data-import" component={() => <ProtectedRoute component={DataImport} />} />
-      <Route path="/data-sources" component={() => <ProtectedRoute component={DataSources} />} />
+      <Route path="/dashboard"><ProtectedRoute component={Dashboard} /></Route>
+      <Route path="/sensors"><ProtectedRoute component={Sensors} /></Route>
+      <Route path="/sensors/:id"><ProtectedRoute component={SensorDetails} /></Route>
+      <Route path="/alerts"><ProtectedRoute component={Alerts} /></Route>
+      <Route path="/reports"><ProtectedRoute component={Reports} /></Route>
+      <Route path="/admin"><ProtectedRoute component={Admin} /></Route>
+      <Route path="/maps"><ProtectedRoute component={CeresMaps} /></Route>
+      <Route path="/insights"><ProtectedRoute component={CeresInsights} /></Route>
+      <Route path="/areas"><ProtectedRoute component={Areas} /></Route>
+      <Route path="/prevention"><ProtectedRoute component={Prevention} /></Route>
+      <Route path="/data-import"><ProtectedRoute component={DataImport} /></Route>
+      <Route path="/data-sources"><ProtectedRoute component={DataSources} /></Route>
       {/* Legacy redirects */}
-      <Route path="/aprende" component={() => <ProtectedRoute component={Prevention} />} />
-      <Route path="/comunidade" component={() => <ProtectedRoute component={Prevention} />} />
-      <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
-      <Route path="/help" component={() => <ProtectedRoute component={Help} />} />
+      <Route path="/aprende"><ProtectedRoute component={Prevention} /></Route>
+      <Route path="/comunidade"><ProtectedRoute component={Prevention} /></Route>
+      <Route path="/settings"><ProtectedRoute component={Settings} /></Route>
+      <Route path="/help"><ProtectedRoute component={Help} /></Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -88,7 +95,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Router />
+        <Suspense fallback={<FullPageSpinner label="Carregando..." />}>
+          <Router />
+        </Suspense>
         <OnboardingTour />
         <Toaster />
       </TooltipProvider>

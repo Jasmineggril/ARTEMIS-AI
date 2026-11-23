@@ -72,7 +72,7 @@ export default function CeresInsights() {
   return (
     <Layout>
       <header className="mb-8">
-        <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
+        <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground flex items-center gap-2">
           <BarChart3 className="w-8 h-8 text-primary" />
           Inteligência Operacional
         </h1>
@@ -83,7 +83,7 @@ export default function CeresInsights() {
       </header>
 
       {/* KPIs */}
-      <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {KPI_CARDS.map(k => (
           <div key={k.label} className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
@@ -97,7 +97,7 @@ export default function CeresInsights() {
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Análises por período */}
         <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
           <h2 className="font-semibold text-foreground mb-4 text-sm">Análises por período</h2>

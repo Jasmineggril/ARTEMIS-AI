@@ -31,18 +31,18 @@ export default function Admin() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold font-display text-foreground">Painel Administrativo</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">Painel Administrativo</h1>
           <p className="text-muted-foreground mt-1">Gerenciar áreas monitoradas, análises de risco, alertas preventivos e relatórios operacionais.</p>
         </div>
-        <Button onClick={handleExportSensors}>
+        <Button onClick={handleExportSensors} className="self-start sm:self-auto shrink-0">
           <Download className="w-4 h-4 mr-2" />
           Exportar Relatórios
         </Button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3 mb-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
         <div className="rounded-3xl border border-border/50 bg-card p-6 shadow-sm">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Usuários cadastrados</p>
           <p className="mt-3 text-3xl font-bold text-foreground">{12 + sensors.length}</p>
@@ -63,7 +63,7 @@ export default function Admin() {
       <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
         <h2 className="text-xl font-bold font-display mb-4">Gerenciar Fontes de Dados</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="border-b border-border/50">
               <tr className="text-left">
                 <th className="py-3 px-4 font-semibold">ID</th>

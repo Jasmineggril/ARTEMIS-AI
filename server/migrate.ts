@@ -24,7 +24,13 @@ export async function runMigrations(): Promise<void> {
       )
     `);
 
-    const migrationsDir = path.resolve(process.cwd(), "migrations");
+    // Normally the app runs from the project root; when started from another
+    // directory, look next to the production bundle (dist/../migrations).
+    const candidates = [path.resolve(process.cwd(), "migrations")];
+    if (typeof __dirname !== "undefined") {
+      candidates.push(path.resolve(__dirname, "..", "migrations"));
+    }
+    const migrationsDir = candidates.find((dir) => fs.existsSync(dir)) ?? candidates[0];
     if (!fs.existsSync(migrationsDir)) {
       console.log("[migrate] No migrations directory found — skipping");
       return;

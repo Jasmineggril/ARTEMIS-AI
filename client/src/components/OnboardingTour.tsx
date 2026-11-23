@@ -8,6 +8,10 @@ import {
   shouldShowWelcome,
 } from "@/hooks/use-onboarding";
 import { WelcomeModal } from "@/components/WelcomeModal";
+import { useAuthStatus } from "@/hooks/use-auth";
+
+/** Pages without the app layout — the welcome/tour is not offered there. */
+const PAGES_WITHOUT_TOUR = new Set(["/", "/login", "/signup", "/reset-password"]);
 
 // ─── Tour step definitions ────────────────────────────────────────────────────
 
@@ -80,8 +84,15 @@ const TOTAL = STEPS.length;
 
 interface Rect { top: number; left: number; width: number; height: number }
 
+/** First *visible* element for the step (e.g. sidebar on desktop, menu button on phones). */
 function findElement(target: string): HTMLElement | null {
-  return document.querySelector(`[data-tour="${target}"]`) as HTMLElement | null;
+  const candidates = Array.from(document.querySelectorAll<HTMLElement>(`[data-tour="${target}"]`));
+  return (
+    candidates.find((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    }) ?? null
+  );
 }
 
 function getRect(el: HTMLElement): Rect {
@@ -93,13 +104,16 @@ function getRect(el: HTMLElement): Rect {
 
 function computeTooltipStyle(rect: Rect | null): React.CSSProperties {
   if (!rect) {
-    return { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)" };
+    return {
+      position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+      width: "min(320px, calc(100vw - 32px))",
+    };
   }
   const PAD = 16;
   const TH = 280; // approx tooltip height
-  const TW = 320;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  const TW = Math.min(320, vw - PAD * 2);
   const centerX = rect.left + rect.width / 2;
   const spaceBelow = vh - (rect.top + rect.height);
   const spaceAbove = rect.top;
@@ -122,7 +136,8 @@ function computeTooltipStyle(rect: Rect | null): React.CSSProperties {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function OnboardingTour() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { data: user } = useAuthStatus();
   const [showWelcome, setShowWelcome] = useState(false);
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
@@ -131,14 +146,15 @@ export function OnboardingTour() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // ── Initial check ──────────────────────────────────────────────────────────
+  // ── Initial check — only for logged-in users inside the app ───────────────
   useEffect(() => {
+    if (!user || PAGES_WITHOUT_TOUR.has(location) || showWelcome || active) return;
     const status = getOnboardingStatus();
     if (shouldShowWelcome() && !status.neverShow) {
       setShowWelcome(true);
       setOnboardingStatus({ started: true });
     }
-  }, []);
+  }, [user, location, showWelcome, active]);
 
   // ── Resolve element rect each step ────────────────────────────────────────
   const resolveStep = useCallback((stepIdx: number) => {

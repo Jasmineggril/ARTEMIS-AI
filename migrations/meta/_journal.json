@@ -15,6 +15,13 @@
       "when": 1784325993158,
       "tag": "0001_add_property_profile_to_users",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795472248419,
+      "tag": "0002_add_import_tables",
+      "breakpoints": true
     }
   ]
 }

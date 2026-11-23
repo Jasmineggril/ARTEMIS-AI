@@ -2,7 +2,14 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { AlertTriangle, ArrowLeft, Leaf } from "lucide-react";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
-import { authenticateDemoSession, authenticateLocally, writeStoredAuthSession } from "@/hooks/use-auth";
+import {
+  authenticateDemoSession,
+  authenticateLocally,
+  bridgeSupabaseSession,
+  completeLogin,
+  isDemoCredentials,
+  loginWithApi,
+} from "@/hooks/use-auth";
 import { PRODUCT_NAME, SUBMISSION_MODE } from "@shared/identity";
 
 function getLoginErrorMessage(error: unknown): string {
@@ -46,24 +53,29 @@ export default function Login() {
     setStatusMessage("");
 
     try {
-      const demoSession = authenticateDemoSession(email, password);
-      if (demoSession) {
-        writeStoredAuthSession(demoSession);
-        setStatusMessage("Login de demonstração realizado com sucesso.");
-        setLocation("/dashboard");
-        return;
-      }
-
-      if (!isSupabaseConfigured) {
-        const localSession = authenticateLocally({ email, password, createIfMissing: false });
-        if (!localSession) {
-          setError("Email ou senha incorretos.");
+      // Demo account, or no Supabase configured: log in on this app's own server.
+      if (!isSupabaseConfigured || isDemoCredentials(email, password)) {
+        const result = await loginWithApi(email, password);
+        if (result.kind === "ok") {
+          completeLogin(result.user);
+          setLocation("/dashboard");
+          return;
+        }
+        if (result.kind === "rejected") {
+          setError(result.status === 401 ? "Email ou senha incorretos." : result.message);
           return;
         }
 
-        writeStoredAuthSession(localSession);
-        setStatusMessage("Login realizado com sucesso em modo local.");
-        setLocation("/dashboard");
+        // Server unreachable: offline mode, kept only in this browser.
+        const offlineSession =
+          authenticateDemoSession(email, password) ??
+          authenticateLocally({ email, password, createIfMissing: false });
+        if (offlineSession) {
+          completeLogin(offlineSession);
+          setLocation("/dashboard");
+          return;
+        }
+        setError("Não foi possível conectar ao servidor. Tente novamente.");
         return;
       }
 
@@ -79,13 +91,14 @@ export default function Login() {
         const isNetworkError = rawMessage.includes("network") || rawMessage.includes("fetch");
         const isEmailNotConfirmed = rawMessage.includes("email not confirmed") || rawMessage.includes("email_not_confirmed");
 
-        const localSession = authenticateLocally({ email, password, createIfMissing: false });
-        if (localSession) {
-          writeStoredAuthSession(localSession);
+        // Fallback: account created on this app's server (e.g. while Supabase was unavailable).
+        const apiResult = await loginWithApi(email, password);
+        if (apiResult.kind === "ok") {
+          completeLogin(apiResult.user);
           setStatusMessage(
             isEmailNotConfirmed
-              ? "Login local realizado. Seu registro Supabase ainda não está aprovado ou seu email não foi confirmado."
-              : "Login realizado em modo local como fallback."
+              ? "Login realizado. Seu registro Supabase ainda não está aprovado ou seu email não foi confirmado."
+              : "Login realizado com a conta do servidor da plataforma."
           );
           setLocation("/dashboard");
           return;
@@ -124,15 +137,15 @@ export default function Login() {
         profileName = profile.name;
       }
 
-      const session = {
+      // Open the matching session on our server (needed by data import, chat profile…)
+      await bridgeSupabaseSession(authData.session?.access_token);
+
+      completeLogin({
         userId: user.id,
         email: user.email ?? email,
         name: profileName,
-        source: "server" as const,
-      };
-      writeStoredAuthSession(session);
-
-      setStatusMessage("Login realizado com sucesso.");
+        source: "server",
+      });
       setLocation("/dashboard");
     } catch (error) {
       console.error("Erro no login:", error);

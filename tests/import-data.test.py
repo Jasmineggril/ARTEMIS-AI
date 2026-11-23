@@ -6,6 +6,8 @@ Validação de arquivos CSV, XLSX e XLS
 
 import csv
 import json
+import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -70,7 +72,8 @@ def validate_row(row):
 def test_import_data():
     """Testar importação de dados em todos os formatos"""
     
-    base_path = Path('/workspaces/CERES-AI/public')
+    # Demo files served by the app (client/public), relative to this script
+    base_path = Path(__file__).resolve().parent.parent / 'client' / 'public'
     files = {
         'CSV': base_path / 'demo-ocorrencias.csv',
         'XLSX': base_path / 'demo-ocorrencias.xlsx',
@@ -166,12 +169,19 @@ if __name__ == '__main__':
             print(f"    Inválidos: {data['invalidos']}")
             print(f"    Tamanho: {data['tamanho_mb']:.3f} MB")
     
+    failed = [name for name, data in results['files'].items() if 'error' in data or data.get('status') == 'erro']
+
     print("\n" + "="*70)
-    print("Resultado: Todos os formatos (CSV, XLSX, XLS) foram testados com sucesso")
+    if failed:
+        print(f"Resultado: FALHA em {', '.join(failed)}")
+    else:
+        print("Resultado: Todos os formatos (CSV, XLSX, XLS) foram testados com sucesso")
     print("="*70 + "\n")
     
-    # Salvar resultados em JSON
-    with open('/tmp/import-test-results.json', 'w') as f:
-        json.dump(results, f, indent=2)
+    # Salvar resultados em JSON (diretório temporário do sistema — funciona também no Windows)
+    output_path = Path(tempfile.gettempdir()) / 'import-test-results.json'
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
     
-    print("Resultados salvos em /tmp/import-test-results.json")
+    print(f"Resultados salvos em {output_path}")
+    sys.exit(1 if failed else 0)

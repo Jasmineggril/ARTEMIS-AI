@@ -67,7 +67,7 @@ function AnalysisReport({ item }: { item: typeof DEMO_RESULTS[0] }) {
           </div>
 
           {/* Score */}
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-card border border-border/40 rounded-xl p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">Índice de Risco</p>
               <p className="text-4xl font-bold text-foreground">{r.score}</p>
@@ -184,7 +184,7 @@ export default function Reports() {
     <Layout>
       <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground flex items-center gap-2">
             <FileText className="w-8 h-8 text-primary" />
             Relatórios
           </h1>
@@ -234,7 +234,7 @@ export default function Reports() {
         {showComparative && (
           <div className="border-t border-border/30 p-6">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="border-b border-border/30">
                     <th className="pb-3 text-left text-xs font-semibold text-muted-foreground">Cenário</th>

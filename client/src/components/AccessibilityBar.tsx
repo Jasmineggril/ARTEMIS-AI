@@ -1,23 +1,42 @@
 import { useState, useEffect } from "react";
 import { Accessibility, Sun, Type, Volume2, VolumeX, ZoomIn, ZoomOut, X } from "lucide-react";
 
+// localStorage can throw in private browsing on some mobile browsers.
+function readPref(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writePref(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore
+  }
+}
+
 export function AccessibilityBar() {
   const [open, setOpen] = useState(false);
-  const [highContrast, setHighContrast] = useState(() => localStorage.getItem("ceres-hc") === "1");
-  const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem("ceres-fs") ?? 100));
+  const [highContrast, setHighContrast] = useState(() => readPref("ceres-hc") === "1");
+  const [fontSize, setFontSize] = useState(() => Number(readPref("ceres-fs") ?? 100) || 100);
   const [speaking, setSpeaking] = useState(false);
+  const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
   useEffect(() => {
     document.documentElement.classList.toggle("high-contrast", highContrast);
-    localStorage.setItem("ceres-hc", highContrast ? "1" : "0");
+    writePref("ceres-hc", highContrast ? "1" : "0");
   }, [highContrast]);
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${fontSize}%`;
-    localStorage.setItem("ceres-fs", String(fontSize));
+    writePref("ceres-fs", String(fontSize));
   }, [fontSize]);
 
   const speak = () => {
+    if (!speechSupported) return;
     if (speaking) {
       window.speechSynthesis.cancel();
       setSpeaking(false);
@@ -43,7 +62,7 @@ export function AccessibilityBar() {
         onClick={() => setOpen(!open)}
         data-testid="button-accessibility-toggle"
         aria-label="Acessibilidade"
-        className="fixed bottom-24 left-5 z-50 w-11 h-11 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 flex items-center justify-center transition-all"
+        className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-50 w-11 h-11 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 flex items-center justify-center transition-all"
         title="Opções de Acessibilidade"
       >
         <Accessibility className="w-5 h-5" />
@@ -53,7 +72,7 @@ export function AccessibilityBar() {
       {open && (
         <div
           data-testid="panel-accessibility"
-          className="fixed bottom-40 left-5 z-50 bg-card border border-border/50 rounded-2xl shadow-2xl p-4 w-64"
+          className="fixed bottom-20 right-4 lg:bottom-20 lg:right-6 z-50 bg-card border border-border/50 rounded-2xl shadow-2xl p-4 w-64 max-w-[calc(100vw-2rem)]"
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-sm text-foreground">Acessibilidade</h3>
@@ -121,7 +140,7 @@ export function AccessibilityBar() {
 
             {/* Reset */}
             <button
-              onClick={() => { setHighContrast(false); setFontSize(100); window.speechSynthesis.cancel(); setSpeaking(false); }}
+              onClick={() => { setHighContrast(false); setFontSize(100); if (speechSupported) window.speechSynthesis.cancel(); setSpeaking(false); }}
               data-testid="button-accessibility-reset"
               className="w-full py-2 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-xl"
             >

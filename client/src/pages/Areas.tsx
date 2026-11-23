@@ -58,7 +58,7 @@ export default function Areas() {
     <Layout>
       <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground flex items-center gap-2">
             <MapPinned className="w-8 h-8 text-primary" />
             Áreas Monitoradas
           </h1>
@@ -119,7 +119,7 @@ export default function Areas() {
       {/* Table */}
       <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="px-5 py-3 text-left font-semibold text-muted-foreground">Área</th>

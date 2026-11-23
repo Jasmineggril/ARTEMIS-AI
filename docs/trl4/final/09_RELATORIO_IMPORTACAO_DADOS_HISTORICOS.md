@@ -21,7 +21,7 @@ O Florestaí buscava transformar registros disponibilizados em planilhas estáti
 | Tipo de fonte | Arquivo CSV, XLS ou XLSX |
 | Origem declarada | Sisfogo (quando aplicável) ou outras fontes autorizadas |
 | Integração | Importação de arquivo — não representa conexão oficial ou direta por API |
-| Dataset demonstrativo | public/demo-ocorrencias.csv (20 registros sintéticos) |
+| Dataset demonstrativo | client/public/demo-ocorrencias.csv (20 registros sintéticos) |
 
 **Aviso obrigatório:** A integração atual ocorre por importação de arquivos autorizados e não representa conexão oficial ou direta por API com o Sisfogo.
 
@@ -135,7 +135,7 @@ Cada importação gera:
 
 ## 10. Dataset Demonstrativo
 
-Arquivo: `public/demo-ocorrencias.csv`
+Arquivo: `client/public/demo-ocorrencias.csv`
 
 | Campo | Valor |
 |---|---|

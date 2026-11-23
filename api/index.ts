@@ -13,14 +13,11 @@
  */
 
 import express, { type Request, type Response, type NextFunction } from "express";
-import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
 import { createServer } from "http";
-import { pool } from "../server/db";
+import { isConnectionError } from "../server/db";
 import { runMigrations } from "../server/migrate";
 import { registerRoutes } from "../server/routes";
-
-const PgSession = connectPgSimple(session);
+import { createSessionMiddleware } from "../server/session";
 
 // Survive warm re-use: build the app once and reuse across invocations.
 let initPromise: Promise<express.Express> | null = null;
@@ -29,35 +26,24 @@ async function buildApp(): Promise<express.Express> {
   const app = express();
   // createServer is only used so registerRoutes can return it; no listen() here.
   const httpServer = createServer(app);
+  app.set("trust proxy", 1);
 
-  const sessionStore = (() => {
-    try {
-      if (pool) return new PgSession({ pool, createTableIfMissing: true });
-    } catch {
-      /* fall through */
-    }
-    return new session.MemoryStore();
-  })();
+  let databaseAvailable = true;
+  try {
+    await runMigrations();
+  } catch (err) {
+    databaseAvailable = !isConnectionError(err);
+    console.warn(
+      "[migrate] skipped:",
+      err instanceof Error ? err.message : err
+    );
+  }
 
-  const isProduction = process.env.NODE_ENV === "production";
-
-  app.use(
-    session({
-      store: sessionStore,
-      secret: process.env.SESSION_SECRET || "ceres-ai-dev-secret",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProduction,
-      },
-    })
-  );
-
+  app.use(createSessionMiddleware({ useDatabase: databaseAvailable }));
   app.use(
     express.json({
+      // Vercel itself limits request bodies to ~4.5 MB.
+      limit: "5mb",
       verify: (req: any, _res, buf) => {
         req.rawBody = buf;
       },
@@ -65,23 +51,18 @@ async function buildApp(): Promise<express.Express> {
   );
   app.use(express.urlencoded({ extended: false }));
 
-  try {
-    await runMigrations();
-  } catch (err) {
-    console.warn(
-      "[migrate] skipped:",
-      err instanceof Error ? err.message : err
-    );
-  }
-
   await registerRoutes(httpServer, app);
 
   // Generic error handler
   app.use(
-    (err: any, _req: Request, res: Response, _next: NextFunction) => {
+    (err: any, _req: Request, res: Response, next: NextFunction) => {
+      if (res.headersSent) return next(err);
       const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      console.error("Unhandled server error:", err);
+      if (status >= 500) console.error("Unhandled server error:", err);
+      else console.warn(`[http] ${status}: ${err.message}`);
+      let message = "Erro interno do servidor";
+      if (status === 413) message = "Arquivo muito grande para ser enviado.";
+      else if (status < 500) message = err.expose && err.message ? err.message : "Requisição inválida";
       res.status(status).json({ message });
     }
   );

@@ -9,3 +9,6 @@ pytest-asyncio>=0.25
 httpx>=0.28
 joblib>=1.4
 matplotlib>=3.8
+# Usados pelo teste de importação (tests/import-data.test.py) para ler XLSX/XLS
+openpyxl>=3.1
+xlrd>=2.0

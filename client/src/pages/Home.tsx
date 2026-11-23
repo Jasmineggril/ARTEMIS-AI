@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/RiskBadge";
-import ceresLogo from "@assets/LOGO_CERES_AI_1782244864205.png";
+import ceresLogo from "@assets/LOGO_CERES_AI_web.png";
 import {
   Flame, Map, Bell, BarChart3, FileText, Database,
   ShieldCheck, CheckCircle2, AlertTriangle, ChevronRight,
@@ -188,7 +188,7 @@ export default function Home() {
 
       {/* ── Problema ─────────────────────────────────────────────────────── */}
       <section id="solucao" className="max-w-7xl mx-auto px-6 py-20">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
             <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-3 block">O Problema</span>
             <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground mb-6 leading-tight">
@@ -227,7 +227,7 @@ export default function Home() {
             <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-3 block">Fluxo tecnológico</span>
             <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">Como funciona</h2>
           </div>
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {steps.map((step, i) => (
               <div key={step.n} className="relative">
                 <div className="bg-card rounded-2xl p-5 border border-border/50 shadow-sm h-full">
@@ -269,7 +269,7 @@ export default function Home() {
             <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-3 block">Setores atendidos</span>
             <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">Para quem é esta plataforma</h2>
           </div>
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
             {sectors.map(s => (
               <div key={s.name} className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm hover:shadow-md transition-shadow">
                 <span className="text-3xl mb-3 block">{s.icon}</span>
@@ -287,7 +287,7 @@ export default function Home() {
           <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-3 block">Funcionalidades</span>
           <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">O que a plataforma oferece</h2>
         </div>
-        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
           {features.map(f => (
             <div key={f.title} className="group bg-card rounded-2xl p-6 border border-border/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
@@ -310,7 +310,7 @@ export default function Home() {
               Não são resultados alcançados. São metas a serem validadas durante a Prova de Valor.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {povGoals.map(g => (
               <div key={g.value} className="bg-card rounded-2xl p-7 border border-border/50 shadow-sm text-center">
                 <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide block mb-2">{g.label}</span>
@@ -451,7 +451,7 @@ export default function Home() {
 
       {/* ── TRL 4 ────────────────────────────────────────────────────────── */}
       <section id="trl" className="max-w-7xl mx-auto px-6 py-20">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
             <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-3 block">Estado de maturidade</span>
             <h2 className="text-3xl font-bold font-display text-foreground mb-6">TRL 4 — Protótipo funcional</h2>

@@ -23,7 +23,7 @@ export default function Sensors() {
     <Layout>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-foreground">Sensores</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">Sensores</h1>
           <p className="text-muted-foreground mt-1">Gerencie e monitore suas unidades de sensores implantadas.</p>
         </div>
         

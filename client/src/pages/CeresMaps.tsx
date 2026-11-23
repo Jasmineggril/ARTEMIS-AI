@@ -178,7 +178,7 @@ export default function CeresMaps() {
     <Layout>
       <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground flex items-center gap-2">
             <MapPin className="w-8 h-8 text-primary" />
             Mapa de Risco
           </h1>
@@ -241,7 +241,7 @@ export default function CeresMaps() {
         </button>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Map */}
         <div className="md:col-span-2 flex flex-col gap-3">
           {/* Biome legend */}

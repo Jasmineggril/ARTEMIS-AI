@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { AlertTriangle, ArrowLeft, Leaf } from "lucide-react";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
-import { authenticateLocally, writeStoredAuthSession } from "@/hooks/use-auth";
+import {
+  authenticateLocally,
+  bridgeSupabaseSession,
+  completeLogin,
+  signupOrLoginWithApi,
+  signupWithApi,
+} from "@/hooks/use-auth";
 import { PRODUCT_NAME, SUBMISSION_MODE } from "@shared/identity";
 
 function isPasswordStrong(password: string) {
@@ -64,6 +70,18 @@ export default function Signup() {
     setLoading(true);
     try {
       if (!isSupabaseConfigured) {
+        const result = await signupWithApi(formData.name, formData.email, formData.password);
+        if (result.kind === "ok") {
+          completeLogin(result.user);
+          setLocation("/dashboard");
+          return;
+        }
+        if (result.kind === "rejected") {
+          setError(result.message);
+          return;
+        }
+
+        // Server unreachable: offline account kept only in this browser.
         const localSession = authenticateLocally({
           email: formData.email,
           password: formData.password,
@@ -72,12 +90,11 @@ export default function Signup() {
         });
 
         if (!localSession) {
-          setError("Não foi possível criar a conta local.");
+          setError("Não foi possível conectar ao servidor. Tente novamente.");
           return;
         }
 
-        writeStoredAuthSession(localSession);
-        setStatusMessage("Conta criada com sucesso em modo local. Redirecionando...");
+        completeLogin(localSession);
         setLocation("/dashboard");
         return;
       }
@@ -101,17 +118,9 @@ export default function Signup() {
         const isConfigError = rawMessage.includes("missing environment variable") || rawMessage.includes("invalid api key") || rawMessage.includes("invalid url");
 
         if (isConfigError) {
-          const localSession = authenticateLocally({
-            email: formData.email,
-            password: formData.password,
-            name: formData.name,
-            createIfMissing: true,
-          });
-          if (localSession) {
-            writeStoredAuthSession(localSession);
-            setStatusMessage(
-              "O Supabase não está totalmente disponível. Conta criada localmente e você pode entrar normalmente."
-            );
+          const apiResult = await signupOrLoginWithApi(formData.name, formData.email, formData.password);
+          if (apiResult.kind === "ok") {
+            completeLogin(apiResult.user);
             setLocation("/dashboard");
             return;
           }
@@ -124,15 +133,9 @@ export default function Signup() {
       const signupUser = authData.user ?? authData.session?.user;
       if (!signupUser) {
         console.error("Erro no cadastro: usuário não retornado", authData);
-        const localSession = authenticateLocally({
-          email: formData.email,
-          password: formData.password,
-          name: formData.name,
-          createIfMissing: true,
-        });
-        if (localSession) {
-          writeStoredAuthSession(localSession);
-          setStatusMessage("Conta criada localmente, mas não foi possível concluir o cadastro Supabase.");
+        const apiResult = await signupOrLoginWithApi(formData.name, formData.email, formData.password);
+        if (apiResult.kind === "ok") {
+          completeLogin(apiResult.user);
           setLocation("/dashboard");
           return;
         }
@@ -156,18 +159,10 @@ export default function Signup() {
 
       const needsConfirmation = !authData.session;
       if (needsConfirmation) {
-        const localSession = authenticateLocally({
-          email: formData.email,
-          password: formData.password,
-          name: formData.name,
-          createIfMissing: true,
-        });
-
-        if (localSession) {
-          writeStoredAuthSession(localSession);
-          setStatusMessage(
-            "Conta criada com sucesso. Se o e-mail de confirmação não chegar, use o login local ou redefinição de senha."
-          );
+        // Until the e-mail is confirmed, use an account on this app's server.
+        const apiResult = await signupOrLoginWithApi(formData.name, formData.email, formData.password);
+        if (apiResult.kind === "ok") {
+          completeLogin(apiResult.user);
           setLocation("/dashboard");
           return;
         }
@@ -176,14 +171,13 @@ export default function Signup() {
         return;
       }
 
-      writeStoredAuthSession({
+      await bridgeSupabaseSession(authData.session?.access_token);
+      completeLogin({
         userId: signupUser.id,
         email: signupUser.email ?? formData.email,
         name: signupUser.user_metadata?.full_name ?? formData.name,
         source: "server",
       });
-
-      setStatusMessage("Conta criada com sucesso. Redirecionando...");
       setLocation("/dashboard");
     } catch (error) {
       console.error("Erro no cadastro:", error);

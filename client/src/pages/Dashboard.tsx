@@ -145,7 +145,7 @@ export default function Dashboard() {
     <Layout>
       <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-foreground">Visão Geral</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">Visão Geral</h1>
           <p className="text-muted-foreground mt-1 flex items-center gap-2">
             <Clock className="w-4 h-4" />
             Atualizado às {format(new Date(), "HH:mm", { locale: ptBR })} ·{" "}
@@ -153,7 +153,7 @@ export default function Dashboard() {
           </p>
         </div>
         <Link href="/reports">
-          <button className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2 shadow-sm text-sm">
+          <button className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2 shadow-sm text-sm whitespace-nowrap">
             <FileText className="w-4 h-4" /> Gerar relatório
           </button>
         </Link>
@@ -168,7 +168,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Índice de Risco Central ───────────────────────────────────────── */}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="md:col-span-2 bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
           <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
             <Activity className="w-5 h-5 text-primary" /> Índice de Risco de Incêndio — Área Crítica
@@ -231,7 +231,7 @@ export default function Dashboard() {
         <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-primary" /> Fatores que influenciaram o risco
         </h2>
-        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {(dominantResult?.factors ?? []).slice(0, 8).map((f, i) => (
             <div key={i} className="bg-muted/30 rounded-xl p-3 border border-border/30">
               <div className="flex items-center justify-between mb-1">
@@ -250,7 +250,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Charts ───────────────────────────────────────────────────────── */}
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Score ao longo do dia */}
         <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
           <h2 className="font-semibold text-foreground mb-4 text-sm">Evolução do índice de risco (hoje)</h2>
@@ -297,7 +297,7 @@ export default function Dashboard() {
           </Link>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="bg-muted/20 border-b border-border/30">
                 <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">Área</th>

@@ -126,7 +126,7 @@ export default function DataSources() {
       {/* Header */}
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">Gestão de fontes</p>
-        <h1 className="text-3xl font-bold font-display text-foreground flex items-center gap-2">
+        <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground flex items-center gap-2">
           <Database className="w-7 h-7 text-primary" />
           Fontes de Dados
         </h1>
@@ -148,7 +148,7 @@ export default function DataSources() {
 
       {/* Sources grid */}
       {isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-card border border-border/50 rounded-xl p-5 h-36 animate-pulse" />
           ))}
@@ -160,7 +160,7 @@ export default function DataSources() {
           <p className="text-sm mt-1">Importe ocorrências para criar uma fonte de arquivo.</p>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {allSources.map(source => {
             const Icon = TYPE_ICONS[source.type] ?? Database;
             return (

@@ -1,4 +1,4 @@
-CREATE TABLE "achievements" (
+CREATE TABLE IF NOT EXISTS "achievements" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"badge_id" text NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE "achievements" (
 	"earned_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "alerts" (
+CREATE TABLE IF NOT EXISTS "alerts" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"sensor_id" integer,
 	"title" text NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE "alerts" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "data_sources" (
+CREATE TABLE IF NOT EXISTS "data_sources" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"type" text NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE "data_sources" (
 	"description" text
 );
 --> statement-breakpoint
-CREATE TABLE "denuncias" (
+CREATE TABLE IF NOT EXISTS "denuncias" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer,
 	"titulo" text NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE "denuncias" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "monitored_areas" (
+CREATE TABLE IF NOT EXISTS "monitored_areas" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"operation_type" text NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE "monitored_areas" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "readings" (
+CREATE TABLE IF NOT EXISTS "readings" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"sensor_id" integer NOT NULL,
 	"value" real NOT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE "readings" (
 	"timestamp" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "risk_analyses" (
+CREATE TABLE IF NOT EXISTS "risk_analyses" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"area_id" integer,
 	"score" integer NOT NULL,
@@ -80,7 +80,7 @@ CREATE TABLE "risk_analyses" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "sensors" (
+CREATE TABLE IF NOT EXISTS "sensors" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"type" text NOT NULL,
@@ -91,7 +91,7 @@ CREATE TABLE "sensors" (
 	"last_ping" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "user_stats" (
+CREATE TABLE IF NOT EXISTS "user_stats" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"points" integer DEFAULT 0,
@@ -101,7 +101,7 @@ CREATE TABLE "user_stats" (
 	"last_activity" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "users" (
+CREATE TABLE IF NOT EXISTS "users" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"email" text NOT NULL,
 	"password" text NOT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
-CREATE TABLE "weather_data" (
+CREATE TABLE IF NOT EXISTS "weather_data" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"latitude" real NOT NULL,
 	"longitude" real NOT NULL,

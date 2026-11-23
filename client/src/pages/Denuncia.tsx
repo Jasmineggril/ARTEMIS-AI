@@ -58,7 +58,7 @@ export default function Denuncia() {
       <div className="max-w-2xl mx-auto py-10">
         <header className="mb-8 text-center">
           <Flame className="w-12 h-12 text-red-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-emerald-950 font-display">Reportar Foco de Incêndio</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-emerald-950 font-display">Reportar Foco de Incêndio</h1>
           <p className="text-muted-foreground mt-2">Dados enviados diretamente ao Centro de Comando via Supabase.</p>
         </header>
 

@@ -185,7 +185,7 @@ export default function Help() {
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary mb-2">Central de Ajuda</p>
-          <h1 className="text-3xl font-bold font-display text-foreground">{displayName}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">{displayName}</h1>
           <p className="mt-2 text-muted-foreground text-sm leading-relaxed">
             Encontre respostas sobre como usar a plataforma, interpretar resultados e acompanhar áreas monitoradas.
           </p>
