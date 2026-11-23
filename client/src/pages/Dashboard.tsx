@@ -146,8 +146,8 @@ export default function Dashboard() {
       <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">Visão Geral</h1>
-          <p className="text-muted-foreground mt-1 flex items-center gap-2">
-            <Clock className="w-4 h-4" />
+          <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <Clock className="w-4 h-4 shrink-0" />
             Atualizado às {format(new Date(), "HH:mm", { locale: ptBR })} ·{" "}
             <span className="text-amber-600 text-sm">{SIMULATED_DATA_LABEL}</span>
           </p>
