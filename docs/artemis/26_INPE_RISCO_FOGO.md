@@ -64,7 +64,18 @@ Calculado segundo Haines (1988) com temperatura e ponto de orvalho **em níveis 
 
 Os valores vêm de dados de **modelo numérico** (Open-Meteo, família GFS), não de radiossonda. O índice indica o potencial de **crescimento de um incêndio já iniciado**; não mede risco de ignição. Referência brasileira: Melo, Justino, Melo & Silva (2012), *Mercator* 11(24): 187–207, DOI 10.4215/RM2012.1124.0012. Evidência de consulta real em quatro cidades: `docs/artemis/evidencias/2026-11-24-haines/haines-openmeteo-4-pontos.json`.
 
-## 6. Limitações e pendências
+## 6. Operação no Compose
+
+A API já executa a sincronização do risco oficial a cada `INPE_RISK_SYNC_HOURS` (padrão 6 h; `INPE_RISK_SYNC_ENABLED=false` desativa) e avalia alertas de risco persistente logo em seguida. Para carga inicial, backfill ou cron explícito, o Compose expõe o job `inpe-risk-sync` (binário gerado por `script/build.ts`):
+
+```bash
+docker compose --profile jobs run --rm inpe-risk-sync
+docker compose --profile jobs run --rm inpe-risk-sync node dist/sync-inpe-risk.cjs --from 2026-08-01 --to 2026-11-22
+```
+
+As variáveis `INPE_RISK_SYNC_ENABLED`, `INPE_RISK_SYNC_HOURS`, `APP_URL` e todas as obrigatórias estão documentadas em `.env.example`. O job usa o papel `artemis_app` (sem DDL) e a rede `edge` para acessar os arquivos públicos do INPE.
+
+## 7. Limitações e pendências
 
 - O RF observado publicado pelo INPE sofre correção por focos dos 3 dias anteriores; essa etapa não é reproduzida pela ARTEMIS.
 - A resolução é de 1 km, mas as entradas meteorológicas vêm de GFS (25–50 km) e IMERG (10 km) interpolados; o mapa mostra uma célula de 0,2° com média e máximo.

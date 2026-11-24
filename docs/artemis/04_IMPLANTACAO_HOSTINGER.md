@@ -73,7 +73,7 @@ git clone <URL_DO_REPOSITORIO> ~/artemis && cd ~/artemis
 cp .env.example .env && chmod 600 .env
 ```
 
-Gere os segredos e preencha `.env` (`APP_DOMAIN`, `ACME_EMAIL`, `POSTGRES_ADMIN_PASSWORD`, `ARTEMIS_OWNER_PASSWORD`, `ARTEMIS_APP_PASSWORD`, `SESSION_SECRET`), um valor diferente para cada:
+O modelo `.env.example` está versionado e lista todas as variáveis; as obrigatórias ficam vazias para o Compose falhar imediatamente se alguma não for preenchida. Gere os segredos e preencha `.env` (`APP_DOMAIN`, `ACME_EMAIL`, `POSTGRES_ADMIN_PASSWORD`, `ARTEMIS_OWNER_PASSWORD`, `ARTEMIS_APP_PASSWORD`, `SESSION_SECRET`), um valor diferente para cada:
 
 ```bash
 openssl rand -base64 48
@@ -87,7 +87,7 @@ docker compose up -d --build
 docker compose ps && curl -fsS https://$APP_DOMAIN/api/health
 ```
 
-Ordem de subida (automática): `db` saudável → `migrate` aplica as migrações com o papel **dono** e termina → `api` sobe com o papel **restrito** e apenas confere que nada ficou pendente. Uma falha de migração impede a API de subir (intencional).
+Ordem de subida (automática): `db` saudável → `migrate` aplica as migrações com o papel **dono** e termina → `api` sobe com o papel **restrito** e apenas confere que nada ficou pendente. Uma falha de migração impede a API de subir (intencional). A API também inicia o agendador interno: INPE de hora em hora, risco de fogo oficial a cada `INPE_RISK_SYNC_HOURS` (padrão 6 h; com alertas de risco persistente), Sisfogo diário, INMET diário e notificações a cada 5 min. Todos usam lock no banco e não se sobrepõem ao cron/CLI.
 
 Banco: `artemis_ai` (PostgreSQL 16 + PostGIS 3.4). Na primeira subida, `infrastructure/postgres/initdb/01-roles-extensions.sh` cria os papéis `artemis_owner` e `artemis_app` e a extensão PostGIS. Detalhes: `10_BANCO_MANUTENCAO_SEGURANCA.md`.
 
@@ -115,6 +115,14 @@ Focos de calor do INPE (de hora em hora) e backup diário. As linhas exatas est�
 
 ```bash
 docker compose --profile jobs run --rm inpe-sync node dist/sync-inpe.cjs --days 7
+```
+
+Risco de fogo oficial do INPE (observado, previsto e dias sem chuva). O agendador da API já faz a rotina; use o job para carga inicial, backfill ou cron explícito:
+
+```bash
+docker compose --profile jobs run --rm inpe-risk-sync
+# backfill observado (o INPE mantém ~10 meses online):
+docker compose --profile jobs run --rm inpe-risk-sync node dist/sync-inpe-risk.cjs --from 2026-08-01 --to 2026-11-22
 ```
 
 Sisfogo (ROIs oficiais, leitura da API pública). Primeira carga = sincronização completa (≈ 5–30 min; 1.698 ROIs em 4 min no teste de 16/11/2026):
