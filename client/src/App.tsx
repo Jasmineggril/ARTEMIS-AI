@@ -15,17 +15,25 @@ import Admin from "@/pages/Admin";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import ResetPassword from "@/pages/ResetPassword";
-import CeresMaps from "@/pages/CeresMaps";
-import CeresInsights from "@/pages/CeresInsights";
+import EnvironmentalMap from "@/pages/EnvironmentalMap";
+import Insights from "@/pages/Insights";
 import RiskAnalysis from "@/pages/RiskAnalysis";
 import Areas from "@/pages/Areas";
+import AreaDetail from "@/pages/AreaDetail";
+import Avaliacao from "@/pages/Avaliacao";
+import AdminOperations from "@/pages/AdminOperations";
 import Prevention from "@/pages/Prevention";
 import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
 import DataImport from "@/pages/DataImport";
 import DataSources from "@/pages/DataSources";
 import NotFound from "@/pages/not-found";
+import Organization from "@/pages/Organization";
+import Privacy from "@/pages/Privacy";
+import PublicLookup from "@/pages/PublicLookup";
+import { Redirect } from "wouter";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { BrandSplash } from "@/components/BrandScreens";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { data: user, isLoading } = useAuthStatus();
@@ -37,16 +45,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
     }
   }, [user, isLoading, setLocation]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F5F7F8" }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#0F5132", borderTopColor: "transparent" }} />
-          <p className="text-sm text-gray-500">Verificando acesso...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <BrandSplash message="Verificando acesso…" />;
 
   if (!user) return null;
   return <Component />;
@@ -59,6 +58,11 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/privacidade" component={Privacy} />
+      <Route path="/consulta-publica" component={PublicLookup} />
+      {/* old shared links */}
+      <Route path="/florestai">{() => <Redirect to={`/consulta-publica${window.location.search}`} replace />}</Route>
+      <Route path="/organization" component={() => <ProtectedRoute component={Organization} />} />
       {/* Public — analysis page accessible without login */}
       <Route path="/simulacao" component={RiskAnalysis} />
       <Route path="/risk-analysis" component={RiskAnalysis} />
@@ -68,8 +72,11 @@ function Router() {
       <Route path="/alerts" component={() => <ProtectedRoute component={Alerts} />} />
       <Route path="/reports" component={() => <ProtectedRoute component={Reports} />} />
       <Route path="/admin" component={() => <ProtectedRoute component={Admin} />} />
-      <Route path="/maps" component={() => <ProtectedRoute component={CeresMaps} />} />
-      <Route path="/insights" component={() => <ProtectedRoute component={CeresInsights} />} />
+      <Route path="/maps" component={() => <ProtectedRoute component={EnvironmentalMap} />} />
+      <Route path="/insights" component={() => <ProtectedRoute component={Insights} />} />
+      <Route path="/admin/operacao" component={() => <ProtectedRoute component={AdminOperations} />} />
+      <Route path="/avaliacao" component={() => <ProtectedRoute component={Avaliacao} />} />
+      <Route path="/areas/:id" component={() => <ProtectedRoute component={AreaDetail} />} />
       <Route path="/areas" component={() => <ProtectedRoute component={Areas} />} />
       <Route path="/prevention" component={() => <ProtectedRoute component={Prevention} />} />
       <Route path="/data-import" component={() => <ProtectedRoute component={DataImport} />} />

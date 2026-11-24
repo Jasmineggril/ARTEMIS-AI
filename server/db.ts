@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "@shared/schema";
+import { resolveDatabaseUrl, describeDbUrl } from "./db-url";
 
 const { Pool } = pg;
 
@@ -27,27 +28,10 @@ const loadDotenv = () => {
 };
 
 
-const getDatabaseUrl = (): string => {
-  loadDotenv();
-
-  // Prefer Supabase URL when set — it persists across deployments
-  const supabaseUrl = process.env.SUPABASE_DATABASE_URL?.trim();
-  if (supabaseUrl && supabaseUrl.includes("://")) {
-    return supabaseUrl;
-  }
-
-  const url = process.env.DATABASE_URL?.trim() || "";
-  if (url.includes("://")) return url;
-
-  const host = process.env.PGHOST || "localhost";
-  const port = process.env.PGPORT || "5432";
-  const user = process.env.PGUSER || "postgres";
-  const password = process.env.PGPASSWORD || "";
-  const database = process.env.PGDATABASE || "postgres";
-  return `postgresql://${user}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
-};
-
-const databaseUrl = getDatabaseUrl();
+loadDotenv();
+const resolved = resolveDatabaseUrl();
+resolved.warnings.forEach((w) => console.warn(`[db] ${w}`));
+const databaseUrl = resolved.url;
 
 const poolConfig: pg.PoolConfig & { family?: number } = {
   connectionString: databaseUrl,
@@ -60,11 +44,8 @@ if (databaseUrl && (databaseUrl.includes("supabase.co") || process.env.PGSSLMODE
   poolConfig.family = 4;
 }
 
-// Log host (no credentials) for diagnostics
-try {
-  const u = new URL(databaseUrl);
-  console.log(`[db] connecting to ${u.hostname}:${u.port || 5432}`);
-} catch { /* ignore */ }
+// Log target without credentials
+console.log(`[db] ${describeDbUrl(databaseUrl)} (origem: ${resolved.origin})`);
 
 const createFallbackDb = () => {
   const error = new Error("Database not configured: using in-memory fallback");
@@ -77,4 +58,6 @@ const createFallbackDb = () => {
 };
 
 export const pool = databaseUrl ? new Pool(poolConfig) : undefined;
-export const db = databaseUrl ? drizzle(pool as pg.Pool, { schema }) : createFallbackDb();
+export const db: NodePgDatabase<typeof schema> = databaseUrl
+  ? drizzle(pool as pg.Pool, { schema })
+  : (createFallbackDb() as NodePgDatabase<typeof schema>);

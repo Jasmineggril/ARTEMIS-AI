@@ -53,6 +53,8 @@ class RiskOutput(BaseModel):
     model_version: str
     dataset_type: str  # "synthetic", "real", "rule-based"
     is_simulated: bool
+    is_experimental: bool = False
+    engine_mode: str = "rules"
     calculated_at: str
 
 

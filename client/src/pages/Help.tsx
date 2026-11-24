@@ -9,11 +9,11 @@ const sections = [
     title: "Como começar",
     content: (
       <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-        <li>Faça login com suas credenciais ou use a conta de demonstração.</li>
-        <li>Acesse a <strong>Visão Geral</strong> para ver os indicadores principais.</li>
-        <li>Em <strong>Áreas Monitoradas</strong>, registre ou selecione a área que será analisada.</li>
-        <li>Acesse <strong>Análise Preditiva</strong> e preencha os dados ambientais.</li>
-        <li>Clique em <em>Calcular risco</em> e interprete o resultado.</li>
+        <li>Crie sua conta (ela cria a sua organização) ou entre com o convite recebido. Esqueceu a senha? Use "Esqueci minha senha" ou peça ao administrador da organização um link de acesso.</li>
+        <li>Em <strong>Áreas Monitoradas</strong>, cadastre a propriedade: desenhe o limite no mapa ou importe o arquivo (GeoJSON, KML/KMZ ou o shapefile .zip do CAR). Área e coordenadas em branco são calculadas do polígono.</li>
+        <li>Abra a propriedade para ver os focos de calor do INPE dentro e no entorno, o histórico oficial do Sisfogo e os alertas.</li>
+        <li>Clique em <em>Analisar risco</em>: o clima vem do Open-Meteo e os focos do INPE são verificados automaticamente. Cada dado do resultado indica se é informado, estimado, observado ou calculado.</li>
+        <li>Gere o <strong>Relatório</strong> (imprimir/salvar em PDF ou CSV) e acompanhe os <strong>Alertas Preventivos</strong>.</li>
       </ol>
     ),
   },
@@ -113,8 +113,11 @@ const sections = [
     title: "Diferença entre dados reais e simulados",
     content: (
       <div className="text-sm text-muted-foreground space-y-2">
-        <p><strong className="text-foreground">Dados reais:</strong> Dados climáticos obtidos em tempo real via API Open-Meteo (temperatura, umidade, vento, precipitação).</p>
-        <p><strong className="text-foreground">Dados simulados:</strong> Áreas monitoradas, histórico de ocorrências e focos próximos são simulados exclusivamente para demonstração em ambiente controlado. Sempre identificados com o rótulo <em>"Dados simulados para demonstração em ambiente controlado."</em></p>
+        <p><strong className="text-foreground">Dados da organização:</strong> áreas, análises, alertas e ocorrências importadas são dados reais cadastrados pela sua organização e só ficam visíveis aos seus membros.</p>
+        <p><strong className="text-foreground">Dados meteorológicos:</strong> quando ativado na análise, o Open-Meteo fornece estimativas de modelo numérico consultadas no momento da análise (não são medições de estação local nem monitoramento contínuo).</p>
+        <p><strong className="text-foreground">Focos de calor (INPE):</strong> detecções térmicas por satélite, sincronizadas de hora em hora. Não são incêndios confirmados; o mesmo fogo pode gerar várias detecções.</p>
+        <p><strong className="text-foreground">Registros oficiais (Sisfogo):</strong> ROIs finalizados publicados pelo Ibama/Prevfogo, sincronizados diariamente. Cobrem apenas os órgãos aderentes.</p>
+        <p><strong className="text-foreground">Cenários demonstrativos:</strong> os botões "Cenário Baixo/Moderado/Alto/Crítico" da análise preenchem valores fictícios de teste e assim são identificados.</p>
       </div>
     ),
   },
@@ -124,8 +127,9 @@ const sections = [
     content: (
       <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
         <li>Motor de classificação baseado em regras documentadas (TRL 4) — não é modelo supervisionado treinado.</li>
-        <li>Dados de focos históricos simulados (integração INPE prevista para Prova de Valor).</li>
-        <li>Exportação de PDF via diálogo do navegador (geração nativa prevista para PoV).</li>
+        <li>Limiares do motor documentados, mas ainda não calibrados com incêndios reais da sua área.</li>
+        <li>Condição da vegetação é informada pelo usuário (não há índice de vegetação por satélite).</li>
+        <li>Exportação de PDF pelo diálogo de impressão do navegador.</li>
         <li>Os resultados são instrumentos de apoio à decisão e não substituem laudo técnico oficial.</li>
         <li>Protótipo em validação controlada — TRL 4.</li>
       </ul>

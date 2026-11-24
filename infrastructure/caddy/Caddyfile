@@ -1,0 +1,19 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+	# Consistent with the API JSON limit used by data imports.
+	request_body {
+		max_size 16MB
+	}
+	reverse_proxy api:5000 {
+		health_uri /api/health
+		health_interval 30s
+	}
+	log {
+		output stdout
+		format json
+	}
+}

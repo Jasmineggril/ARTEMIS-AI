@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig } from "drizzle-kit";
+import { resolveDatabaseUrl } from "./server/db-url";
 
 const loadDotenv = () => {
   const envPath = path.resolve(process.cwd(), ".env");
@@ -24,12 +25,10 @@ const loadDotenv = () => {
 
 loadDotenv();
 
-// Prefer Supabase URL — it persists across deployments
-const dbUrl = process.env.SUPABASE_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim() || "";
-
-if (!dbUrl) {
-  throw new Error("No database URL found. Set SUPABASE_DATABASE_URL or DATABASE_URL.");
-}
+// Same precedence as the server (DATABASE_URL > PG* > legacy Supabase). See server/db-url.ts.
+const resolved = resolveDatabaseUrl();
+resolved.warnings.forEach((w) => console.warn(`[drizzle] ${w}`));
+const dbUrl = resolved.url;
 
 export default defineConfig({
   out: "./migrations",

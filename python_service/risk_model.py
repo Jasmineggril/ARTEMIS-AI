@@ -9,6 +9,7 @@ de modelo supervisionado com dados representativos.
 from __future__ import annotations
 
 import math
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -227,14 +228,14 @@ def explain_factors(data: RiskInput) -> list[RiskFactor]:
     if data.nearby_hotspot and data.hotspot_distance is not None:
         d = data.hotspot_distance
         if d <= 5:
-            contrib, desc, w_label = 20, "Foco de incêndio a menos de 5 km — risco muito elevado de propagação imediata.", "alto"
+            contrib, desc, w_label = 20, "Foco de calor ou incêndio a menos de 5 km — risco muito elevado de propagação imediata.", "alto"
         elif d <= 15:
             contrib, desc, w_label = 15, "Foco a menos de 15 km — alta probabilidade de propagação.", "alto"
         elif d <= 30:
             contrib, desc, w_label = 8, "Foco a menos de 30 km — risco moderado de propagação com ventos fortes.", "médio"
         else:
             contrib, desc, w_label = 4, "Foco ativo na região — contribuição leve ao risco.", "baixo"
-        factors.append(RiskFactor(name="Foco de incêndio próximo",
+        factors.append(RiskFactor(name="Foco de calor ou incêndio próximo",
             contribution=contrib, description=desc, weight=w_label, value=f"{d:.0f} km"))
 
     # Historical occurrences
@@ -369,29 +370,40 @@ def _calculate_confidence(data: RiskInput) -> float:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def analyze_risk(data: RiskInput, is_simulated: bool = False) -> RiskOutput:
-    """
-    Run risk analysis. Uses the supervised ML classifier if available;
-    falls back to the transparent rule engine otherwise.
-    """
-    artifact = load_ml_model()
-    factors  = explain_factors(data)
+def get_engine_mode() -> str:
+    """Engine selection. Default is the transparent rule engine.
 
+    The supervised model was trained on a SYNTHETIC dataset, so it must be
+    enabled explicitly (RISK_ENGINE_MODE=ml-experimental) and every result it
+    produces is flagged as experimental.
+    """
+    mode = os.environ.get("RISK_ENGINE_MODE", "rules").strip().lower()
+    return mode if mode in ("rules", "ml-experimental") else "rules"
+
+
+def analyze_risk(data: RiskInput, is_simulated: bool = False, engine_mode: Optional[str] = None) -> RiskOutput:
+    """
+    Run risk analysis.
+
+    - engine_mode="rules" (default): transparent, deterministic rule engine.
+    - engine_mode="ml-experimental": supervised classifier (synthetic dataset);
+      falls back to the rule engine if the artifact is missing or inference fails.
+    """
+    mode = engine_mode or get_engine_mode()
+    factors = explain_factors(data)
+    artifact = load_ml_model() if mode == "ml-experimental" else None
+
+    score = None
+    confidence = None
     if artifact is not None:
         score, confidence = predict_with_ml_model(artifact, data)
-        if score is not None and confidence is not None:
-            level        = classify_risk(score)
-            model_type   = "supervised-ml"
-            version      = artifact.get("version", ML_MODEL_VERSION)
-            dataset_type = "synthetic"
-        else:
-            # ML inference failed — fall back to rule engine
-            score        = calculate_rule_score(data)
-            level        = classify_risk(score)
-            confidence   = _calculate_confidence(data)
-            model_type   = "transparent-rule-engine"
-            version      = MODEL_VERSION
-            dataset_type = "rule-based"
+
+    if score is not None and confidence is not None:
+        level        = classify_risk(score)
+        model_type   = "supervised-ml"
+        version      = artifact.get("version", ML_MODEL_VERSION)
+        dataset_type = "synthetic"
+        experimental = True
     else:
         score        = calculate_rule_score(data)
         level        = classify_risk(score)
@@ -399,6 +411,7 @@ def analyze_risk(data: RiskInput, is_simulated: bool = False) -> RiskOutput:
         model_type   = "transparent-rule-engine"
         version      = MODEL_VERSION
         dataset_type = "rule-based"
+        experimental = False
 
     recommendations = generate_recommendations(level)
 
@@ -412,5 +425,7 @@ def analyze_risk(data: RiskInput, is_simulated: bool = False) -> RiskOutput:
         model_version=version,
         dataset_type=dataset_type,
         is_simulated=is_simulated,
+        is_experimental=experimental,
+        engine_mode=mode,
         calculated_at=datetime.now(timezone.utc).isoformat(),
     )

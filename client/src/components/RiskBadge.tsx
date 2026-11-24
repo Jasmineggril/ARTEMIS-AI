@@ -83,7 +83,7 @@ export function RiskBadge({ level, score, size = "md", showIcon = false, classNa
       {showIcon && <span aria-hidden>{cfg.icon}</span>}
       <span>{cfg.label}</span>
       {score !== undefined && (
-        <span className="opacity-70 font-normal ml-0.5">({score})</span>
+        <span className="opacity-90 font-normal ml-0.5">({score})</span>
       )}
     </span>
   );
@@ -115,6 +115,6 @@ export function riskLevelDescription(level: RiskLevel): string {
     baixo:    "Condições favoráveis — risco controlado com monitoramento periódico.",
     moderado: "Atenção recomendada — condições podem evoluir.",
     alto:     "Risco significativo — ação preventiva urgente necessária.",
-    crítico:  "Perigo imediato — acionar protocolos de emergência.",
+    crítico:  "Condições críticas — revisar imediatamente os protocolos preventivos e de resposta da organização.",
   }[level] ?? "";
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Teste de Importação de Dados - CERES AI TRL4
+Teste de Importação de Dados - ARTEMIS AI TRL4
 Validação de arquivos CSV, XLSX e XLS
 """
 
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     results = test_import_data()
     
     print("\n" + "="*70)
-    print("TESTE DE IMPORTAÇÃO DE DADOS - CERES AI TRL4")
+    print("TESTE DE IMPORTAÇÃO DE DADOS - ARTEMIS AI TRL4")
     print("="*70)
     
     for format_name, data in results['files'].items():

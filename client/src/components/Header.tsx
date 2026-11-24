@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, HelpCircle } from "lucide-react";
 import { useState } from "react";
-import ceresLogo from "@assets/LOGO_CERES_AI_1782244864205.png";
+import { ArtemisMark, ArtemisWordmark } from "@/components/ArtemisMark";
 import { PRODUCT_NAME } from "@shared/identity";
 
 export function Header() {
@@ -14,7 +14,7 @@ export function Header() {
 
   if (!user) {
     return (
-      <header className="bg-card border-b border-border/50 sticky top-0 z-40 backdrop-blur-sm">
+      <header className="bg-card border-b border-border/50 sticky top-0 z-40 backdrop-blur-sm print:hidden">
         <div className="px-6 py-3 flex items-center justify-between">
           <button
             onClick={() => setLocation("/")}
@@ -22,11 +22,8 @@ export function Header() {
             data-testid="button-header-logo"
             aria-label="Voltar para página inicial"
           >
-            <img
-              src={ceresLogo}
-              alt={PRODUCT_NAME}
-              className="h-9 w-auto group-hover:scale-105 transition-transform"
-            />
+            <ArtemisMark className="w-9 h-9 shrink-0" />
+            <ArtemisWordmark className="text-base" />
           </button>
           <div className="flex gap-2">
             <Button
@@ -51,7 +48,7 @@ export function Header() {
   }
 
   return (
-    <header className="bg-card border-b border-border/50 sticky top-0 z-40 backdrop-blur-sm">
+    <header className="bg-card border-b border-border/50 sticky top-0 z-40 backdrop-blur-sm print:hidden">
       <div className="px-6 py-3 flex items-center justify-between">
         <button
           onClick={() => setLocation("/")}
@@ -59,12 +56,14 @@ export function Header() {
           data-testid="button-header-logo"
           aria-label="Voltar para página inicial"
         >
-          <img
-            src={ceresLogo}
-            alt={PRODUCT_NAME}
-            className="h-9 w-auto group-hover:scale-105 transition-transform"
-          />
+          <ArtemisMark className="w-9 h-9 shrink-0 md:hidden" />
+          <ArtemisWordmark className="text-base md:hidden" />
         </button>
+        {user.organization && (
+          <p className="hidden md:block text-sm text-muted-foreground truncate max-w-md" title="Organização ativa">
+            Organização: <span className="font-semibold text-foreground">{user.organization.name}</span>
+          </p>
+        )}
 
         <div className="flex items-center gap-2">
           <button
@@ -84,7 +83,7 @@ export function Header() {
               data-testid="button-profile-menu"
             >
               <User className="w-4 h-4" />
-              <span className="text-sm font-medium truncate max-w-[150px]">{user.name}</span>
+              <span className="text-sm font-medium truncate max-w-[220px]" title={user.name}>{user.name}</span>
             </button>
 
             {showMenu && (
@@ -100,13 +99,15 @@ export function Header() {
                 >
                   Página Inicial
                 </button>
-                <button
-                  onClick={() => { setLocation("/admin"); setShowMenu(false); }}
-                  className="w-full text-left px-4 py-2 hover:bg-secondary/50 text-sm"
-                  data-testid="button-admin-menu"
-                >
-                  Painel Admin
-                </button>
+                {user?.platformRole === "platform_admin" && (
+                  <button
+                    onClick={() => { setLocation("/admin"); setShowMenu(false); }}
+                    className="w-full text-left px-4 py-2 hover:bg-secondary/50 text-sm"
+                    data-testid="button-admin-menu"
+                  >
+                    Painel Admin
+                  </button>
+                )}
                 <button
                   onClick={() => { logout.mutate(); setShowMenu(false); }}
                   className="w-full text-left px-4 py-2 hover:bg-destructive/10 text-sm text-destructive flex items-center gap-2"

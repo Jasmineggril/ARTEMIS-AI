@@ -3,18 +3,18 @@ import { Accessibility, Sun, Type, Volume2, VolumeX, ZoomIn, ZoomOut, X } from "
 
 export function AccessibilityBar() {
   const [open, setOpen] = useState(false);
-  const [highContrast, setHighContrast] = useState(() => localStorage.getItem("ceres-hc") === "1");
-  const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem("ceres-fs") ?? 100));
+  const [highContrast, setHighContrast] = useState(() => (localStorage.getItem("artemis-hc") ?? localStorage.getItem("ceres-hc")) === "1");
+  const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem("artemis-fs") ?? localStorage.getItem("ceres-fs") ?? 100));
   const [speaking, setSpeaking] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("high-contrast", highContrast);
-    localStorage.setItem("ceres-hc", highContrast ? "1" : "0");
+    localStorage.setItem("artemis-hc", highContrast ? "1" : "0");
   }, [highContrast]);
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${fontSize}%`;
-    localStorage.setItem("ceres-fs", String(fontSize));
+    localStorage.setItem("artemis-fs", String(fontSize));
   }, [fontSize]);
 
   const speak = () => {

@@ -1,0 +1,119 @@
+{
+  "ambiente": "build de produção (NODE_ENV=production), PostgreSQL 16 local, motor Python local; 4 vCPU Intel Xeon 2.1 GHz, 16 GB RAM; limitador desligado nesta instância",
+  "ferramenta": "autocannon 7.15.0",
+  "data": "2026-11-17",
+  "resultados": {
+    "analysis": {
+      "url": "http://localhost:5057/api/areas/:id/analyses",
+      "conexoes": 5,
+      "duracao_s": 15.02,
+      "req_por_s": 217.2,
+      "total": 3258,
+      "2xx": 3258,
+      "nao_2xx": 0,
+      "erros": 0,
+      "latencia_ms": {
+        "p50": 21,
+        "p97_5": 36,
+        "p99": 46,
+        "max": 79
+      }
+    },
+    "area-surroundings": {
+      "url": "http://localhost:5057/api/areas/:id/surroundings?days=7",
+      "conexoes": 10,
+      "duracao_s": 20.03,
+      "req_por_s": 482.5,
+      "total": 9650,
+      "2xx": 9650,
+      "nao_2xx": 0,
+      "erros": 0,
+      "latencia_ms": {
+        "p50": 19,
+        "p97_5": 33,
+        "p99": 37,
+        "max": 57
+      }
+    },
+    "areas-list": {
+      "url": "http://localhost:5057/api/areas",
+      "conexoes": 10,
+      "duracao_s": 20.03,
+      "req_por_s": 844.1,
+      "total": 16882,
+      "2xx": 16882,
+      "nao_2xx": 0,
+      "erros": 0,
+      "latencia_ms": {
+        "p50": 11,
+        "p97_5": 20,
+        "p99": 23,
+        "max": 50
+      }
+    },
+    "health": {
+      "url": "http://localhost:5057/api/health",
+      "conexoes": 10,
+      "duracao_s": 20.02,
+      "req_por_s": 802.6,
+      "total": 16052,
+      "2xx": 16052,
+      "nao_2xx": 0,
+      "erros": 0,
+      "latencia_ms": {
+        "p50": 11,
+        "p97_5": 22,
+        "p99": 26,
+        "max": 87
+      }
+    },
+    "hotspots-AM": {
+      "url": "http://localhost:5057/api/public/hotspots?state=AM",
+      "conexoes": 10,
+      "duracao_s": 20.02,
+      "req_por_s": 263.2,
+      "total": 5264,
+      "2xx": 5264,
+      "nao_2xx": 0,
+      "erros": 0,
+      "latencia_ms": {
+        "p50": 36,
+        "p97_5": 61,
+        "p99": 67,
+        "max": 78
+      }
+    },
+    "page-home": {
+      "url": "http://localhost:5057/",
+      "conexoes": 10,
+      "duracao_s": 20.02,
+      "req_por_s": 1282.2,
+      "total": 25645,
+      "2xx": 25645,
+      "nao_2xx": 0,
+      "erros": 0,
+      "latencia_ms": {
+        "p50": 6,
+        "p97_5": 18,
+        "p99": 26,
+        "max": 52
+      }
+    },
+    "sisfogo-summary": {
+      "url": "http://localhost:5057/api/public/sisfogo/summary",
+      "conexoes": 10,
+      "duracao_s": 20.03,
+      "req_por_s": 425.9,
+      "total": 8519,
+      "2xx": 8519,
+      "nao_2xx": 0,
+      "erros": 0,
+      "latencia_ms": {
+        "p50": 22,
+        "p97_5": 37,
+        "p99": 42,
+        "max": 57
+      }
+    }
+  }
+}

@@ -1,310 +1,103 @@
-# Plataforma Preditiva de Inteligência Ambiental
+# ARTEMIS AI
 
-**Preveja o risco. Proteja a operação.**
+**Inteligência para antecipar riscos. Tecnologia para proteger territórios.**
 
-Plataforma preditiva para prevenção de incêndios em áreas produtivas e ativos territoriais.
+Plataforma brasileira de inteligência ambiental para prevenção de incêndios, análise preditiva de risco e apoio à decisão. Integra duas propostas anteriores, cuja história é preservada neste repositório:
 
----
+- **Análise Preditiva** — índice de risco 0–100 explicável, alertas e recomendações.
+- **Consulta Pública** — consulta aberta de ocorrências de queimadas, prevenção e biomas (`/consulta-publica`).
 
-## 1. Visão Geral
+> Histórico: a ARTEMIS AI nasceu da unificação de dois projetos anteriores (CERES AI e Florestaí). O dossiê TRL 4 já submetido fica preservado sem alterações em `docs/trl4/`.
 
-A plataforma integra dados ambientais, climáticos, geoespaciais e históricos para:
+> **Estágio:** protótipo em validação controlada (TRL 4). **Não está pronto para produção.**
+> O índice não está calibrado com incêndios reais. A plataforma apoia decisões humanas e **não é serviço de emergência** — em caso de incêndio ligue **193**.
 
-- classificar o risco de incêndio por área produtiva (score 0–100, 4 níveis);
-- identificar e explicar os fatores críticos que contribuem para o risco;
-- gerar alertas preventivos georreferenciados;
-- recomendar ações antes da ocorrência;
-- importar e tratar registros históricos de ocorrências;
-- visualizar áreas e ocorrências em mapa interativo.
+## O que funciona hoje
 
-> **Estágio atual:** TRL 4 — Protótipo em validação controlada.
-> Os dados utilizados são sintéticos, demonstrativos ou públicos.
-> A validação operacional está prevista para a Prova de Valor.
-
----
-
-## 2. Problema
-
-Incêndios em áreas produtivas causam impactos ambientais, econômicos e operacionais relevantes. A ausência de sistemas preditivos integrados limita a capacidade de antecipação e resposta por parte de gestores de:
-
-- agroindústrias;
-- empresas florestais;
-- unidades de energia;
-- mineração;
-- operações logísticas;
-- instalações industriais;
-- propriedades com ativos territoriais.
-
----
-
-## 3. Solução
-
-A plataforma demonstra o seguinte fluxo tecnológico:
-
-```
-Entrada de dados
-→ Validação
-→ Tratamento
-→ Processamento (motor de risco ou modelo supervisionado)
-→ Classificação de risco
-→ Explicação dos fatores críticos
-→ Recomendações preventivas
-→ Geração de alerta
-→ Visualização em mapa
-→ Persistência
-→ Geração de relatório
-```
-
----
-
-## 4. Evolução do projeto base
-
-O CERES AI evolui a proposta original base ao incorporar:
-
-- tratamento estruturado de registros históricos de incêndios;
-- análise preditiva de risco com fatores explicáveis;
-- visualização georreferenciada de ocorrências e áreas monitoradas;
-- geração de alertas e recomendações preventivas;
-- rastreabilidade completa das análises realizadas.
-
----
-
-## 5. Setores Atendidos
-
-Agroindústria · Empresas florestais · Energia · Mineração · Logística · Instalações industriais · Propriedades rurais
-
----
-
-## 6. Funcionalidades
-
-| Funcionalidade | Status |
+| Módulo | Situação |
 |---|---|
-| Análise preditiva de risco (formulário) | Implementado |
-| Motor de regras transparente (determinístico) | Implementado |
-| Modelo supervisionado Scikit-learn (RF) | Experimental — dataset sintético |
-| Mapa de risco interativo (Leaflet) | Implementado |
-| Alertas preventivos | Implementado |
-| Áreas monitoradas (CRUD) | Implementado |
-| Importação de ocorrências (CSV/XLS/XLSX) | Implementado |
-| Tratamento e validação de registros | Implementado |
-| Fontes de dados | Implementado — demonstrativo |
-| Inteligência operacional (gráficos) | Implementado — demonstrativo |
-| Protocolos de prevenção | Implementado |
-| Relatórios | Implementado — demonstrativo |
-| Tutorial de onboarding | Implementado |
-| Modo de submissão anônima | Implementado |
-| Autenticação (bcrypt + sessões) | Implementado |
-| Fallback TypeScript quando Python indisponível | Implementado |
-| Integração com sensores IoT reais | Prevista para a Prova de Valor |
-| Integração com API Sisfogo em tempo real | Prevista para a Prova de Valor |
-| Alertas via SMS/e-mail | Prevista para a Prova de Valor |
+| Contas, organizações, 5 papéis, isolamento entre organizações, auditoria | Implementado e testado |
+| Áreas monitoradas (coordenadas, polígono GeoJSON) | Implementado e testado |
+| Análise de risco com procedência por variável, fontes, limitações e histórico | Implementado e testado |
+| Motor de regras transparente (Python + espelho TypeScript como fallback) | Implementado e testado |
+| Modelo Random Forest **experimental** (dataset sintético, desligado por padrão) | Experimental |
+| Dados meteorológicos Open-Meteo sob demanda (nunca inventa valores) | Implementado; não verificado contra a API real |
+| Alertas com ciclo de vida, histórico e deduplicação | Implementado e testado |
+| Importação CSV/XLS/XLSX com revalidação no servidor | Implementado e testado |
+| Mapa com áreas, polígonos e ocorrências filtráveis | Parcial |
+| Consulta Pública (`/consulta-publica`): só lotes publicados explicitamente, coordenadas ~1 km | Implementado e testado |
+| Painel, relatório por área/período e indicadores agregados (fonte e data em cada bloco) | Implementado e testado |
+| Exportação CSV | Implementado e testado |
+| Focos de calor do INPE (sincronização incremental real) e uso na análise de risco | Implementado e testado |
+| Banco `artemis_ai`: 10 migrações, FKs, PostGIS opcional, papéis com privilégio mínimo | Implementado e testado |
+| Docker Compose (Caddy + API + motor + PostgreSQL/PostGIS + migrate + job INPE), backup cifrado | Pilha executada e restauração testada; build completo das imagens a validar na VPS |
 
----
+Situação completa dos 20 entregáveis: **[`docs/artemis/STATUS_ENTREGAVEIS.md`](docs/artemis/STATUS_ENTREGAVEIS.md)**.
 
-## 7. Arquitetura
+## Documentação
 
-```
-Frontend React/TypeScript (Vite, porta 5000)
-    ↓ HTTP
-Backend Express/Node.js
-    ↓ HTTP interno
-Serviço Python/FastAPI (porta 8000)
-    ↓
-Motor Scikit-learn RF ou Motor de Regras Transparente
-    ↓
-PostgreSQL (Drizzle ORM)
-```
+| Documento | Conteúdo |
+|---|---|
+| [00 Diagnóstico](docs/artemis/00_DIAGNOSTICO.md) | O que existia, problemas encontrados e corrigidos |
+| [01 Requisitos](docs/artemis/01_REQUISITOS.md) | Funcionais e não funcionais, com status |
+| [02 Arquitetura](docs/artemis/02_ARQUITETURA.md) | Componentes, pastas, modelo de dados |
+| [03 API](docs/artemis/03_API.md) | Rotas, papéis, esquemas |
+| [04 Implantação Hostinger](docs/artemis/04_IMPLANTACAO_HOSTINGER.md) | VPS KVM 2 passo a passo |
+| [05 Backup](docs/artemis/05_BACKUP_RECUPERACAO.md) | Política, agendamento, restauração testada |
+| [06 Manual](docs/artemis/06_MANUAL.md) | Usuário e administrador |
+| [07 Limitações](docs/artemis/07_LIMITACOES_PENDENCIAS.md) | Limitações científicas, pendências, dependências |
+| [08 Prova de Valor](docs/artemis/08_PLANO_PROVA_DE_VALOR.md) | Plano de validação (metas, não resultados) |
+| [09 Banco — diagnóstico e plano](docs/artemis/09_BANCO_DIAGNOSTICO_E_PLANO.md) | Auditoria do banco, ER, plano de migrações |
+| [10 Banco — execução, manutenção e segurança](docs/artemis/10_BANCO_MANUTENCAO_SEGURANCA.md) | Migrações aplicadas com evidências, papéis, fontes, rotinas |
 
----
+## Desenvolvimento local
 
-## 8. Tecnologias
-
-**Frontend:** React 18 · TypeScript 5.6 · Vite 7 · Tailwind CSS · shadcn/ui · Leaflet · Recharts · TanStack Query · Wouter
-
-**Backend:** Node.js 20 · Express 4 · Drizzle ORM · bcrypt · PostgreSQL 16
-
-**Camada analítica:** Python 3.12 · FastAPI · Scikit-learn · Pandas · NumPy · Pydantic · Joblib · Pytest
-
----
-
-## 9. Como Executar
-
-### Pré-requisitos
-
-- Node.js 20+
-- Python 3.12+
-- PostgreSQL 16+
-
-### Instalação
+Pré-requisitos: Node 22+, Python 3.12+, PostgreSQL 16 (ou Docker).
 
 ```bash
-# Instalar dependências Node.js
-npm install
-
-# Instalar dependências Python
-pip install -r python_service/requirements.txt
+docker compose -f docker-compose.dev.yml up -d
 ```
 
-### Variáveis de Ambiente
-
-| Variável | Descrição | Obrigatória |
-|---|---|---|
-| `DATABASE_URL` | URL de conexão com PostgreSQL | Sim |
-| `SESSION_SECRET` | Segredo das sessões | Sim |
-| `PYTHON_SERVICE_URL` | URL do FastAPI (padrão: http://127.0.0.1:8000) | Não |
-| `VITE_SUBMISSION_MODE` | true = modo anônimo de submissão | Não |
-
-### Executar
+```bash
+npm install --legacy-peer-deps && pip install -r python_service/requirements.txt
+```
 
 ```bash
-# Frontend + Backend Express (porta 5000)
+cp .env.example .env
+```
+
+Em `.env`, descomente `DATABASE_URL` da seção de desenvolvimento. Depois, em dois terminais:
+
+```bash
 npm run dev
-
-# Serviço Python FastAPI (porta 8000)
-cd python_service && uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
-
----
-
-## 10. Serviço Python
 
 ```bash
-# Treinar o modelo supervisionado
-cd python_service && python train_model.py
-
-# Avaliar o modelo
-python evaluate_model.py
-
-# Executar testes Python
-pytest tests/ -v
+npm run dev:python
 ```
 
-**Endpoints:**
-
-- `GET /health` — verificação de disponibilidade
-- `POST /analyze-risk` — análise de risco
-
----
-
-## 11. Machine Learning
-
-O modelo supervisionado é um `RandomForestClassifier` (Scikit-learn) treinado com **dataset sintético** gerado pelo motor de regras.
-
-> **AVISO:** As métricas abaixo foram obtidas com dataset sintético em ambiente controlado e **não representam desempenho operacional definitivo**.
-
-| Métrica | Valor (dataset sintético) |
-|---|---|
-| Accuracy | 84.25% |
-| F1 macro | 87.29% |
-| F1 weighted | 84.37% |
-
-A validação com dados reais está prevista para a Prova de Valor.
-
-Quando o modelo não está disponível, o sistema usa automaticamente o motor de regras transparente como fallback.
-
----
-
-## 12. Importação de Dados Históricos
-
-A integração atual com dados do Sisfogo ocorre por **importação de arquivos autorizados** e **não representa conexão oficial ou direta por API**.
-
-**Formatos suportados:** CSV, XLS, XLSX (até 10 MB)
-
-**Fluxo:** upload → prévia → mapeamento de colunas → validação → persistência → visualização no mapa
-
-**Status por registro:** válido · válido com ressalvas · inválido · duplicado
-
-Nenhum registro é descartado silenciosamente.
-
----
-
-## 13. Banco de Dados
-
-| Tabela | Descrição |
-|---|---|
-| users | Usuários da plataforma |
-| sensors | Sensores/estações |
-| readings | Leituras dos sensores |
-| alerts | Alertas preventivos |
-| weather_data | Dados climáticos |
-| monitored_areas | Áreas monitoradas |
-| risk_analyses | Resultados de análises de risco |
-| data_sources | Fontes de dados |
-| import_batches | Lotes de importação |
-| fire_occurrences | Ocorrências de incêndio importadas |
-
----
-
-## 14. Testes
+Acesse `http://localhost:5000` e crie uma conta. Para dados de demonstração (rotulados "[DEMO]", bloqueados em produção):
 
 ```bash
-# Verificação TypeScript (0 erros)
-npm run check
-
-# Testes do motor de risco TypeScript (35 aprovados)
-npm run test:risk
-
-# Build de produção
-npm run build
-
-# Testes Python (104 aprovados)
-pytest python_service/tests -v
+DEMO_SEED_PASSWORD='escolhaUmaSenha1' npm run db:seed-demo
 ```
 
----
+## Testes
 
-## 15. Segurança
+| Comando | O que roda |
+|---|---|
+| `npm run check` | TypeScript (0 erros) |
+| `npm test` | Motor de risco TS (34) + hash de senha (10) |
+| `npm run test:unit` | Conectores (INPE com amostra real, Open-Meteo), procedência, alertas, segurança, CSV, GeoJSON, importação, conexão (19) |
+| `TEST_DATABASE_URL=... npm run test:integration` | API completa contra PostgreSQL real, incl. isolamento, deduplicação, rollback de importação, INPE e PostGIS opcional (39), mais `tests/integration/database.test.ts` (9: migrações, FKs, deriva de schema, falha de conexão, PostGIS). Os 2 testes de PostGIS só rodam com `TEST_SUPERUSER_URL`. **Apaga o banco de teste**; o nome precisa conter `test`. Com `TEST_PYTHON_URL` usa o FastAPI real. |
+| `npm run test:python` | Serviço FastAPI (109) |
+| `E2E_BASE_URL=... npm run test:e2e` | Fluxos no navegador, desktop e celular (12) |
+| `E2E_BASE_URL=... E2E_DEMO_PASSWORD=... npm run test:a11y` | axe-core WCAG A/AA em 12 telas |
 
-- Senhas com bcrypt (salt rounds: 10)
-- Sessões httpOnly + sameSite
-- Proteção de rotas (frontend + backend)
-- Variáveis sensíveis via variáveis de ambiente
-- Logs sem dados sensíveis
-- Fallback Python não expõe erros internos
+## Tecnologias
 
----
+React 18 · TypeScript · Vite · Tailwind · shadcn/ui · Leaflet · Recharts · TanStack Query · Node 22 · Express · Drizzle ORM · PostgreSQL 16 · Python 3.12 · FastAPI · Scikit-learn · Docker Compose · Caddy
 
-## 16. Dados Simulados
+## Licença
 
-Os dados demonstrativos e sintéticos são claramente identificados na interface com:
-
-- Label "Dados simulados para demonstração em ambiente controlado"
-- Badge de tipo de modelo (supervised-ml / transparent-rule-engine)
-- Campo `dataset_type` nas respostas da API
-- Flag `is_simulated` em análises e alertas
-
----
-
-## 17. Limitações
-
-1. Dataset do modelo supervisionado é sintético — métricas não refletem desempenho operacional
-2. Importação de ocorrências via arquivo (não API em tempo real)
-3. Dados climáticos externos dependem de conectividade
-4. Sem integração com sistemas de alerta externos (SMS, e-mail) nesta fase
-5. A plataforma apoia decisões, mas **não substitui** laudos, inspeções ou protocolos oficiais
-
----
-
-## 18. TRL 4
-
-A solução encontra-se em **TRL 4** porque possui arquitetura definida, protótipo funcional e componentes integrados e testados em ambiente controlado. A versão atual demonstra entrada e processamento de dados, classificação de risco, visualização georreferenciada, importação de ocorrências, geração de alertas e recomendações.
-
-A validação em ambiente operacionalmente relevante será realizada durante a **Prova de Valor**.
-
----
-
-## 19. Prova de Valor
-
-Metas previstas (não alcançadas nesta fase):
-
-- Validação do modelo com dados reais de incêndios
-- Retreinamento com dataset representativo (mínimo 500 ocorrências reais)
-- Integração com fonte de dados climáticos em tempo real
-- Validação operacional em área piloto
-- Meta de F1 macro ≥ 80% com dados reais
-
----
-
-## 20. Licença
-
-Protótipo em desenvolvimento. Todos os direitos reservados.
+Protótipo em desenvolvimento. Todos os direitos reservados. Componentes de terceiros mantêm suas licenças. Dados de mapa © colaboradores do OpenStreetMap. Dados meteorológicos: Open-Meteo.com (CC BY 4.0).
