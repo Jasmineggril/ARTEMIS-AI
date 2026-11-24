@@ -1,0 +1,50 @@
+{
+  "period": {
+    "from": "2026-08-01",
+    "to": "2026-10-31"
+  },
+  "radiusKm": 25,
+  "window": "dia local e os 2 seguintes",
+  "stations": 542,
+  "stationDaysValid": 23002,
+  "stationDaysExcluded": 26862,
+  "excludedReason": "sem dados suficientes ou acumulação iniciada sem zeramento por chuva (possivelmente subestimada)",
+  "byClass": [
+    {
+      "class": "nulo",
+      "n": 23,
+      "withHotspot": 2,
+      "ratePct": 8.7
+    },
+    {
+      "class": "pequeno",
+      "n": 3411,
+      "withHotspot": 600,
+      "ratePct": 17.6
+    },
+    {
+      "class": "medio",
+      "n": 5703,
+      "withHotspot": 1801,
+      "ratePct": 31.6
+    },
+    {
+      "class": "alto",
+      "n": 5532,
+      "withHotspot": 2554,
+      "ratePct": 46.2
+    },
+    {
+      "class": "muito_alto",
+      "n": 8333,
+      "withHotspot": 5686,
+      "ratePct": 68.2
+    }
+  ],
+  "durationS": 46,
+  "limits": [
+    "Foco de calor é detecção por satélite, não incêndio confirmado.",
+    "Verifica coerência do índice implementado, não calibra limiares.",
+    "Uma temporada; dias consecutivos da mesma estação não são independentes."
+  ]
+}

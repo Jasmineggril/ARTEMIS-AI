@@ -1,0 +1,75 @@
+{
+  "base": "http://localhost:5057",
+  "ranAt": "2026-11-18T17:10:36.869Z",
+  "total": 11,
+  "passed": 11,
+  "failed": 0,
+  "results": [
+    {
+      "scenario": "motor",
+      "name": "análise com o motor Python no ar",
+      "ok": true,
+      "detail": "transparent-rule-engine"
+    },
+    {
+      "scenario": "motor",
+      "name": "motor fora do ar → análise feita pelo fallback TypeScript e registrada como tal",
+      "ok": true,
+      "detail": "transparent-rule-engine-ts-fallback "
+    },
+    {
+      "scenario": "motor",
+      "name": "mesma entrada → mesma pontuação nos dois motores",
+      "ok": true,
+      "detail": "44 × 44"
+    },
+    {
+      "scenario": "motor",
+      "name": "motor Python volta a ser usado após reiniciar",
+      "ok": true,
+      "detail": "1 s"
+    },
+    {
+      "scenario": "banco",
+      "name": "banco fora do ar → /api/health responde 503 indicando o banco",
+      "ok": true,
+      "detail": "HTTP 503 {\"status\":\"degraded\",\"database\":\"down\",\"riskEngine\":\"ok\",\"time\":\"2026-11-18T17:10:31.496Z\"}"
+    },
+    {
+      "scenario": "banco",
+      "name": "requisição de dados falha com erro controlado (sem queda do processo)",
+      "ok": true,
+      "detail": "HTTP 500"
+    },
+    {
+      "scenario": "banco",
+      "name": "API se recupera sozinha quando o banco volta",
+      "ok": true,
+      "detail": "0 s"
+    },
+    {
+      "scenario": "banco",
+      "name": "sessão e dados preservados após a queda do banco",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "scenario": "reinício",
+      "name": "aplicação parada",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "scenario": "reinício",
+      "name": "aplicação volta a responder",
+      "ok": true,
+      "detail": "1 s"
+    },
+    {
+      "scenario": "reinício",
+      "name": "sessão persistida (login continua válido) e análises preservadas",
+      "ok": true,
+      "detail": "antes 4, depois 4"
+    }
+  ]
+}

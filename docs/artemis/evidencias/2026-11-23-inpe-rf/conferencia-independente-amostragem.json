@@ -1,0 +1,26 @@
+{
+ "estacoes": {
+  "n": 40,
+  "conferem": 40.0
+ },
+ "areas": {
+  "n": 17,
+  "conferem": 15
+ },
+ "divergentes": [
+  {
+   "area": 125,
+   "banco": null,
+   "independente": null,
+   "pixels": 0,
+   "ok": false
+  },
+  {
+   "area": 145,
+   "banco": null,
+   "independente": null,
+   "pixels": 0,
+   "ok": false
+  }
+ ]
+}

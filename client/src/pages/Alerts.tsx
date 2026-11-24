@@ -12,6 +12,7 @@ import { useAlerts, useAlert, useAlertTransition, STATUS_LABEL, type AlertRow } 
 import { EMERGENCY_NOTICE } from "@shared/identity";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { AlertDeliveries } from "@/components/notifications/NotificationSettings";
 
 const EVAL_LABEL: Record<string, string> = { pertinente: "Pertinente", parcialmente_pertinente: "Parcialmente pertinente", nao_pertinente: "Não pertinente" };
 
@@ -148,6 +149,7 @@ function AlertDrawer({ id, onClose, canAct }: { id: number; onClose: () => void;
               </section>
             )}
             <AlertEvaluation a={a} canAct={canAct} />
+            <AlertDeliveries alertId={a.id} />
             <section className="border-t pt-4">
               <h3 className="font-semibold text-sm mb-2 flex items-center gap-2"><History className="w-4 h-4" aria-hidden />Histórico</h3>
               <ol className="space-y-3">

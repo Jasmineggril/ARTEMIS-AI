@@ -16,10 +16,13 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import { dataSources, satelliteHotspots, sourceSyncRuns } from "@shared/schema";
+import { retryDelay, type RetryPolicy } from "./sisfogo";
 
 export const INPE_SOURCE_KEY = "inpe-queimadas";
 export const INPE_DAILY_URL = "https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil";
 const MAX_BYTES = 60 * 1024 * 1024;
+const MAX_MONTH_BYTES = 400 * 1024 * 1024;
+export const INPE_MONTHLY_URL = "https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/mensal/Brasil";
 
 /** IBGE state codes -> UF. */
 export const IBGE_UF: Record<string, string> = {
@@ -83,7 +86,12 @@ function num(v: string | undefined): number | null {
   return n;
 }
 
-export function parseInpeCsv(text: string): ParseResult {
+export function parseInpeCsv(text: string, fileDay?: string, now = new Date(), fileMonth?: string): ParseResult {
+  // A daily file holds detections of that UTC day; allow ±1 day for edge cases.
+  const dayStart = fileDay ? Date.parse(`${fileDay}T00:00:00Z`) : NaN;
+  // A monthly file holds detections of that UTC month (±1 day).
+  const monthStart = fileMonth ? Date.parse(`${fileMonth}-01T00:00:00Z`) : NaN;
+  const monthEnd = fileMonth ? Date.UTC(+fileMonth.slice(0, 4), +fileMonth.slice(5, 7), 1) : NaN;
   const lines = text.replace(/^﻿/, "").split(/\r?\n/).filter((l) => l.trim() !== "");
   if (lines.length === 0) throw new Error("Arquivo do INPE vazio.");
   const header = splitCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
@@ -107,6 +115,9 @@ export function parseInpeCsv(text: string): ParseResult {
     const m = r.data_hora_gmt.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
     const detectedAt = m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] ?? 0))) : null;
     if (!detectedAt || Number.isNaN(detectedAt.getTime())) { reject("data/hora inválida"); continue; }
+    if (detectedAt.getTime() > now.getTime() + 3_600_000) { reject("data/hora no futuro"); continue; }
+    if (Number.isFinite(dayStart) && (detectedAt.getTime() < dayStart - 86_400_000 || detectedAt.getTime() >= dayStart + 2 * 86_400_000)) { reject("data fora do dia do arquivo"); continue; }
+    if (Number.isFinite(monthStart) && (detectedAt.getTime() < monthStart - 86_400_000 || detectedAt.getTime() >= monthEnd + 86_400_000)) { reject("data fora do mês do arquivo"); continue; }
     if (!r.satelite) { reject("sem satélite"); continue; }
     const munCode = /^\d{7}$/.test(r.municipio_id ?? "") ? r.municipio_id : null;
     const risk = num(r.risco_fogo);
@@ -138,20 +149,56 @@ export function inpeDailyUrl(day: string): string {
 
 export type FetchText = (url: string) => Promise<{ ok: boolean; status: number; text: string }>;
 
+export function inpeMonthlyUrl(month: string): string {
+  return `${INPE_MONTHLY_URL}/focos_mensal_br_${month.replace(/-/g, "")}.csv`;
+}
+
 export const defaultFetchText: FetchText = async (url) => {
+  const monthly = url.startsWith(INPE_MONTHLY_URL);
+  const MAX = monthly ? MAX_MONTH_BYTES : MAX_BYTES;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 120_000);
+  const timer = setTimeout(() => controller.abort(), monthly ? 900_000 : 120_000);
   try {
     const res = await fetch(url, { signal: controller.signal });
     const len = Number(res.headers.get("content-length") ?? 0);
-    if (len > MAX_BYTES) throw new Error(`Arquivo maior que o limite (${len} bytes).`);
+    if (len > MAX) throw new Error(`Arquivo maior que o limite (${len} bytes).`);
     const text = res.ok ? await res.text() : "";
-    if (text.length > MAX_BYTES) throw new Error("Arquivo maior que o limite.");
+    if (text.length > MAX) throw new Error("Arquivo maior que o limite.");
     return { ok: res.ok, status: res.status, text };
   } finally {
     clearTimeout(timer);
   }
 };
+
+/** Retries for network errors, timeouts and HTTP 429/5xx. 404 (file not published yet) is not retried. */
+export const INPE_RETRY: RetryPolicy = {
+  timeoutMs: 120_000, attempts: 3, baseDelayMs: Number(process.env.INPE_RETRY_BASE_MS ?? 3_000), maxDelayMs: 60_000,
+  sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+};
+const RETRYABLE_HTTP = new Set([429, 500, 502, 503, 504]);
+
+export async function fetchWithRetry(fetchText: FetchText, url: string, p: RetryPolicy = INPE_RETRY) {
+  let lastErr: unknown = null;
+  for (let attempt = 1; attempt <= p.attempts; attempt++) {
+    try {
+      const res = await fetchText(url);
+      if (!RETRYABLE_HTTP.has(res.status) || attempt === p.attempts) return { res, attempts: attempt };
+      lastErr = new Error(`INPE respondeu HTTP ${res.status}.`);
+    } catch (err) {
+      lastErr = err;
+      if (attempt === p.attempts) break;
+    }
+    await p.sleep(retryDelay(attempt, null, p));
+  }
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+  throw new Error(`${msg} (após ${p.attempts} tentativas)`);
+}
+
+/** Runs left "em_execucao" for over 30 min by a process that died: close them as failures. */
+export async function closeInterruptedInpeRuns(sourceId: number) {
+  await db.update(sourceSyncRuns).set({ status: "falha", finishedAt: new Date(), error: "Execução interrompida antes de concluir (processo encerrado)." })
+    .where(and(eq(sourceSyncRuns.sourceId, sourceId), eq(sourceSyncRuns.status, "em_execucao"), sql`${sourceSyncRuns.startedAt} < now() - interval '30 minutes'`));
+}
 
 export interface DaySyncResult {
   day: string;
@@ -172,10 +219,25 @@ async function inpeSourceId(): Promise<number> {
 }
 
 /** Sync one UTC day. Each day is one transaction: a failure leaves no partial data. */
-export async function syncInpeDay(day: string, fetchText: FetchText = defaultFetchText): Promise<DaySyncResult> {
+export async function syncInpeDay(day: string, fetchText: FetchText = defaultFetchText, retry: RetryPolicy = INPE_RETRY): Promise<DaySyncResult> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error(`Dia inválido: ${day}`);
+  return syncInpeFile({ day, url: inpeDailyUrl(day), parse: (t) => parseInpeCsv(t, day) }, fetchText, retry);
+}
+
+/**
+ * Reprocess a whole UTC month from INPE's monthly file (same format and ids as
+ * the daily files, so it is idempotent with them). Used to backfill history
+ * older than the daily files kept online (~4 weeks).
+ */
+export async function syncInpeMonth(month: string, fetchText: FetchText = defaultFetchText, retry: RetryPolicy = INPE_RETRY): Promise<DaySyncResult> {
+  if (!/^\d{4}-\d{2}$/.test(month)) throw new Error(`Mês inválido: ${month}`);
+  return syncInpeFile({ day: month, url: inpeMonthlyUrl(month), parse: (t) => parseInpeCsv(t, undefined, new Date(), month) }, fetchText, retry);
+}
+
+async function syncInpeFile(f: { day: string; url: string; parse: (text: string) => ParseResult }, fetchText: FetchText, retry: RetryPolicy): Promise<DaySyncResult> {
+  const day = f.day, url = f.url;
   const sourceId = await inpeSourceId();
-  const url = inpeDailyUrl(day);
+  await closeInterruptedInpeRuns(sourceId);
   const [run] = await db.insert(sourceSyncRuns).values({ sourceId, params: { day, url } }).returning();
 
   const fail = async (error: string, read = 0): Promise<DaySyncResult> => {
@@ -185,9 +247,10 @@ export async function syncInpeDay(day: string, fetchText: FetchText = defaultFet
 
   let parsed: ParseResult;
   try {
-    const res = await fetchText(url);
-    if (!res.ok) return fail(res.status === 404 ? "Arquivo do dia ainda não publicado pelo INPE (404)." : `INPE respondeu HTTP ${res.status}.`);
-    parsed = parseInpeCsv(res.text);
+    const { res, attempts } = await fetchWithRetry(fetchText, url, retry);
+    if (attempts > 1) await db.update(sourceSyncRuns).set({ params: { day, url, attempts } }).where(eq(sourceSyncRuns.id, run.id));
+    if (!res.ok) return fail(res.status === 404 ? (day.length === 7 ? "Arquivo mensal não encontrado no INPE (404)." : "Arquivo do dia ainda não publicado pelo INPE (404).") : `INPE respondeu HTTP ${res.status}.`);
+    parsed = f.parse(res.text);
   } catch (err) {
     return fail(err instanceof Error ? err.message : String(err));
   }

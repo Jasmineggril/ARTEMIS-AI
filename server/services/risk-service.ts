@@ -33,12 +33,14 @@ export const analysisRequestSchema = z.object({
 });
 export type AnalysisRequest = z.infer<typeof analysisRequestSchema>;
 
-type FieldOrigin = "manual" | "open-meteo" | "base-historica-organizacao" | "sisfogo-roi" | "inpe-queimadas" | "nao-verificado";
+type FieldOrigin = "manual" | "inmet-estacao" | "open-meteo" | "base-historica-organizacao" | "sisfogo-roi" | "inpe-queimadas" | "nao-verificado";
 
 export interface Provenance {
   field: string;
   origin: FieldOrigin;
   referenceAt?: string;
+  /** e.g. station code, name and distance for INMET */
+  detail?: string;
 }
 
 export interface EngineOutput {
@@ -86,6 +88,16 @@ export interface HotspotContext {
 
 export type WeatherProvider = (lat: number, lng: number) => Promise<RiskWeather & { cached?: boolean }>;
 
+/** INMET station context prepared by the route (nearest representative station). */
+export interface InmetContext {
+  station: { code: string; name: string; distanceKm: number; representativeness: string } | null;
+  observation: { observedAt: string; temperatureC: number | null; humidityPct: number | null; windSpeedMs: number | null; precipitation72hMm: number | null } | null;
+  usable: boolean;
+  reason: string;
+}
+/** An INMET observation is used only from a station ≤ 50 km away and at most 3 h old. */
+export const INMET_MAX_KM = 50, INMET_MAX_AGE_H = 3;
+
 export interface ResolvedInputs {
   engineInput: RiskInput;
   pythonPayload: Record<string, unknown>;
@@ -93,6 +105,7 @@ export interface ResolvedInputs {
   weather: (RiskWeather & { cached?: boolean }) | null;
   hotspots: HotspotContext | null;
   hotspotOrigin: "manual" | "inpe-queimadas" | "nao-verificado";
+  inmet: InmetContext | null;
   connectorError?: string;
   qualityLabel: string;
   /** Breakdown of historicalOccurrences when it came from the database. */
@@ -108,7 +121,7 @@ export async function resolveInputs(
   area: { latitude: number | null; longitude: number | null },
   historicalCount: number | null,
   fetchImpl?: FetchLike,
-  ctx: { hotspots?: HotspotContext | null; weatherProvider?: WeatherProvider; history?: HistoryContext | null } = {},
+  ctx: { hotspots?: HotspotContext | null; weatherProvider?: WeatherProvider; history?: HistoryContext | null; inmet?: InmetContext | null } = {},
 ): Promise<ResolvedInputs> {
   const i = req.inputs;
   const provenance: Provenance[] = [];
@@ -116,7 +129,15 @@ export async function resolveInputs(
   let connectorError: string | undefined;
 
   const meteoFields = ["temperature", "humidity", "windSpeed", "recentRainfall"] as const;
-  const needsWeather = meteoFields.some((f) => i[f] === undefined);
+  // Official station observations (INMET), when fresh and from a representative station.
+  const ob = ctx.inmet?.usable ? ctx.inmet.observation : null;
+  const fromInmet: Record<(typeof meteoFields)[number], number | undefined> = {
+    temperature: ob?.temperatureC ?? undefined,
+    humidity: ob?.humidityPct ?? undefined,
+    windSpeed: ob?.windSpeedMs != null ? Math.round(ob.windSpeedMs * 3.6 * 10) / 10 : undefined, // m/s → km/h
+    recentRainfall: ob?.precipitation72hMm ?? undefined,
+  };
+  const needsWeather = meteoFields.some((f) => i[f] === undefined && fromInmet[f] === undefined);
 
   if (req.useLiveWeather && needsWeather) {
     if (area.latitude == null || area.longitude == null) {
@@ -149,6 +170,9 @@ export async function resolveInputs(
   for (const f of meteoFields) {
     if (values[f] !== undefined) {
       provenance.push({ field: f, origin: "manual" });
+    } else if (fromInmet[f] !== undefined) {
+      values[f] = fromInmet[f];
+      provenance.push({ field: f, origin: "inmet-estacao", referenceAt: ob!.observedAt, detail: `${ctx.inmet!.station!.code} ${ctx.inmet!.station!.name} a ${ctx.inmet!.station!.distanceKm} km` });
     } else if (fromWeather[f] !== undefined) {
       values[f] = fromWeather[f];
       provenance.push({ field: f, origin: "open-meteo", referenceAt: weather!.referenceAt });
@@ -221,7 +245,7 @@ export async function resolveInputs(
   };
 
   const qualityLabel = { poor: "ruim", regular: "regular", good: "boa", excellent: "excelente" }[quality];
-  return { engineInput, pythonPayload, provenance, weather, hotspots: hs, hotspotOrigin, connectorError, qualityLabel, history: ctx.history ?? null };
+  return { engineInput, pythonPayload, provenance, weather, hotspots: hs, hotspotOrigin, inmet: ctx.inmet ?? null, connectorError, qualityLabel, history: ctx.history ?? null };
 }
 
 function runTsEngine(input: RiskInput, engineType: string): EngineOutput {
@@ -292,6 +316,13 @@ export function buildLimitations(resolved: ResolvedInputs, engine: EngineOutput)
   if (resolved.weather) {
     out.push("Dados do Open-Meteo são estimativas de modelo numérico para a coordenada, não medições de estação no local.");
   }
+  const im = resolved.inmet;
+  if (im?.station && resolved.provenance.some((p) => p.origin === "inmet-estacao")) {
+    out.push(`Observação oficial do INMET da estação ${im.station.code} (${im.station.name}), a ${im.station.distanceKm} km da área (representatividade: ${im.station.representativeness}). ` +
+      "Medida no local da estação, não na propriedade; relevo e uso do solo podem fazer as condições diferirem.");
+  } else if (im) {
+    out.push(`INMET não utilizado: ${im.reason}`);
+  }
   if (resolved.connectorError) {
     out.push(`Conector meteorológico: ${resolved.connectorError}`);
   }
@@ -326,6 +357,10 @@ export function buildDataSources(resolved: ResolvedInputs) {
   const sources: { key: string; name: string; referenceAt?: string; url?: string; licence?: string }[] = [];
   if (resolved.provenance.some((p) => p.origin === "manual")) {
     sources.push({ key: "manual", name: "Entrada manual do usuário" });
+  }
+  if (resolved.inmet?.station && resolved.provenance.some((p) => p.origin === "inmet-estacao")) {
+    sources.push({ key: "inmet-estacoes", name: `INMET — estação automática ${resolved.inmet.station.code} (${resolved.inmet.station.name}), ${resolved.inmet.station.distanceKm} km`,
+      referenceAt: resolved.inmet.observation?.observedAt, url: "https://portal.inmet.gov.br/dadoshistoricos", licence: "Dados públicos do INMET" });
   }
   if (resolved.weather) {
     sources.push({

@@ -3,6 +3,11 @@
  *   INPE        every INPE_SYNC_MINUTES (default 60): today + yesterday, then hotspot alerts
  *   Sisfogo     incremental every SISFOGO_SYNC_HOURS (default 24); complete when the last
  *               complete run is older than 7 days
+ *   E-mails     alert notifications due, every NOTIFY_MINUTES (default 5)
+ *   INPE RF     official fire risk: last 3 observed days + forecast T0–T3 + days without rain,
+ *               every INPE_RISK_SYNC_HOURS (default 6; files already processed are skipped by sha256)
+ *   INMET       station registry + current-year archive every INMET_SYNC_HOURS (default 24);
+ *               the archive is downloaded only when its Last-Modified changed
  * Each job runs under a PostgreSQL advisory lock, so it never overlaps itself
  * or the same job started by cron/CLI. Every run is recorded in
  * source_sync_runs (visible in Fontes de Dados and in the admin panel).
@@ -12,6 +17,11 @@ import { db, pool } from "../db";
 import { syncInpeDay, recentUtcDays } from "../connectors/inpe";
 import { syncSisfogo, SisfogoBusyError } from "./sisfogo-sync";
 import { evaluateHotspotAlerts } from "./hotspot-alerts";
+import { processDeliveries } from "./notifications";
+import { syncInmetStations } from "../connectors/inmet";
+import { syncInmetYear, archiveLooksUnchanged, InmetBusyError } from "./inmet-sync";
+import { syncRecentRisk, InpeRfBusyError } from "./inpe-fire-risk-sync";
+import { evaluateRiskAlerts } from "./fire-risk-alerts";
 
 const log = (e: Record<string, unknown>) => console.log(JSON.stringify({ time: new Date().toISOString(), source: "scheduler", ...e }));
 
@@ -63,6 +73,30 @@ async function runSisfogoCycle() {
   }
 }
 
+export async function runInpeRiskCycle() {
+  try {
+    const r = await syncRecentRisk(3);
+    const alerts = await evaluateRiskAlerts();
+    log({ job: "inpe-risco-fogo", observado: r.observado.map((x) => `${x.validDay ?? "?"}:${x.status}`), previsto: r.previsto.map((x) => `T${x.lead}:${x.status}`), alerts });
+  } catch (err) {
+    if (err instanceof InpeRfBusyError) log({ job: "inpe-risco-fogo", status: "ignorado", reason: "já em andamento" });
+    else log({ job: "inpe-risco-fogo", status: "erro", error: err instanceof Error ? err.message : String(err) });
+  }
+}
+
+export async function runInmetCycle() {
+  const year = new Date().getUTCFullYear();
+  try {
+    const st = await syncInmetStations();
+    if (await archiveLooksUnchanged(year)) { log({ job: "inmet", stations: st.status, archive: "sem alteração (Last-Modified)" }); return; }
+    const r = await syncInmetYear(year, { trigger: "agendado" });
+    log({ job: "inmet", stations: st.status, year, status: r.status, inserted: r.inserted, updated: r.updated, unchangedArchive: r.unchangedArchive, error: r.error });
+  } catch (err) {
+    if (err instanceof InmetBusyError) log({ job: "inmet", status: "ignorado", reason: "já em andamento" });
+    else log({ job: "inmet", status: "erro", error: err instanceof Error ? err.message : String(err) });
+  }
+}
+
 let timers: NodeJS.Timeout[] = [];
 
 export function startScheduler() {
@@ -72,16 +106,30 @@ export function startScheduler() {
   const safe = (name: string, fn: () => Promise<unknown>) => () => fn().catch((e) => log({ job: name, status: "erro", error: e instanceof Error ? e.message : String(e) }));
   const inpe = safe("inpe", runInpeCycle);
   const sis = safe("sisfogo", runSisfogoCycle);
+  const inmetH = Math.max(6, Number(process.env.INMET_SYNC_HOURS ?? 24));
+  const rfH = Math.max(1, Number(process.env.INPE_RISK_SYNC_HOURS ?? 6));
+  const rfJob = process.env.INPE_RISK_SYNC_ENABLED === "false" ? () => {} : safe("inpe-risco-fogo", runInpeRiskCycle);
+  const inmetJob = process.env.INMET_SYNC_ENABLED === "false" ? () => {} : safe("inmet", runInmetCycle);
+  const notifyMin = Math.max(1, Number(process.env.NOTIFY_MINUTES ?? 5));
+  const notify = safe("notificacoes", async () => {
+    const r = await processDeliveries();
+    if (r.claimed) log({ job: "notificacoes", result: r });
+  });
 
   // On start, catch up only what is overdue (a restart does not re-download everything).
   setTimeout(async () => {
     const [i, s] = await Promise.all([lastSuccess("inpe-queimadas"), lastSuccess("sisfogo-roi")]).catch(() => [null, null]);
     if (!i || Date.now() - i.getTime() > inpeMin * 60_000) inpe();
     if (!s || Date.now() - s.getTime() > sisH * 3_600_000) sis();
+    const rfLast = await lastSuccess("inpe-risco-fogo").catch(() => null);
+    if (!rfLast || Date.now() - rfLast.getTime() > rfH * 3_600_000) rfJob();
+    const m = await lastSuccess("inmet-estacoes").catch(() => null);
+    if (process.env.INMET_SYNC_ENABLED !== "false" && (!m || Date.now() - m.getTime() > inmetH * 3_600_000)) inmetJob();
   }, 30_000).unref();
-  timers = [setInterval(inpe, inpeMin * 60_000), setInterval(sis, sisH * 3_600_000)];
+  if (process.env.INMET_SYNC_ENABLED === "false") log({ job: "inmet", status: "desativado" });
+  timers = [setInterval(inpe, inpeMin * 60_000), setInterval(sis, sisH * 3_600_000), setInterval(notify, notifyMin * 60_000), setInterval(inmetJob, inmetH * 3_600_000), setInterval(rfJob, rfH * 3_600_000)];
   timers.forEach((t) => t.unref());
-  log({ status: "iniciado", inpeMinutes: inpeMin, sisfogoHours: sisH });
+  log({ status: "iniciado", inpeMinutes: inpeMin, sisfogoHours: sisH, notifyMinutes: notifyMin, inmetHours: inmetH });
   return true;
 }
 

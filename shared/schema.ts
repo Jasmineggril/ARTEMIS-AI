@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json, uniqueIndex, index, date, smallint, char, bigserial } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json, jsonb, uniqueIndex, index, date, smallint, char, bigserial, real } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -177,6 +177,11 @@ export const riskAnalyses = pgTable("risk_analyses", {
   areaSnapshot: json("area_snapshot"),      // area as it was at analysis time (migration 0004)
   modelVersionId: integer("model_version_id"), // migration 0007
   clientDurationMs: integer("client_duration_ms"), // migration 0013: time from opening the form to the result
+  // migration 0017: expert verdict on the recommendations
+  recommendationEvaluation: text("recommendation_evaluation"),
+  recommendationEvaluationNote: text("recommendation_evaluation_note"),
+  recommendationEvaluatedBy: integer("recommendation_evaluated_by"),
+  recommendationEvaluatedAt: timestamp("recommendation_evaluated_at", { withTimezone: true }),
 });
 
 /** Fontes de dados disponíveis */
@@ -570,4 +575,165 @@ export const susResponses = pgTable("sus_responses", {
   score: doublePrecision("score").notNull(),
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Alert notifications (migration 0015) ───────────────────────────────────
+export const NOTIFICATION_SEVERITIES = ["baixo", "moderado", "alto", "crítico"] as const;
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: integer("user_id").primaryKey(),
+  emailEnabled: boolean("email_enabled").notNull().default(true),
+  minSeverity: text("min_severity").notNull().default("alto"),
+  kinds: text("kinds").array().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const notificationDeliveries = pgTable("notification_deliveries", {
+  id: serial("id").primaryKey(),
+  alertId: integer("alert_id").notNull(),
+  userId: integer("user_id").notNull(),
+  organizationId: integer("organization_id").notNull(),
+  channel: text("channel").notNull().default("email"),
+  status: text("status").notNull().default("pendente"), // pendente | enviado | falha | bloqueado_configuracao
+  attempts: integer("attempts").notNull().default(0),
+  lastError: text("last_error"),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type NotificationDelivery = typeof notificationDeliveries.$inferSelect;
+
+// ─── Official municipal boundaries (migration 0016) ─────────────────────────
+export const municipalityBoundaries = pgTable("municipality_boundaries", {
+  ibgeCode: char("ibge_code", { length: 7 }).primaryKey(),
+  boundary: jsonb("boundary").notNull(),
+  minLat: doublePrecision("min_lat").notNull(), maxLat: doublePrecision("max_lat").notNull(),
+  minLng: doublePrecision("min_lng").notNull(), maxLng: doublePrecision("max_lng").notNull(),
+  centroidLat: doublePrecision("centroid_lat").notNull(), centroidLng: doublePrecision("centroid_lng").notNull(),
+  areaKm2: doublePrecision("area_km2").notNull(),
+  quality: text("quality").notNull(),
+  source: text("source").notNull(),
+  sourceUrl: text("source_url"),
+  loadedAt: timestamp("loaded_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Proof of Value baseline (migration 0017) ───────────────────────────────
+export const povBaselineMeasurements = pgTable("pov_baseline_measurements", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").notNull(),
+  userId: integer("user_id").notNull(),
+  areaId: integer("area_id"),
+  method: text("method").notNull().default("manual"),
+  durationMs: integer("duration_ms").notNull(),
+  sourcesConsulted: text("sources_consulted").array().notNull(),
+  note: text("note"),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── INMET weather stations (migration 0018) ────────────────────────────────
+export const weatherStations = pgTable("weather_stations", {
+  id: serial("id").primaryKey(),
+  sourceId: integer("source_id").notNull(),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  state: char("state", { length: 2 }),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  altitudeM: doublePrecision("altitude_m"),
+  stationType: text("station_type"),
+  status: text("status"),
+  utcOffsetHours: smallint("utc_offset_hours").notNull().default(-3),
+  operationStart: timestamp("operation_start", { withTimezone: true }),
+  operationEnd: timestamp("operation_end", { withTimezone: true }),
+  registry: jsonb("registry"),
+  firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type WeatherStation = typeof weatherStations.$inferSelect;
+export const weatherStationObservations = pgTable("weather_station_observations", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  stationId: integer("station_id").notNull(),
+  observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+  temperatureC: real("temperature_c"),
+  temperatureMaxC: real("temperature_max_c"),
+  temperatureMinC: real("temperature_min_c"),
+  dewPointC: real("dew_point_c"),
+  humidityPct: real("humidity_pct"),
+  humidityMinPct: real("humidity_min_pct"),
+  windSpeedMs: real("wind_speed_ms"),
+  windGustMs: real("wind_gust_ms"),
+  windDirectionDeg: smallint("wind_direction_deg"),
+  precipitationMm: real("precipitation_mm"),
+  pressureHpa: real("pressure_hpa"),
+  radiationKjM2: real("radiation_kj_m2"),
+  qualityFlags: text("quality_flags").array().notNull(),
+  rawFileSha256: char("raw_file_sha256", { length: 64 }),
+  rawFileName: text("raw_file_name"),
+  rawLine: integer("raw_line"),
+  syncRunId: integer("sync_run_id"),
+  firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const weatherStationDaily = pgTable("weather_station_daily", {
+  stationId: integer("station_id").notNull(),
+  day: date("day").notNull(),
+  hoursObserved: smallint("hours_observed").notNull(),
+  hoursTemperature: smallint("hours_temperature").notNull(),
+  hoursHumidity: smallint("hours_humidity").notNull(),
+  hoursPrecipitation: smallint("hours_precipitation").notNull(),
+  temperatureMeanC: real("temperature_mean_c"),
+  temperatureMaxC: real("temperature_max_c"),
+  temperatureMinC: real("temperature_min_c"),
+  humidityMeanPct: real("humidity_mean_pct"),
+  humidityMinPct: real("humidity_min_pct"),
+  humidity13hPct: real("humidity_13h_pct"),
+  temperature13hC: real("temperature_13h_c"),
+  windMeanMs: real("wind_mean_ms"),
+  windMaxMs: real("wind_max_ms"),
+  wind13hMs: real("wind_13h_ms"),
+  gustMaxMs: real("gust_max_ms"),
+  precipitationMm: real("precipitation_mm"),
+  flaggedHours: smallint("flagged_hours").notNull().default(0),
+  computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Fire-risk indices (migration 0019) ─────────────────────────────────────
+export const fireRiskValues = pgTable("fire_risk_values", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  indexKey: text("index_key").notNull(),
+  product: text("product").notNull(),
+  modelVersion: text("model_version").notNull(),
+  targetType: text("target_type").notNull(),
+  targetId: integer("target_id").notNull(),
+  validDay: date("valid_day").notNull(),
+  leadDays: smallint("lead_days").notNull().default(0),
+  issuedOn: date("issued_on"),
+  valueMean: real("value_mean"),
+  valueMax: real("value_max"),
+  valueMin: real("value_min"),
+  riskClass: text("risk_class"),
+  pixelsTotal: integer("pixels_total").notNull().default(0),
+  pixelsValid: integer("pixels_valid").notNull().default(0),
+  method: text("method").notNull(),
+  inputs: jsonb("inputs"),
+  sourceFile: text("source_file"),
+  sourceSha256: char("source_sha256", { length: 64 }),
+  syncRunId: integer("sync_run_id"),
+  computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const fireRiskGrids = pgTable("fire_risk_grids", {
+  indexKey: text("index_key").notNull(),
+  product: text("product").notNull(),
+  validDay: date("valid_day").notNull(),
+  leadDays: smallint("lead_days").notNull().default(0),
+  cellDeg: real("cell_deg").notNull(),
+  lat0: doublePrecision("lat0").notNull(),
+  lon0: doublePrecision("lon0").notNull(),
+  nlat: integer("nlat").notNull(),
+  nlon: integer("nlon").notNull(),
+  meanValues: jsonb("mean_values").notNull(),
+  maxValues: jsonb("max_values").notNull(),
+  sourceFile: text("source_file"),
+  sourceSha256: char("source_sha256", { length: 64 }),
+  computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
 });

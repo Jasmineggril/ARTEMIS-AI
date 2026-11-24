@@ -21,6 +21,8 @@ import RiskAnalysis from "@/pages/RiskAnalysis";
 import Areas from "@/pages/Areas";
 import AreaDetail from "@/pages/AreaDetail";
 import Avaliacao from "@/pages/Avaliacao";
+import LinhaDeBase from "@/pages/LinhaDeBase";
+import WeatherStations from "@/pages/WeatherStations";
 import AdminOperations from "@/pages/AdminOperations";
 import Prevention from "@/pages/Prevention";
 import Settings from "@/pages/Settings";
@@ -73,8 +75,10 @@ function Router() {
       <Route path="/reports" component={() => <ProtectedRoute component={Reports} />} />
       <Route path="/admin" component={() => <ProtectedRoute component={Admin} />} />
       <Route path="/maps" component={() => <ProtectedRoute component={EnvironmentalMap} />} />
+      <Route path="/estacoes" component={() => <ProtectedRoute component={WeatherStations} />} />
       <Route path="/insights" component={() => <ProtectedRoute component={Insights} />} />
       <Route path="/admin/operacao" component={() => <ProtectedRoute component={AdminOperations} />} />
+      <Route path="/avaliacao/linha-de-base" component={() => <ProtectedRoute component={LinhaDeBase} />} />
       <Route path="/avaliacao" component={() => <ProtectedRoute component={Avaliacao} />} />
       <Route path="/areas/:id" component={() => <ProtectedRoute component={AreaDetail} />} />
       <Route path="/areas" component={() => <ProtectedRoute component={Areas} />} />

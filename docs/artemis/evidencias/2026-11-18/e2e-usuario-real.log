@@ -1,0 +1,19 @@
+(node:8261) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+local escolhido: ALENQUER/PA (-1.3834, -54.9361) — 29 foco(s) reais em 6 h
+PASS 1. criar conta (cria a organização) (1.6 s)
+PASS 2. sair e entrar de novo (0.6 s)
+PASS 3. organização cadastrada e papel de proprietária (0.1 s)
+PASS 4. cadastrar propriedade desenhando o limite no mapa (2.2 s)
+     focos INPE reais: 39 dentro, 1030 até 10 km
+PASS 5. ver dados reais do INPE e Sisfogo no entorno (0.2 s)
+PASS 6. executar análise de risco (clima ao vivo + INPE automático) (25.1 s)
+PASS 7. interpretar o resultado (natureza de cada dado) (0.1 s)
+PASS 8. gerar relatório rastreável (e PDF) (0.3 s)
+     {"source":"hotspot-alerts","areasChecked":46,"alertsCreated":1,"alertsUpdated":0,"areasWithHotspots":9}
+PASS 9a. alerta automático a partir do foco detectado (rotina horária do INPE) (3.6 s)
+PASS 9b. acompanhar o alerta (registrar ação) (0.1 s)
+     no banco: 1 análise(s), 1 alerta(s) em acompanhamento, limite=desenho, área=calculada
+PASS 10. sair, entrar e conferir que tudo continua salvo (1.3 s)
+JS errors: []
+RESULTADO: todas as etapas passaram

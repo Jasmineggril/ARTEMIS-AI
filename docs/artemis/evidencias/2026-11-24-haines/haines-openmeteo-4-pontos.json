@@ -1,0 +1,222 @@
+{
+ "consultadoEm": "2026-11-24T01:18:08.785Z",
+ "observacao": "Dados de modelo (Open-Meteo, níveis de pressão), não radiossondagem.",
+ "resultados": [
+  {
+   "local": "Brasília (DF)",
+   "lat": -15.79,
+   "lng": -47.93,
+   "source": "Open-Meteo — níveis de pressão (modelo numérico), 18 UTC",
+   "nature": "estimado_modelo",
+   "method": "Haines (1988), variante pela elevação",
+   "status": "ok",
+   "elevationM": 1151,
+   "variant": "media",
+   "values": [
+    {
+     "at": "2026-11-24T18:00Z",
+     "levels": {
+      "t950": 31.6,
+      "t850": 23.7,
+      "td850": 15.2,
+      "t700": 10.8,
+      "td700": 8.1,
+      "t500": -3.7
+     },
+     "result": {
+      "hi": 5,
+      "A": 3,
+      "B": 2,
+      "stabilityDeltaC": 12.9,
+      "dewpointDepressionC": 8.5,
+      "cls": "moderado",
+      "variant": "media"
+     }
+    },
+    {
+     "at": "2026-11-25T18:00Z",
+     "levels": {
+      "t950": 32.6,
+      "t850": 24.5,
+      "td850": 16.5,
+      "t700": 10.8,
+      "td700": 7.3,
+      "t500": -3.5
+     },
+     "result": {
+      "hi": 5,
+      "A": 3,
+      "B": 2,
+      "stabilityDeltaC": 13.7,
+      "dewpointDepressionC": 8,
+      "cls": "moderado",
+      "variant": "media"
+     }
+    }
+   ],
+   "note": "Índice de estabilidade e secura da baixa troposfera: indica potencial de crescimento de um incêndio já iniciado, não risco de ignição. Dados de modelo, não de radiossondagem."
+  },
+  {
+   "local": "Palmas (TO)",
+   "lat": -10.18,
+   "lng": -48.33,
+   "source": "Open-Meteo — níveis de pressão (modelo numérico), 18 UTC",
+   "nature": "estimado_modelo",
+   "method": "Haines (1988), variante pela elevação",
+   "status": "ok",
+   "elevationM": 263,
+   "variant": "baixa",
+   "values": [
+    {
+     "at": "2026-11-24T18:00Z",
+     "levels": {
+      "t950": 30.7,
+      "t850": 21.2,
+      "td850": 19.7,
+      "t700": 11.1,
+      "td700": 4.2,
+      "t500": -3
+     },
+     "result": {
+      "hi": 4,
+      "A": 3,
+      "B": 1,
+      "stabilityDeltaC": 9.5,
+      "dewpointDepressionC": 1.5,
+      "cls": "baixo",
+      "variant": "baixa"
+     }
+    },
+    {
+     "at": "2026-11-25T18:00Z",
+     "levels": {
+      "t950": 31.6,
+      "t850": 22.2,
+      "td850": 19.2,
+      "t700": 11.7,
+      "td700": 2.5,
+      "t500": -2.8
+     },
+     "result": {
+      "hi": 4,
+      "A": 3,
+      "B": 1,
+      "stabilityDeltaC": 9.4,
+      "dewpointDepressionC": 3,
+      "cls": "baixo",
+      "variant": "baixa"
+     }
+    }
+   ],
+   "note": "Índice de estabilidade e secura da baixa troposfera: indica potencial de crescimento de um incêndio já iniciado, não risco de ignição. Dados de modelo, não de radiossondagem."
+  },
+  {
+   "local": "Cuiabá (MT)",
+   "lat": -15.6,
+   "lng": -56.1,
+   "source": "Open-Meteo — níveis de pressão (modelo numérico), 18 UTC",
+   "nature": "estimado_modelo",
+   "method": "Haines (1988), variante pela elevação",
+   "status": "ok",
+   "elevationM": 182,
+   "variant": "baixa",
+   "values": [
+    {
+     "at": "2026-11-24T18:00Z",
+     "levels": {
+      "t950": 30.9,
+      "t850": 21.2,
+      "td850": 19,
+      "t700": 11,
+      "td700": 5.9,
+      "t500": -3.3
+     },
+     "result": {
+      "hi": 4,
+      "A": 3,
+      "B": 1,
+      "stabilityDeltaC": 9.7,
+      "dewpointDepressionC": 2.2,
+      "cls": "baixo",
+      "variant": "baixa"
+     }
+    },
+    {
+     "at": "2026-11-25T18:00Z",
+     "levels": {
+      "t950": 32.5,
+      "t850": 22.7,
+      "td850": 18,
+      "t700": 10.8,
+      "td700": 6,
+      "t500": -4
+     },
+     "result": {
+      "hi": 4,
+      "A": 3,
+      "B": 1,
+      "stabilityDeltaC": 9.8,
+      "dewpointDepressionC": 4.7,
+      "cls": "baixo",
+      "variant": "baixa"
+     }
+    }
+   ],
+   "note": "Índice de estabilidade e secura da baixa troposfera: indica potencial de crescimento de um incêndio já iniciado, não risco de ignição. Dados de modelo, não de radiossondagem."
+  },
+  {
+   "local": "Porto Velho (RO)",
+   "lat": -8.76,
+   "lng": -63.9,
+   "source": "Open-Meteo — níveis de pressão (modelo numérico), 18 UTC",
+   "nature": "estimado_modelo",
+   "method": "Haines (1988), variante pela elevação",
+   "status": "ok",
+   "elevationM": 88,
+   "variant": "baixa",
+   "values": [
+    {
+     "at": "2026-11-24T18:00Z",
+     "levels": {
+      "t950": 28.7,
+      "t850": 19.9,
+      "td850": 18.4,
+      "t700": 11.1,
+      "td700": 6.5,
+      "t500": -3.5
+     },
+     "result": {
+      "hi": 4,
+      "A": 3,
+      "B": 1,
+      "stabilityDeltaC": 8.8,
+      "dewpointDepressionC": 1.5,
+      "cls": "baixo",
+      "variant": "baixa"
+     }
+    },
+    {
+     "at": "2026-11-25T18:00Z",
+     "levels": {
+      "t950": 28.5,
+      "t850": 21.1,
+      "td850": 15,
+      "t700": 11.3,
+      "td700": 6,
+      "t500": -3.3
+     },
+     "result": {
+      "hi": 4,
+      "A": 2,
+      "B": 2,
+      "stabilityDeltaC": 7.4,
+      "dewpointDepressionC": 6.1,
+      "cls": "baixo",
+      "variant": "baixa"
+     }
+    }
+   ],
+   "note": "Índice de estabilidade e secura da baixa troposfera: indica potencial de crescimento de um incêndio já iniciado, não risco de ignição. Dados de modelo, não de radiossondagem."
+  }
+ ]
+}

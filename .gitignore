@@ -9,3 +9,4 @@ vite.config.ts.*
 __pycache__/
 *.pyc
 *.pyo
+data/raw/

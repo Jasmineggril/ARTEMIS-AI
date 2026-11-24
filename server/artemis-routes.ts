@@ -27,6 +27,8 @@ import {
 import { getRiskWeatherCached } from "./services/weather-cache";
 import { inpeFreshness } from "./connectors/inpe";
 import { hasPostgisGeom } from "./spatial";
+import { checkDeclaredMunicipality } from "./services/municipality-lookup";
+import { inmetContextForArea } from "./services/inmet-stations";
 import { historyContext, type HistoryContext } from "./services/history-context";
 import { areaSurroundings } from "./services/surroundings";
 import { upsertAlertFromAnalysis, transitionAlert, TransitionError, shouldAlert, allowedTransitions, OPEN_STATUSES } from "./services/alert-service";
@@ -241,7 +243,7 @@ function analysisSourceRows(analysisId: number, resolved: Awaited<ReturnType<typ
   const byOrigin = new Map<string, string[]>();
   for (const p of resolved.provenance) {
     if (p.origin === "nao-verificado") continue;
-    const key = p.origin === "base-historica-organizacao" ? "fire_occurrences" : p.origin;
+    const key = p.origin === "base-historica-organizacao" ? "fire_occurrences" : p.origin === "inmet-estacao" ? "inmet-estacoes" : p.origin;
     byOrigin.set(key, [...(byOrigin.get(key) ?? []), p.field]);
   }
   return Array.from(byOrigin, ([sourceKey, fields]) => ({
@@ -252,6 +254,7 @@ function analysisSourceRows(analysisId: number, resolved: Awaited<ReturnType<typ
       sourceKey === "open-meteo" && resolved.weather ? new Date(resolved.weather.referenceAt)
       : sourceKey === "inpe-queimadas" ? resolved.hotspots?.lastSyncAt ?? null
       : sourceKey === "sisfogo-roi" ? history?.officialLastCompleteAt ?? null
+      : sourceKey === "inmet-estacoes" && resolved.inmet?.observation ? new Date(resolved.inmet.observation.observedAt)
       : null,
     recordCount:
       sourceKey === "fire_occurrences" ? history?.orgCount ?? null
@@ -263,6 +266,7 @@ function analysisSourceRows(analysisId: number, resolved: Awaited<ReturnType<typ
       : sourceKey === "inpe-queimadas" ? { radiusKm: resolved.hotspots?.radiusKm, windowHours: resolved.hotspots?.windowHours, nearestKm: resolved.hotspots?.nearestKm }
       : sourceKey === "fire_occurrences" ? { radiusKm: history?.radiusKm, period: "todo o período importado pela organização", officialIncluded: history?.officialIncluded ?? false, officialReason: history?.officialReason ?? null }
       : sourceKey === "sisfogo-roi" ? { radiusKm: history?.radiusKm, period: history?.officialRange ?? null, duplicatesExcluded: history?.duplicatesExcluded ?? 0, coverage: "ROIs finalizados dos órgãos aderentes ao Sisfogo" }
+      : sourceKey === "inmet-estacoes" ? { station: resolved.inmet?.station ?? null, nature: "medido_estacao" }
       : null,
   }));
 }
@@ -440,7 +444,10 @@ export function registerArtemisRoutes(app: Express) {
       .values({ ...(applied.values as typeof input), organizationId: req.ctx.organizationId, createdBy: req.ctx.userId })
       .returning();
     await audit(req, "area.created", { type: "area", id: area.id }, { name: area.name, boundary: Boolean(area.boundary) });
-    res.status(201).json({ ...area, warnings: applied.warnings });
+    const municipalityCheck = area.latitude != null && area.longitude != null
+      ? await checkDeclaredMunicipality(area.latitude, area.longitude, area).catch(() => null) : null;
+    const warnings = [...(applied.warnings ?? []), ...(municipalityCheck?.status === "diverge" ? [municipalityCheck.message] : [])];
+    res.status(201).json({ ...area, warnings, municipalityCheck });
   }));
 
   app.get("/api/areas/:id/surroundings", requireOrg(), handle(async (req, res) => {
@@ -469,7 +476,9 @@ export function registerArtemisRoutes(app: Express) {
   app.get("/api/areas/:id", requireOrg(), handle(async (req, res) => {
     const area = await loadArea(req.ctx.organizationId, idParam(req.params.id));
     if (!area) return res.status(404).json({ message: "Área não encontrada." });
-    res.json(area);
+    const municipalityCheck = area.latitude != null && area.longitude != null
+      ? await checkDeclaredMunicipality(area.latitude, area.longitude, area).catch(() => null) : null;
+    res.json({ ...area, municipalityCheck });
   }));
 
   app.patch("/api/areas/:id", requireOrg("manager"), handle(async (req, res) => {
@@ -534,7 +543,8 @@ export function registerArtemisRoutes(app: Express) {
       const hotspots = request.inputs.nearbyHotspot === undefined && area.latitude != null && area.longitude != null
         ? await hotspotContext(area.latitude, area.longitude)
         : null;
-      resolved = await resolveInputs(request, area, historical, undefined, { hotspots, weatherProvider: getRiskWeatherCached, history });
+      const inmet = await inmetContextForArea(area);
+      resolved = await resolveInputs(request, area, historical, undefined, { hotspots, weatherProvider: getRiskWeatherCached, history, inmet });
     } catch (err) {
       if (err instanceof MissingInputError) {
         return res.status(422).json({

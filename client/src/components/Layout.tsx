@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import {
+import { CloudSun,
   LayoutDashboard, Bell, Settings,
   FileText, Map, BarChart3, Home,
   Flame, MapPinned, ShieldCheck, Database,
@@ -33,6 +33,7 @@ export function Layout({ children }: LayoutProps) {
     { icon: Upload,          label: "Importação de Ocorrências", href: "/data-import",   tour: undefined },
     { icon: Globe,           label: "Consulta Pública", href: "/consulta-publica",   tour: undefined },
     { icon: Database,        label: "Fontes de Dados",           href: "/data-sources",  tour: undefined },
+    { icon: CloudSun,        label: "Estações INMET",            href: "/estacoes",      tour: undefined },
     { icon: TrendingUp,      label: "Inteligência Operacional",  href: "/insights",      tour: undefined },
     { icon: ShieldCheck,     label: "Protocolos de Prevenção",   href: "/prevention",    tour: undefined },
     { icon: FileText,        label: "Relatórios",                href: "/reports",       tour: "reports" },

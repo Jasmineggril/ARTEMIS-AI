@@ -1,4 +1,4 @@
-# 17 — Metodologia de risco de incêndio (motor `1.0.0-rules`)
+# 17 — Metodologia de risco de incêndio (motor `1.1.0-rules`)
 
 Documento de referência do cálculo exibido ao usuário. Fonte da verdade:
 `python_service/risk_model.py` (motor principal) e `shared/risk-engine.ts`
@@ -27,8 +27,8 @@ Cada análise grava a natureza de cada entrada e a decomposição do histórico
 |---|---|
 | Temperatura | ≥ 40 → +20 · ≥ 35 → +15 · ≥ 30 → +8 · ≥ 25 → +3 |
 | Umidade relativa | < 20 → +20 · < 30 → +15 · < 50 → +8 · < 65 → +3 |
-| Vento | > 40 → +15 · ≥ 26 → +10 · ≥ 16 → +5 |
-| Chuva 72 h (reduz) | > 30 → −15 · ≥ 11 → −8 · ≥ 3 → −3 |
+| Vento | > 40 → +15 · > 25 → +10 · > 15 → +5 |
+| Chuva 72 h (reduz) | > 30 → −15 · > 10 → −8 · > 2 → −3 |
 | Vegetação | muito seca +15 · seca +10 · moderada +4 · verde 0 |
 | Foco INPE próximo | ≤ 5 km +20 · ≤ 15 km +15 · ≤ 30 km +8 · ≤ 50 km +4 |
 | Ocorrências históricas | ≥ 5 → +10 · ≥ 3 → +6 · ≥ 1 → +2 |
@@ -57,9 +57,15 @@ evidência. O texto diz que foco é detecção térmica, não incêndio confirma
 
 ## 5. Limitações conhecidas
 
-1. **Divergência do fallback:** foco a 5–15 km vale 15 pontos no Python e **12** no
-   fallback TypeScript. Afeta só análises feitas com o motor Python fora do ar
-   (o resultado registra qual motor foi usado). Correção prevista após decisão.
+1. **Paridade entre motores (corrigida na 1.1.0, 18/11/2026):** a versão 1.0.0 do fallback
+   TypeScript divergia do motor Python em 1 765 de 3 433 entradas testadas (51 %): foco a
+   5–15 km (12 × 15 pontos), 15–30 km (6 × 8), 30–50 km (0 × 4), histórico de 2 ocorrências
+   (5 × 2) e de 3–4 (5 × 6). O Python também usava faixas inteiras (≥ 26 km/h, ≥ 11 mm) que
+   deixavam valores fracionários (ex.: 25,5 km/h) na faixa de baixo, e a explicação mostrava
+   +4 para foco além de 50 km sem somar na pontuação. Agora os dois motores usam as faixas
+   contínuas acima e o teste `tests/unit/engine-parity.test.ts` exige **diferença zero** de
+   pontuação e nível e soma dos fatores igual à pontuação. Para entradas inteiras, o motor
+   Python 1.1.0 dá o mesmo resultado da 1.0.0.
 2. Vegetação é declarada pelo usuário; não há índice de satélite (NDVI) integrado.
 3. Meteorologia é de modelo em grade (Open-Meteo), não de estação local.
 4. Foco INPE tem atraso de horas e falsos positivos (ex.: superfícies quentes).
@@ -75,3 +81,10 @@ seguintes, e consolida as avaliações de especialistas sobre os alertas
 evidências (`/api/admin/evidence.json`). Só depois de volume suficiente
 (ver critérios em `18_PLANO_PILOTO_OPERACAO.md`) os limiares poderão ser recalibrados,
 com nova versão do motor e registro da mudança.
+
+## 7. Resultado da primeira validação retrospectiva (18/11/2026)
+
+4 800 casos reais (400 municípios × 12 semanas, ago–nov 2026): AUC 0,72; taxa de focos nos
+7 dias seguintes de 22 % (baixo), 55 % (moderado) e 58 % (alto). Os níveis alto e crítico são
+raros demais para este desfecho (1 % dos casos). Detalhes, limitações e proposta de revisão:
+`23_VALIDACAO_MOTOR_DADOS_REAIS.md`. Os limiares **não** foram alterados.

@@ -11,7 +11,9 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db";
 import { alerts, alertEvents, monitoredAreas, type MonitoredArea } from "@shared/schema";
 import type { RiskRecommendation } from "@shared/risk-engine";
-import { areaShape, expandBox } from "./surroundings";
+import { areaShape } from "./surroundings";
+import { pointsNearArea } from "./spatial";
+import { enqueueAlertDeliveries } from "./notifications";
 import { OPEN_STATUSES } from "./alert-service";
 
 export interface HotspotAlertResult { areasChecked: number; alertsCreated: number; alertsUpdated: number; areasWithHotspots: number }
@@ -36,15 +38,13 @@ export async function evaluateHotspotAlerts(opts: { windowHours?: number; now?: 
     if (!shape) continue;
     out.areasChecked++;
     const limitKm = area.hotspotAlertKm ?? 5;
-    const b = expandBox(shape.box, limitKm);
-    const rows = (await db.execute<{ id: number; detectedAt: Date | string; satellite: string; latitude: number; longitude: number; frpMw: number | null }>(sql`
-      SELECT id, detected_at AS "detectedAt", satellite, latitude, longitude, frp_mw AS "frpMw" FROM satellite_hotspots
-      WHERE detected_at >= ${new Date(now.getTime() - windowHours * 3_600_000)} AND detected_at <= ${now}
-        AND latitude BETWEEN ${b.minLat} AND ${b.maxLat} AND longitude BETWEEN ${b.minLng} AND ${b.maxLng}
-      ORDER BY detected_at DESC LIMIT 5000`)).rows;
-    const hits = rows
-      .map((h) => ({ ...h, detectedAt: new Date(h.detectedAt), distanceKm: Math.round(shape.distance([h.longitude, h.latitude]) * 100) / 100 }))
-      .filter((h) => h.distanceKm <= limitKm);
+    const near = await pointsNearArea<{ id: number; detectedAt: Date | string; satellite: string; latitude: number; longitude: number; frpMw: number | null }>(area, {
+      table: "satellite_hotspots", radiusKm: limitKm, limit: 5000,
+      columns: sql`t.id, t.detected_at AS "detectedAt", t.satellite, t.latitude, t.longitude, t.frp_mw AS "frpMw"`,
+      where: sql`t.detected_at >= ${new Date(now.getTime() - windowHours * 3_600_000)} AND t.detected_at <= ${now}`,
+      orderBy: sql`t.detected_at DESC`,
+    });
+    const hits = (near?.rows ?? []).map((h) => ({ ...h, detectedAt: new Date(h.detectedAt) }));
     if (!hits.length) continue;
     out.areasWithHotspots++;
     const r = await upsertHotspotAlert(area, hits, limitKm, shape.kind, now);
@@ -99,6 +99,7 @@ async function upsertHotspotAlert(
     }).returning({ id: alerts.id });
     await tx.insert(alertEvents).values({ alertId: created.id, fromStatus: null, toStatus: "novo",
       note: "Alerta emitido automaticamente após a sincronização do INPE.", userId: null });
+    await enqueueAlertDeliveries(tx, { id: created.id, organizationId: area.organizationId!, severity, kind: "foco_proximo" });
     return "created";
   });
 }

@@ -7,6 +7,8 @@
 import { sql } from "drizzle-orm";
 import { db } from "../db";
 import { evaluateOutcomes } from "./outcome-validation";
+import { deliveryStats } from "./notifications";
+import { povIndicators } from "./pov";
 
 const iso = (col: string) => sql.raw(`to_char(${col} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')`);
 const one = async <T>(q: ReturnType<typeof sql>) => ((await db.execute(q)).rows[0] ?? {}) as T;
@@ -79,6 +81,8 @@ export async function operationsReport(from: Date, to: Date) {
     FROM sus_responses WHERE created_at >= ${from} AND created_at < ${to}`);
 
   const outcomes = await evaluateOutcomes({ from, to, windowDays: 7, radiusKm: 10 });
+  const notifications = await deliveryStats(from, to);
+  const proofOfValue = await povIndicators(from, to);
 
   return {
     generatedAt: new Date().toISOString(),
@@ -101,5 +105,7 @@ export async function operationsReport(from: Date, to: Date) {
     feedback,
     sus: { ...sus, note: "Escala SUS 0–100; referência usual: ≥ 68 acima da média (Bangor et al., 2008)." },
     outcomes,
+    proofOfValue,
+    notifications: { ...notifications, note: "Envios por e-mail. 'bloqueado_configuracao' = não enviado porque o SMTP não está configurado." },
   };
 }

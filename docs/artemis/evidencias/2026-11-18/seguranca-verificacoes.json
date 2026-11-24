@@ -1,0 +1,177 @@
+{
+  "base": "http://localhost:5057",
+  "ranAt": "2026-11-18T17:18:17.546Z",
+  "total": 28,
+  "passed": 28,
+  "failed": 0,
+  "results": [
+    {
+      "area": "cabeçalhos",
+      "name": "Content-Security-Policy presente",
+      "ok": true,
+      "detail": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://"
+    },
+    {
+      "area": "cabeçalhos",
+      "name": "CSP sem 'unsafe-eval'",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "cabeçalhos",
+      "name": "X-Content-Type-Options: nosniff",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "cabeçalhos",
+      "name": "X-Frame-Options: DENY (anti-clickjacking)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "cabeçalhos",
+      "name": "Referrer-Policy definido",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "cabeçalhos",
+      "name": "HSTS em produção",
+      "ok": true,
+      "detail": "max-age=31536000; includeSubDomains"
+    },
+    {
+      "area": "cabeçalhos",
+      "name": "X-Powered-By ausente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "autenticação",
+      "name": "senha fraca recusada",
+      "ok": true,
+      "detail": "A senha deve ter pelo menos 8 caracteres."
+    },
+    {
+      "area": "sessão",
+      "name": "cookie HttpOnly",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "sessão",
+      "name": "cookie SameSite=Lax",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "sessão",
+      "name": "cookie Secure atrás de HTTPS",
+      "ok": true,
+      "detail": "artemis.sid=…; Path=/; Expires=Thu, 19 Nov 2026 01:18:12 GMT; HttpOnly; Secure; SameSite=L"
+    },
+    {
+      "area": "autenticação",
+      "name": "cadastro A ok",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "autenticação",
+      "name": "mensagem de login não revela se o e-mail existe",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "autenticação",
+      "name": "recuperação de senha não revela se o e-mail existe",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "autorização",
+      "name": "13 rotas protegidas exigem login",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "isolamento",
+      "name": "outra organização não lê, altera, analisa nem apaga a área",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "isolamento",
+      "name": "lista de áreas da outra organização não contém a área",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "autorização",
+      "name": "proprietário de organização não acessa o painel da plataforma",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "autorização",
+      "name": "sincronização manual restrita ao administrador da plataforma",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "csrf",
+      "name": "POST com Origin de outro site é recusado",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "area": "injeção",
+      "name": "sondagens de SQL injection tratadas (400 ou resultado vazio, sem erro do banco, sem atraso)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "injeção",
+      "name": "tabelas intactas após as sondagens",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "robustez",
+      "name": "corpo acima de 15 MB recusado (413)",
+      "ok": true,
+      "detail": "413"
+    },
+    {
+      "area": "robustez",
+      "name": "travessia de diretório não expõe arquivos",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "area": "robustez",
+      "name": "JSON malformado → 400 sem pilha de erro",
+      "ok": true,
+      "detail": "400"
+    },
+    {
+      "area": "xss",
+      "name": "área com HTML no nome foi criada (pré-condição)",
+      "ok": true,
+      "detail": "201"
+    },
+    {
+      "area": "xss",
+      "name": "HTML no nome da área é exibido como texto, sem executar",
+      "ok": true,
+      "detail": "executou=false exibido=1"
+    },
+    {
+      "area": "força bruta",
+      "name": "tentativas repetidas de login são limitadas (429)",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

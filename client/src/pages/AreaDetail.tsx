@@ -5,6 +5,7 @@
  */
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AreaWeather } from "@/components/inmet/AreaWeather";
 import { Link, useLocation, useRoute } from "wouter";
 import { format } from "date-fns";
 import { MapContainer, TileLayer, Polygon, Circle, CircleMarker, Popup, useMap } from "react-leaflet";
@@ -96,6 +97,8 @@ export default function AreaDetail() {
             {a.municipality}/{a.state} · {OPERATION_LABELS[a.operationType] ?? a.operationType}
             {a.areaHectares != null && <> · {a.areaHectares.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ha ({a.areaHectaresSource === "calculada" ? "calculada do polígono" : "informada"})</>}
           </p>
+          {(a as any).municipalityCheck?.status === "confere" && <p className="text-xs text-muted-foreground mt-1" data-testid="municipality-check">✓ {(a as any).municipalityCheck.message}</p>}
+          {(a as any).municipalityCheck?.status === "diverge" && <p role="status" className="text-xs mt-1 text-amber-800 dark:text-amber-200" data-testid="municipality-check">⚠ {(a as any).municipalityCheck.message}</p>}
         </div>
         <div className="flex flex-wrap gap-2">
           {hasRole(user, "analyst") && <Button onClick={() => setLocation(`/risk-analysis?area=${a.id}`)} data-testid="button-analyze-area"><Flame className="w-4 h-4 mr-1" aria-hidden />Analisar risco</Button>}
@@ -200,6 +203,8 @@ export default function AreaDetail() {
           {hasRole(user, "manager") && <Link href="/data-import" className="text-sm underline mt-2 inline-block">Importar histórico</Link>}
         </section>
       </div>
+
+      <div className="mt-4"><AreaWeather areaId={a.id} /></div>
 
       {data.analyses.length > 0 && (
         <section className="rounded-2xl border bg-card p-4 mt-4" aria-labelledby="hist-t">

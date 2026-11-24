@@ -10,7 +10,7 @@
  * baseado em regras, separado da interface e preparado para futura
  * substituição por modelo supervisionado.
  *
- * Versão: 1.0.0
+ * Versão: 1.1.0 (paridade com python_service/risk_model.py — ver docs/artemis/17_METODOLOGIA_RISCO.md)
  */
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ export interface RiskResult {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const ENGINE_VERSION = "1.0.0";
+const ENGINE_VERSION = "1.1.0";
 
 // Thresholds para classificação de nível
 const LEVEL_THRESHOLDS = {
@@ -338,7 +338,7 @@ function calculateScore(input: RiskInput): { score: number; factors: RiskFactor[
         weight: "alto",
       });
     } else if (input.hotspotDistance <= 15) {
-      hotspotPts = 12;
+      hotspotPts = 15;
       factors.push({
         name: "Foco ativo próximo",
         description: `Foco de calor ou incêndio a ${input.hotspotDistance} km — risco de propagação elevado.`,
@@ -347,13 +347,22 @@ function calculateScore(input: RiskInput): { score: number; factors: RiskFactor[
         weight: "alto",
       });
     } else if (input.hotspotDistance <= 30) {
-      hotspotPts = 6;
+      hotspotPts = 8;
       factors.push({
         name: "Foco ativo na região",
         description: `Foco de calor ou incêndio a ${input.hotspotDistance} km — atenção recomendada.`,
         contribution: hotspotPts,
         value: `${input.hotspotDistance} km`,
         weight: "médio",
+      });
+    } else if (input.hotspotDistance <= 50) {
+      hotspotPts = 4;
+      factors.push({
+        name: "Foco ativo distante",
+        description: `Foco de calor ou incêndio a ${input.hotspotDistance} km — acompanhar a evolução.`,
+        contribution: hotspotPts,
+        value: `${input.hotspotDistance} km`,
+        weight: "baixo",
       });
     }
   }
@@ -370,8 +379,8 @@ function calculateScore(input: RiskInput): { score: number; factors: RiskFactor[
       value: `${input.historicalOccurrences} ocorrências`,
       weight: "médio",
     });
-  } else if (input.historicalOccurrences >= 2) {
-    histPts = 5;
+  } else if (input.historicalOccurrences >= 3) {
+    histPts = 6;
     factors.push({
       name: "Histórico de ocorrências",
       description: "Área com registro de incêndios anteriores.",
@@ -379,13 +388,13 @@ function calculateScore(input: RiskInput): { score: number; factors: RiskFactor[
       value: `${input.historicalOccurrences} ocorrências`,
       weight: "baixo",
     });
-  } else if (input.historicalOccurrences === 1) {
+  } else if (input.historicalOccurrences >= 1) {
     histPts = 2;
     factors.push({
       name: "Ocorrência histórica",
-      description: "Área com registro de uma ocorrência anterior.",
+      description: "Área com registro de ocorrência anterior.",
       contribution: histPts,
-      value: "1 ocorrência",
+      value: input.historicalOccurrences === 1 ? "1 ocorrência" : `${input.historicalOccurrences} ocorrências`,
       weight: "baixo",
     });
   }
@@ -578,7 +587,7 @@ export const DEMO_SCENARIOS: Record<string, { label: string; input: RiskInput }>
       vegetationCondition: 2,
       nearbyHotspot: false,
       hotspotDistance: 0,
-      historicalOccurrences: 2,
+      historicalOccurrences: 3,
       dataQuality: 2,
     },
   },

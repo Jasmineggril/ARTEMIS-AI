@@ -5,12 +5,15 @@
  *   POST  /api/sus                        any signed-in user: System Usability Scale (10 items)
  *   GET   /api/admin/feedback             platform admin
  *   PATCH /api/admin/feedback/:id         platform admin: status + response
+ *   POST  /api/analyses/:id/recommendation-evaluation  analyst+: expert verdict on the recommendations
+ *   POST  /api/pov/baseline               analyst+: time of the same task done WITHOUT the platform
+ *   GET   /api/pov/baseline               member: own organisation's baseline timings
  */
 import type { Express } from "express";
 import { z } from "zod";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "./db";
-import { alerts, alertEvents, userFeedback, susResponses, users, organizations } from "@shared/schema";
+import { alerts, alertEvents, userFeedback, susResponses, users, organizations, riskAnalyses, monitoredAreas, povBaselineMeasurements } from "@shared/schema";
 import { requireAuth, requireOrg, requirePlatformAdmin, rateLimit, idParam } from "./security";
 import { audit } from "./services/audit";
 
@@ -50,6 +53,57 @@ export function registerEvidenceRoutes(app: Express) {
     } catch (err) {
       next(err);
     }
+  });
+
+  app.post("/api/analyses/:id/recommendation-evaluation", requireOrg("analyst"), async (req, res, next) => {
+    try {
+      const id = idParam(req.params.id);
+      const body = z.object({ evaluation: z.enum(EVALUATIONS), note: z.string().trim().max(2000).optional() }).strict()
+        .refine((b) => b.evaluation === "pertinente" || (b.note && b.note.length >= 5), "Justifique quando as recomendações não forem pertinentes (mín. 5 caracteres).")
+        .safeParse(req.body);
+      if (!id) return res.status(400).json({ message: "Identificador inválido." });
+      if (!body.success) return res.status(400).json({ message: body.error.issues[0].message });
+      const [a] = await db.select({ id: riskAnalyses.id }).from(riskAnalyses).innerJoin(monitoredAreas, eq(monitoredAreas.id, riskAnalyses.areaId))
+        .where(and(eq(riskAnalyses.id, id), eq(monitoredAreas.organizationId, req.ctx!.organizationId)));
+      if (!a) return res.status(404).json({ message: "Análise não encontrada." });
+      const [u] = await db.update(riskAnalyses).set({
+        recommendationEvaluation: body.data.evaluation, recommendationEvaluationNote: body.data.note ?? null,
+        recommendationEvaluatedBy: req.ctx!.userId, recommendationEvaluatedAt: new Date(),
+      }).where(eq(riskAnalyses.id, id)).returning({ id: riskAnalyses.id, recommendationEvaluation: riskAnalyses.recommendationEvaluation, recommendationEvaluatedAt: riskAnalyses.recommendationEvaluatedAt });
+      await audit(req, "analysis.recommendations_evaluated", { type: "risk_analysis", id }, { evaluation: body.data.evaluation });
+      res.json(u);
+    } catch (err) { next(err); }
+  });
+
+  app.post("/api/pov/baseline", requireOrg("analyst"), async (req, res, next) => {
+    try {
+      const b = z.object({
+        durationMs: z.number().int().min(10_000, "Medição menor que 10 s não é uma análise manual.").max(86_400_000),
+        startedAt: z.string().datetime(),
+        areaId: z.number().int().positive().optional(),
+        sourcesConsulted: z.array(z.enum(["inpe", "sisfogo", "meteorologia", "mapa", "planilha", "outro"])).max(6).default([]),
+        note: z.string().trim().max(2000).optional(),
+      }).strict().safeParse(req.body);
+      if (!b.success) return res.status(400).json({ message: b.error.issues[0].message });
+      const started = new Date(b.data.startedAt);
+      if (started.getTime() > Date.now() + 60_000 || Date.now() - started.getTime() < b.data.durationMs - 60_000) return res.status(400).json({ message: "Início e duração incoerentes com o horário atual." });
+      if (b.data.areaId) {
+        const [ar] = await db.select({ id: monitoredAreas.id }).from(monitoredAreas).where(and(eq(monitoredAreas.id, b.data.areaId), eq(monitoredAreas.organizationId, req.ctx!.organizationId)));
+        if (!ar) return res.status(404).json({ message: "Área não encontrada." });
+      }
+      const [row] = await db.insert(povBaselineMeasurements).values({
+        organizationId: req.ctx!.organizationId, userId: req.ctx!.userId, areaId: b.data.areaId ?? null, durationMs: b.data.durationMs,
+        sourcesConsulted: b.data.sourcesConsulted, note: b.data.note ?? null, startedAt: started,
+      }).returning();
+      await audit(req, "pov.baseline_recorded", { type: "pov_baseline", id: row.id }, { durationMs: row.durationMs });
+      res.status(201).json(row);
+    } catch (err) { next(err); }
+  });
+
+  app.get("/api/pov/baseline", requireOrg("viewer"), async (req, res, next) => {
+    try {
+      res.json(await db.select().from(povBaselineMeasurements).where(eq(povBaselineMeasurements.organizationId, req.ctx!.organizationId)).orderBy(desc(povBaselineMeasurements.createdAt)).limit(200));
+    } catch (err) { next(err); }
   });
 
   app.post("/api/feedback", requireAuth, limiter, async (req, res, next) => {

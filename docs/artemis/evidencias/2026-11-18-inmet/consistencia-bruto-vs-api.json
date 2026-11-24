@@ -1,0 +1,2256 @@
+{
+ "raw_archive": "2026-e50640dee9556273.zip",
+ "station_files_sampled": 40,
+ "station_days_checked": 107,
+ "station_days_with_difference": 0,
+ "seed": 7,
+ "checks": [
+  {
+   "station": "A043",
+   "day": "2026-10-16",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 37.5,
+    "temperatureMinC": 21.7,
+    "humidityMinPct": 30.0,
+    "humidity13hPct": 33.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 37.5,
+    "temperatureMinC": 21.7,
+    "humidityMinPct": 30,
+    "humidity13hPct": 33,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A043",
+   "day": "2026-10-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 38.6,
+    "temperatureMinC": 21.1,
+    "humidityMinPct": 13.0,
+    "humidity13hPct": 22.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 38.6,
+    "temperatureMinC": 21.1,
+    "humidityMinPct": 13,
+    "humidity13hPct": 22,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A043",
+   "day": "2026-10-03",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.8,
+    "temperatureMinC": 21.2,
+    "humidityMinPct": 51.0,
+    "humidity13hPct": 64.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.8,
+    "temperatureMinC": 21.2,
+    "humidityMinPct": 51,
+    "humidity13hPct": 64,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A440",
+   "day": "2026-10-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 35.2,
+    "temperatureMinC": 16.0,
+    "humidityMinPct": 18.0,
+    "humidity13hPct": 20.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 35.2,
+    "temperatureMinC": 16,
+    "humidityMinPct": 18,
+    "humidity13hPct": 20,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A440",
+   "day": "2026-10-07",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.4,
+    "temperatureMinC": 20.1,
+    "humidityMinPct": 24.0,
+    "humidity13hPct": 29.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.4,
+    "temperatureMinC": 20.1,
+    "humidityMinPct": 24,
+    "humidity13hPct": 29,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A440",
+   "day": "2026-10-15",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 37.7,
+    "temperatureMinC": 18.5,
+    "humidityMinPct": 23.0,
+    "humidity13hPct": 27.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 37.7,
+    "temperatureMinC": 18.5,
+    "humidityMinPct": 23,
+    "humidity13hPct": 27,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A557",
+   "day": "2026-04-07",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.1,
+    "temperatureMinC": 21.9,
+    "humidityMinPct": 52.0,
+    "humidity13hPct": 64.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.1,
+    "temperatureMinC": 21.9,
+    "humidityMinPct": 52,
+    "humidity13hPct": 64,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A557",
+   "day": "2026-07-11",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.7,
+    "temperatureMinC": 13.4,
+    "humidityMinPct": 38.0,
+    "humidity13hPct": 48.0,
+    "precipitationMm": 0.2
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.7,
+    "temperatureMinC": 13.4,
+    "humidityMinPct": 38,
+    "humidity13hPct": 48,
+    "precipitationMm": 0.2
+   },
+   "differences": {}
+  },
+  {
+   "station": "A557",
+   "day": "2026-02-19",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 35.5,
+    "temperatureMinC": 21.3,
+    "humidityMinPct": 47.0,
+    "humidity13hPct": 51.0,
+    "precipitationMm": 0.4
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 35.5,
+    "temperatureMinC": 21.3,
+    "humidityMinPct": 47,
+    "humidity13hPct": 51,
+    "precipitationMm": 0.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "A750",
+   "day": "2026-10-16",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 27.5,
+    "temperatureMinC": 14.4,
+    "humidityMinPct": 38.0,
+    "humidity13hPct": 52.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 27.5,
+    "temperatureMinC": 14.4,
+    "humidityMinPct": 38,
+    "humidity13hPct": 52,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A750",
+   "day": "2026-02-03",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.9,
+    "temperatureMinC": 20.1,
+    "humidityMinPct": 50.0,
+    "humidity13hPct": 61.0,
+    "precipitationMm": 23.6
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.9,
+    "temperatureMinC": 20.1,
+    "humidityMinPct": 50,
+    "humidity13hPct": 61,
+    "precipitationMm": 23.6
+   },
+   "differences": {}
+  },
+  {
+   "station": "A750",
+   "day": "2026-10-24",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.9,
+    "temperatureMinC": 19.3,
+    "humidityMinPct": 39.0,
+    "humidity13hPct": 46.0,
+    "precipitationMm": 27.6
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.9,
+    "temperatureMinC": 19.3,
+    "humidityMinPct": 39,
+    "humidity13hPct": 46,
+    "precipitationMm": 27.6
+   },
+   "differences": {}
+  },
+  {
+   "station": "A919",
+   "day": "2026-01-04",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 27.9,
+    "temperatureMinC": 21.9,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 59.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 27.9,
+    "temperatureMinC": 21.9,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 59
+   },
+   "differences": {}
+  },
+  {
+   "station": "A919",
+   "day": "2026-02-09",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.0,
+    "temperatureMinC": 21.4,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 77.4
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31,
+    "temperatureMinC": 21.4,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 77.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "A919",
+   "day": "2026-01-14",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 29.4,
+    "temperatureMinC": 21.8,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 0.2
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 29.4,
+    "temperatureMinC": 21.8,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 0.2
+   },
+   "differences": {}
+  },
+  {
+   "station": "A884",
+   "day": "2026-09-13",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.2,
+    "temperatureMinC": 12.4,
+    "humidityMinPct": 63.0,
+    "humidity13hPct": 77.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.2,
+    "temperatureMinC": 12.4,
+    "humidityMinPct": 63,
+    "humidity13hPct": 77,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A884",
+   "day": "2026-10-01",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 19.1,
+    "temperatureMinC": 11.9,
+    "humidityMinPct": 62.0,
+    "humidity13hPct": 81.0,
+    "precipitationMm": 0.4
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 19.1,
+    "temperatureMinC": 11.9,
+    "humidityMinPct": 62,
+    "humidity13hPct": 81,
+    "precipitationMm": 0.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "A884",
+   "day": "2026-08-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.6,
+    "temperatureMinC": 6.8,
+    "humidityMinPct": 67.0,
+    "humidity13hPct": 74.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.6,
+    "temperatureMinC": 6.8,
+    "humidityMinPct": 67,
+    "humidity13hPct": 74,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A948",
+   "day": "2026-09-26",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 36.4,
+    "temperatureMinC": 22.1,
+    "humidityMinPct": 35.0,
+    "humidity13hPct": 38.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 36.4,
+    "temperatureMinC": 22.1,
+    "humidityMinPct": 35,
+    "humidity13hPct": 38,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A948",
+   "day": "2026-10-15",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 23.8,
+    "temperatureMinC": 20.6,
+    "humidityMinPct": 87.0,
+    "humidity13hPct": 96.0,
+    "precipitationMm": 29.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 23.8,
+    "temperatureMinC": 20.6,
+    "humidityMinPct": 87,
+    "humidity13hPct": 96,
+    "precipitationMm": 29
+   },
+   "differences": {}
+  },
+  {
+   "station": "A948",
+   "day": "2026-10-30",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.8,
+    "temperatureMinC": 22.0,
+    "humidityMinPct": 56.0,
+    "humidity13hPct": 82.0,
+    "precipitationMm": 37.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.8,
+    "temperatureMinC": 22,
+    "humidityMinPct": 56,
+    "humidity13hPct": 82,
+    "precipitationMm": 37
+   },
+   "differences": {}
+  },
+  {
+   "station": "A526",
+   "day": "2026-01-14",
+   "expected": {
+    "hoursObserved": 22,
+    "temperatureMaxC": 32.5,
+    "temperatureMinC": 19.1,
+    "humidityMinPct": 33.0,
+    "humidity13hPct": 40.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 22,
+    "temperatureMaxC": 32.5,
+    "temperatureMinC": 19.1,
+    "humidityMinPct": 33,
+    "humidity13hPct": 40,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A526",
+   "day": "2026-01-13",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 33.0,
+    "temperatureMinC": 19.0,
+    "humidityMinPct": 42.0,
+    "humidity13hPct": 47.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 33,
+    "temperatureMinC": 19,
+    "humidityMinPct": 42,
+    "humidity13hPct": 47,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B848",
+   "day": "2026-08-10",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 15.8,
+    "temperatureMinC": 4.0,
+    "humidityMinPct": 36.0,
+    "humidity13hPct": 46.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 15.8,
+    "temperatureMinC": 4,
+    "humidityMinPct": 36,
+    "humidity13hPct": 46,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B848",
+   "day": "2026-08-09",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 16.5,
+    "temperatureMinC": 3.3,
+    "humidityMinPct": 30.0,
+    "humidity13hPct": 42.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 16.5,
+    "temperatureMinC": 3.3,
+    "humidityMinPct": 30,
+    "humidity13hPct": 42,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B848",
+   "day": "2026-08-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.5,
+    "temperatureMinC": 6.6,
+    "humidityMinPct": 51.0,
+    "humidity13hPct": 64.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.5,
+    "temperatureMinC": 6.6,
+    "humidityMinPct": 51,
+    "humidity13hPct": 64,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A901",
+   "day": "2026-05-25",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.6,
+    "temperatureMinC": 20.3,
+    "humidityMinPct": 35.0,
+    "humidity13hPct": 42.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.6,
+    "temperatureMinC": 20.3,
+    "humidityMinPct": 35,
+    "humidity13hPct": 42,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A901",
+   "day": "2026-02-19",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 33.9,
+    "temperatureMinC": 25.2,
+    "humidityMinPct": 43.0,
+    "humidity13hPct": 59.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 33.9,
+    "temperatureMinC": 25.2,
+    "humidityMinPct": 43,
+    "humidity13hPct": 59,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A901",
+   "day": "2026-06-24",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 15.9,
+    "temperatureMinC": 13.4,
+    "humidityMinPct": 79.0,
+    "humidity13hPct": 80.0,
+    "precipitationMm": 4.4
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 15.9,
+    "temperatureMinC": 13.4,
+    "humidityMinPct": 79,
+    "humidity13hPct": 80,
+    "precipitationMm": 4.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "A810",
+   "day": "2026-10-24",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 22.3,
+    "temperatureMinC": 16.9,
+    "humidityMinPct": 81.0,
+    "humidity13hPct": 97.0,
+    "precipitationMm": 54.7
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 22.3,
+    "temperatureMinC": 16.9,
+    "humidityMinPct": 81,
+    "humidity13hPct": 97,
+    "precipitationMm": 54.7
+   },
+   "differences": {}
+  },
+  {
+   "station": "A810",
+   "day": "2026-10-22",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 19.9,
+    "temperatureMinC": 16.9,
+    "humidityMinPct": 88.0,
+    "humidity13hPct": 97.0,
+    "precipitationMm": 9.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 19.9,
+    "temperatureMinC": 16.9,
+    "humidityMinPct": 88,
+    "humidity13hPct": 97,
+    "precipitationMm": 9
+   },
+   "differences": {}
+  },
+  {
+   "station": "A810",
+   "day": "2026-10-09",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 23.7,
+    "temperatureMinC": null,
+    "humidityMinPct": 84.0,
+    "humidity13hPct": 92.0,
+    "precipitationMm": 2.2
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 23.7,
+    "temperatureMinC": null,
+    "humidityMinPct": 84,
+    "humidity13hPct": 92,
+    "precipitationMm": 2.2
+   },
+   "differences": {}
+  },
+  {
+   "station": "A388",
+   "day": "2026-09-29",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.4,
+    "temperatureMinC": 21.7,
+    "humidityMinPct": 56.0,
+    "humidity13hPct": 61.0,
+    "precipitationMm": 5.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.4,
+    "temperatureMinC": 21.7,
+    "humidityMinPct": 56,
+    "humidity13hPct": 61,
+    "precipitationMm": 5
+   },
+   "differences": {}
+  },
+  {
+   "station": "A388",
+   "day": "2026-09-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.6,
+    "temperatureMinC": 21.9,
+    "humidityMinPct": 50.0,
+    "humidity13hPct": 56.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.6,
+    "temperatureMinC": 21.9,
+    "humidityMinPct": 50,
+    "humidity13hPct": 56,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A388",
+   "day": "2026-10-19",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.2,
+    "temperatureMinC": 21.3,
+    "humidityMinPct": 44.0,
+    "humidity13hPct": 46.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.2,
+    "temperatureMinC": 21.3,
+    "humidityMinPct": 44,
+    "humidity13hPct": 46,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A720",
+   "day": "2026-03-12",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.7,
+    "temperatureMinC": 23.4,
+    "humidityMinPct": 71.0,
+    "humidity13hPct": 93.0,
+    "precipitationMm": 6.8
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.7,
+    "temperatureMinC": 23.4,
+    "humidityMinPct": 71,
+    "humidity13hPct": 93,
+    "precipitationMm": 6.8
+   },
+   "differences": {}
+  },
+  {
+   "station": "A720",
+   "day": "2026-03-18",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 31.4,
+    "temperatureMinC": 22.3,
+    "humidityMinPct": 61.0,
+    "humidity13hPct": 96.0,
+    "precipitationMm": 66.4
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 31.4,
+    "temperatureMinC": 22.3,
+    "humidityMinPct": 61,
+    "humidity13hPct": 96,
+    "precipitationMm": 66.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "A720",
+   "day": "2026-05-07",
+   "expected": {
+    "hoursObserved": 22,
+    "temperatureMaxC": 34.6,
+    "temperatureMinC": 16.4,
+    "humidityMinPct": 25.0,
+    "humidity13hPct": 26.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 22,
+    "temperatureMaxC": 34.6,
+    "temperatureMinC": 16.4,
+    "humidityMinPct": 25,
+    "humidity13hPct": 26,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A936",
+   "day": "2026-05-14",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.9,
+    "temperatureMinC": 18.8,
+    "humidityMinPct": 48.0,
+    "humidity13hPct": 55.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.9,
+    "temperatureMinC": 18.8,
+    "humidityMinPct": 48,
+    "humidity13hPct": 55,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A936",
+   "day": "2026-03-10",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.9,
+    "temperatureMinC": 22.5,
+    "humidityMinPct": 55.0,
+    "humidity13hPct": 61.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.9,
+    "temperatureMinC": 22.5,
+    "humidityMinPct": 55,
+    "humidity13hPct": 61,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A936",
+   "day": "2026-08-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 36.7,
+    "temperatureMinC": 21.2,
+    "humidityMinPct": 30.0,
+    "humidity13hPct": 31.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 36.7,
+    "temperatureMinC": 21.2,
+    "humidityMinPct": 30,
+    "humidity13hPct": 31,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A659",
+   "day": "2026-07-19",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.1,
+    "temperatureMinC": 12.4,
+    "humidityMinPct": 35.0,
+    "humidity13hPct": 37.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.1,
+    "temperatureMinC": 12.4,
+    "humidityMinPct": 35,
+    "humidity13hPct": 37,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A659",
+   "day": "2026-03-20",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 30.6,
+    "temperatureMinC": 22.0,
+    "humidityMinPct": 68.0,
+    "humidity13hPct": 77.0,
+    "precipitationMm": 38.8
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 30.6,
+    "temperatureMinC": 22,
+    "humidityMinPct": 68,
+    "humidity13hPct": 77,
+    "precipitationMm": 38.8
+   },
+   "differences": {}
+  },
+  {
+   "station": "A659",
+   "day": "2026-10-02",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 23.5,
+    "temperatureMinC": 20.3,
+    "humidityMinPct": 87.0,
+    "humidity13hPct": 91.0,
+    "precipitationMm": 26.8
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 23.5,
+    "temperatureMinC": 20.3,
+    "humidityMinPct": 87,
+    "humidity13hPct": 91,
+    "precipitationMm": 26.8
+   },
+   "differences": {}
+  },
+  {
+   "station": "A610",
+   "day": "2026-08-04",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 18.1,
+    "temperatureMinC": 10.3,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 18.1,
+    "temperatureMinC": 10.3,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A610",
+   "day": "2026-01-21",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 14.5,
+    "temperatureMinC": 7.9,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 17.8
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 14.5,
+    "temperatureMinC": 7.9,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 17.8
+   },
+   "differences": {}
+  },
+  {
+   "station": "A610",
+   "day": "2026-02-09",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 16.5,
+    "temperatureMinC": 14.2,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 20.4
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 16.5,
+    "temperatureMinC": 14.2,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 20.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "A318",
+   "day": "2026-10-13",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 33.0,
+    "temperatureMinC": 24.4,
+    "humidityMinPct": 44.0,
+    "humidity13hPct": 46.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 33,
+    "temperatureMinC": 24.4,
+    "humidityMinPct": 44,
+    "humidity13hPct": 46,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A318",
+   "day": "2026-10-21",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.2,
+    "temperatureMinC": 23.7,
+    "humidityMinPct": 46.0,
+    "humidity13hPct": 53.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.2,
+    "temperatureMinC": 23.7,
+    "humidityMinPct": 46,
+    "humidity13hPct": 53,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A318",
+   "day": "2026-06-10",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 30.7,
+    "temperatureMinC": 22.7,
+    "humidityMinPct": 69.0,
+    "humidity13hPct": 71.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 30.7,
+    "temperatureMinC": 22.7,
+    "humidityMinPct": 69,
+    "humidity13hPct": 71,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A944",
+   "day": "2026-03-29",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 33.9,
+    "temperatureMinC": 22.1,
+    "humidityMinPct": 42.0,
+    "humidity13hPct": 52.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 33.9,
+    "temperatureMinC": 22.1,
+    "humidityMinPct": 42,
+    "humidity13hPct": 52,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A944",
+   "day": "2026-07-24",
+   "expected": {
+    "hoursObserved": 20,
+    "temperatureMaxC": 34.0,
+    "temperatureMinC": 20.4,
+    "humidityMinPct": 36.0,
+    "humidity13hPct": 43.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 20,
+    "temperatureMaxC": 34,
+    "temperatureMinC": 20.4,
+    "humidityMinPct": 36,
+    "humidity13hPct": 43,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A944",
+   "day": "2026-03-31",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 34.8,
+    "temperatureMinC": 22.6,
+    "humidityMinPct": 39.0,
+    "humidity13hPct": 46.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 34.8,
+    "temperatureMinC": 22.6,
+    "humidityMinPct": 39,
+    "humidity13hPct": 46,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B816",
+   "day": "2026-07-27",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 23.7,
+    "temperatureMinC": 16.5,
+    "humidityMinPct": 74.0,
+    "humidity13hPct": 81.0,
+    "precipitationMm": 15.3
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 23.7,
+    "temperatureMinC": 16.5,
+    "humidityMinPct": 74,
+    "humidity13hPct": 81,
+    "precipitationMm": 15.3
+   },
+   "differences": {}
+  },
+  {
+   "station": "B816",
+   "day": "2026-06-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.5,
+    "temperatureMinC": 12.4,
+    "humidityMinPct": 84.0,
+    "humidity13hPct": 90.0,
+    "precipitationMm": 23.2
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.5,
+    "temperatureMinC": 12.4,
+    "humidityMinPct": 84,
+    "humidity13hPct": 90,
+    "precipitationMm": 23.2
+   },
+   "differences": {}
+  },
+  {
+   "station": "B816",
+   "day": "2026-07-23",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 14.9,
+    "temperatureMinC": 10.3,
+    "humidityMinPct": 78.0,
+    "humidity13hPct": 95.0,
+    "precipitationMm": 7.8
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 14.9,
+    "temperatureMinC": 10.3,
+    "humidityMinPct": 78,
+    "humidity13hPct": 95,
+    "precipitationMm": 7.8
+   },
+   "differences": {}
+  },
+  {
+   "station": "A624",
+   "day": "2026-08-22",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 14.9,
+    "temperatureMinC": 11.6,
+    "humidityMinPct": 81.0,
+    "humidity13hPct": 85.0,
+    "precipitationMm": 0.4
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 14.9,
+    "temperatureMinC": 11.6,
+    "humidityMinPct": 81,
+    "humidity13hPct": 85,
+    "precipitationMm": 0.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "A624",
+   "day": "2026-02-05",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.3,
+    "temperatureMinC": 17.8,
+    "humidityMinPct": 60.0,
+    "humidity13hPct": 81.0,
+    "precipitationMm": 32.8
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.3,
+    "temperatureMinC": 17.8,
+    "humidityMinPct": 60,
+    "humidity13hPct": 81,
+    "precipitationMm": 32.8
+   },
+   "differences": {}
+  },
+  {
+   "station": "A624",
+   "day": "2026-02-17",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.6,
+    "temperatureMinC": 14.2,
+    "humidityMinPct": 47.0,
+    "humidity13hPct": 55.0,
+    "precipitationMm": 0.2
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.6,
+    "temperatureMinC": 14.2,
+    "humidityMinPct": 47,
+    "humidity13hPct": 55,
+    "precipitationMm": 0.2
+   },
+   "differences": {}
+  },
+  {
+   "station": "A902",
+   "day": "2026-05-19",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 16.9,
+    "temperatureMinC": 13.9,
+    "humidityMinPct": 92.0,
+    "humidity13hPct": 100.0,
+    "precipitationMm": 0.6
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 16.9,
+    "temperatureMinC": 13.9,
+    "humidityMinPct": 92,
+    "humidity13hPct": 100,
+    "precipitationMm": 0.6
+   },
+   "differences": {}
+  },
+  {
+   "station": "A902",
+   "day": "2026-08-31",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 38.2,
+    "temperatureMinC": 22.0,
+    "humidityMinPct": 28.0,
+    "humidity13hPct": 32.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 38.2,
+    "temperatureMinC": 22,
+    "humidityMinPct": 28,
+    "humidity13hPct": 32,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A902",
+   "day": "2026-02-03",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 30.9,
+    "temperatureMinC": 21.6,
+    "humidityMinPct": 59.0,
+    "humidity13hPct": 70.0,
+    "precipitationMm": 0.4
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 30.9,
+    "temperatureMinC": 21.6,
+    "humidityMinPct": 59,
+    "humidity13hPct": 70,
+    "precipitationMm": 0.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "B831",
+   "day": "2026-04-03",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.4,
+    "temperatureMinC": 18.2,
+    "humidityMinPct": 60.0,
+    "humidity13hPct": 69.0,
+    "precipitationMm": 0.2
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.4,
+    "temperatureMinC": 18.2,
+    "humidityMinPct": 60,
+    "humidity13hPct": 69,
+    "precipitationMm": 0.2
+   },
+   "differences": {}
+  },
+  {
+   "station": "B831",
+   "day": "2026-10-13",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 19.1,
+    "temperatureMinC": 14.6,
+    "humidityMinPct": 76.0,
+    "humidity13hPct": 94.0,
+    "precipitationMm": 4.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 19.1,
+    "temperatureMinC": 14.6,
+    "humidityMinPct": 76,
+    "humidity13hPct": 94,
+    "precipitationMm": 4
+   },
+   "differences": {}
+  },
+  {
+   "station": "B831",
+   "day": "2026-10-05",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 20.2,
+    "temperatureMinC": 8.7,
+    "humidityMinPct": 42.0,
+    "humidity13hPct": 63.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 20.2,
+    "temperatureMinC": 8.7,
+    "humidityMinPct": 42,
+    "humidity13hPct": 63,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A401",
+   "day": "2026-06-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.5,
+    "temperatureMinC": 22.0,
+    "humidityMinPct": 66.0,
+    "humidity13hPct": 69.0,
+    "precipitationMm": 1.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.5,
+    "temperatureMinC": 22,
+    "humidityMinPct": 66,
+    "humidity13hPct": 69,
+    "precipitationMm": 1
+   },
+   "differences": {}
+  },
+  {
+   "station": "A401",
+   "day": "2026-10-30",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.0,
+    "temperatureMinC": 23.1,
+    "humidityMinPct": 59.0,
+    "humidity13hPct": 63.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31,
+    "temperatureMinC": 23.1,
+    "humidityMinPct": 59,
+    "humidity13hPct": 63,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A401",
+   "day": "2026-08-17",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.5,
+    "temperatureMinC": 22.4,
+    "humidityMinPct": 70.0,
+    "humidity13hPct": 74.0,
+    "precipitationMm": 8.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.5,
+    "temperatureMinC": 22.4,
+    "humidityMinPct": 70,
+    "humidity13hPct": 74,
+    "precipitationMm": 8
+   },
+   "differences": {}
+  },
+  {
+   "station": "A335",
+   "day": "2026-09-05",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 38.0,
+    "temperatureMinC": 22.9,
+    "humidityMinPct": 29.0,
+    "humidity13hPct": 34.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 38,
+    "temperatureMinC": 22.9,
+    "humidityMinPct": 29,
+    "humidity13hPct": 34,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A335",
+   "day": "2026-09-18",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 37.9,
+    "temperatureMinC": 22.5,
+    "humidityMinPct": 19.0,
+    "humidity13hPct": 24.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 37.9,
+    "temperatureMinC": 22.5,
+    "humidityMinPct": 19,
+    "humidity13hPct": 24,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A335",
+   "day": "2026-09-13",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 39.0,
+    "temperatureMinC": 21.3,
+    "humidityMinPct": 15.0,
+    "humidity13hPct": 19.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 39,
+    "temperatureMinC": 21.3,
+    "humidityMinPct": 15,
+    "humidity13hPct": 19,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A905",
+   "day": "2026-09-01",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 36.9,
+    "temperatureMinC": 23.6,
+    "humidityMinPct": 29.0,
+    "humidity13hPct": 34.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 36.9,
+    "temperatureMinC": 23.6,
+    "humidityMinPct": 29,
+    "humidity13hPct": 34,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A905",
+   "day": "2026-09-28",
+   "expected": {
+    "hoursObserved": 22,
+    "temperatureMaxC": 38.0,
+    "temperatureMinC": 23.3,
+    "humidityMinPct": 29.0,
+    "humidity13hPct": null,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 22,
+    "temperatureMaxC": 38,
+    "temperatureMinC": 23.3,
+    "humidityMinPct": 29,
+    "humidity13hPct": null,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A905",
+   "day": "2026-09-06",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.2,
+    "temperatureMinC": 17.5,
+    "humidityMinPct": 58.0,
+    "humidity13hPct": 67.0,
+    "precipitationMm": 0.2
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.2,
+    "temperatureMinC": 17.5,
+    "humidityMinPct": 58,
+    "humidity13hPct": 67,
+    "precipitationMm": 0.2
+   },
+   "differences": {}
+  },
+  {
+   "station": "B842",
+   "day": "2026-04-16",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 27.2,
+    "temperatureMinC": 19.2,
+    "humidityMinPct": 60.0,
+    "humidity13hPct": 65.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 27.2,
+    "temperatureMinC": 19.2,
+    "humidityMinPct": 60,
+    "humidity13hPct": 65,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B842",
+   "day": "2026-09-05",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 16.5,
+    "temperatureMinC": 7.6,
+    "humidityMinPct": 44.0,
+    "humidity13hPct": 62.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 16.5,
+    "temperatureMinC": 7.6,
+    "humidityMinPct": 44,
+    "humidity13hPct": 62,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B842",
+   "day": "2026-04-01",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 30.5,
+    "temperatureMinC": 18.6,
+    "humidityMinPct": 42.0,
+    "humidity13hPct": 56.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 30.5,
+    "temperatureMinC": 18.6,
+    "humidityMinPct": 42,
+    "humidity13hPct": 56,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B851",
+   "day": "2026-09-03",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 28.4,
+    "temperatureMinC": 13.5,
+    "humidityMinPct": 43.0,
+    "humidity13hPct": 47.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 28.4,
+    "temperatureMinC": 13.5,
+    "humidityMinPct": 43,
+    "humidity13hPct": 47,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B851",
+   "day": "2026-05-15",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 21.5,
+    "temperatureMinC": 8.5,
+    "humidityMinPct": 48.0,
+    "humidity13hPct": 63.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 21.5,
+    "temperatureMinC": 8.5,
+    "humidityMinPct": 48,
+    "humidity13hPct": 63,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B851",
+   "day": "2026-06-24",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 16.5,
+    "temperatureMinC": 3.0,
+    "humidityMinPct": 45.0,
+    "humidity13hPct": 53.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 16.5,
+    "temperatureMinC": 3,
+    "humidityMinPct": 45,
+    "humidity13hPct": 53,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A560",
+   "day": "2026-05-31",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.9,
+    "temperatureMinC": 13.0,
+    "humidityMinPct": 34.0,
+    "humidity13hPct": 41.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.9,
+    "temperatureMinC": 13,
+    "humidityMinPct": 34,
+    "humidity13hPct": 41,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A560",
+   "day": "2026-03-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.3,
+    "temperatureMinC": 18.3,
+    "humidityMinPct": 46.0,
+    "humidity13hPct": 51.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.3,
+    "temperatureMinC": 18.3,
+    "humidityMinPct": 46,
+    "humidity13hPct": 51,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A560",
+   "day": "2026-05-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 29.6,
+    "temperatureMinC": 16.7,
+    "humidityMinPct": 37.0,
+    "humidity13hPct": 45.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 29.6,
+    "temperatureMinC": 16.7,
+    "humidityMinPct": 37,
+    "humidity13hPct": 45,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A751",
+   "day": "2026-07-28",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.2,
+    "temperatureMinC": 18.1,
+    "humidityMinPct": 37.0,
+    "humidity13hPct": 42.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.2,
+    "temperatureMinC": 18.1,
+    "humidityMinPct": 37,
+    "humidity13hPct": 42,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A751",
+   "day": "2026-07-25",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 21.3,
+    "temperatureMinC": 16.7,
+    "humidityMinPct": 80.0,
+    "humidity13hPct": 87.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 21.3,
+    "temperatureMinC": 16.7,
+    "humidityMinPct": 80,
+    "humidity13hPct": 87,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A751",
+   "day": "2026-10-30",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.2,
+    "temperatureMinC": 17.1,
+    "humidityMinPct": 52.0,
+    "humidity13hPct": 62.0,
+    "precipitationMm": null
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.2,
+    "temperatureMinC": 17.1,
+    "humidityMinPct": 52,
+    "humidity13hPct": 62,
+    "precipitationMm": null
+   },
+   "differences": {}
+  },
+  {
+   "station": "A330",
+   "day": "2026-02-11",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.7,
+    "temperatureMinC": 24.9,
+    "humidityMinPct": 19.0,
+    "humidity13hPct": 30.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 34.7,
+    "temperatureMinC": 24.9,
+    "humidityMinPct": 19,
+    "humidity13hPct": 30,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A330",
+   "day": "2026-03-27",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.5,
+    "temperatureMinC": 23.1,
+    "humidityMinPct": 37.0,
+    "humidity13hPct": 44.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 32.5,
+    "temperatureMinC": 23.1,
+    "humidityMinPct": 37,
+    "humidity13hPct": 44,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A330",
+   "day": "2026-08-18",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.8,
+    "temperatureMinC": 22.6,
+    "humidityMinPct": 33.0,
+    "humidity13hPct": 38.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.8,
+    "temperatureMinC": 22.6,
+    "humidityMinPct": 33,
+    "humidity13hPct": 38,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A743",
+   "day": "2026-06-02",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.2,
+    "temperatureMinC": 12.3,
+    "humidityMinPct": 44.0,
+    "humidity13hPct": 49.0,
+    "precipitationMm": 0.2
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 26.2,
+    "temperatureMinC": 12.3,
+    "humidityMinPct": 44,
+    "humidity13hPct": 49,
+    "precipitationMm": 0.2
+   },
+   "differences": {}
+  },
+  {
+   "station": "A743",
+   "day": "2026-07-26",
+   "expected": {
+    "hoursObserved": 22,
+    "temperatureMaxC": 31.7,
+    "temperatureMinC": 18.3,
+    "humidityMinPct": 37.0,
+    "humidity13hPct": 43.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 22,
+    "temperatureMaxC": 31.7,
+    "temperatureMinC": 18.3,
+    "humidityMinPct": 37,
+    "humidity13hPct": 43,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A743",
+   "day": "2026-03-29",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 33.9,
+    "temperatureMinC": 19.7,
+    "humidityMinPct": 34.0,
+    "humidity13hPct": 39.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 33.9,
+    "temperatureMinC": 19.7,
+    "humidityMinPct": 34,
+    "humidity13hPct": 39,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B822",
+   "day": "2026-03-15",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 33.8,
+    "temperatureMinC": 17.4,
+    "humidityMinPct": 35.0,
+    "humidity13hPct": 51.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 33.8,
+    "temperatureMinC": 17.4,
+    "humidityMinPct": 35,
+    "humidity13hPct": 51,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B822",
+   "day": "2026-08-19",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 20.7,
+    "temperatureMinC": 16.5,
+    "humidityMinPct": 94.0,
+    "humidity13hPct": 97.0,
+    "precipitationMm": 1.4
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 20.7,
+    "temperatureMinC": 16.5,
+    "humidityMinPct": 94,
+    "humidity13hPct": 97,
+    "precipitationMm": 1.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "B822",
+   "day": "2026-10-19",
+   "expected": {
+    "hoursObserved": 21,
+    "temperatureMaxC": 15.5,
+    "temperatureMinC": 13.9,
+    "humidityMinPct": 71.0,
+    "humidity13hPct": null,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 21,
+    "temperatureMaxC": 15.5,
+    "temperatureMinC": 13.9,
+    "humidityMinPct": 71,
+    "humidity13hPct": null,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A611",
+   "day": "2026-05-23",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 24.3,
+    "temperatureMinC": 16.1,
+    "humidityMinPct": 63.0,
+    "humidity13hPct": 67.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 24.3,
+    "temperatureMinC": 16.1,
+    "humidityMinPct": 63,
+    "humidity13hPct": 67,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A611",
+   "day": "2026-08-01",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 25.2,
+    "temperatureMinC": 15.1,
+    "humidityMinPct": 47.0,
+    "humidity13hPct": 50.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 25.2,
+    "temperatureMinC": 15.1,
+    "humidityMinPct": 47,
+    "humidity13hPct": 50,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A611",
+   "day": "2026-07-03",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.6,
+    "temperatureMinC": 12.4,
+    "humidityMinPct": 42.0,
+    "humidity13hPct": 46.0,
+    "precipitationMm": 0.2
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 28.6,
+    "temperatureMinC": 12.4,
+    "humidityMinPct": 42,
+    "humidity13hPct": 46,
+    "precipitationMm": 0.2
+   },
+   "differences": {}
+  },
+  {
+   "station": "A894",
+   "day": "2026-10-12",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.4,
+    "temperatureMinC": 13.3,
+    "humidityMinPct": 84.0,
+    "humidity13hPct": 86.0,
+    "precipitationMm": 3.4
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.4,
+    "temperatureMinC": 13.3,
+    "humidityMinPct": 84,
+    "humidity13hPct": 86,
+    "precipitationMm": 3.4
+   },
+   "differences": {}
+  },
+  {
+   "station": "A894",
+   "day": "2026-07-29",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 22.9,
+    "temperatureMinC": 13.2,
+    "humidityMinPct": 60.0,
+    "humidity13hPct": 65.0,
+    "precipitationMm": 38.9
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 22.9,
+    "temperatureMinC": 13.2,
+    "humidityMinPct": 60,
+    "humidity13hPct": 65,
+    "precipitationMm": 38.9
+   },
+   "differences": {}
+  },
+  {
+   "station": "A894",
+   "day": "2026-05-12",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": null,
+    "temperatureMinC": null,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": null,
+    "temperatureMinC": null,
+    "humidityMinPct": null,
+    "humidity13hPct": null,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A323",
+   "day": "2026-02-12",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 35.5,
+    "temperatureMinC": 22.8,
+    "humidityMinPct": 16.0,
+    "humidity13hPct": 20.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 35.5,
+    "temperatureMinC": 22.8,
+    "humidityMinPct": 16,
+    "humidity13hPct": 20,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "A323",
+   "day": "2026-04-01",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.8,
+    "temperatureMinC": 24.3,
+    "humidityMinPct": 33.0,
+    "humidity13hPct": 53.0,
+    "precipitationMm": 10.8
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 31.8,
+    "temperatureMinC": 24.3,
+    "humidityMinPct": 33,
+    "humidity13hPct": 53,
+    "precipitationMm": 10.8
+   },
+   "differences": {}
+  },
+  {
+   "station": "A323",
+   "day": "2026-03-19",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 36.2,
+    "temperatureMinC": 23.4,
+    "humidityMinPct": 14.0,
+    "humidity13hPct": 19.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 36.2,
+    "temperatureMinC": 23.4,
+    "humidityMinPct": 14,
+    "humidity13hPct": 19,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B836",
+   "day": "2026-05-08",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 27.2,
+    "temperatureMinC": 14.5,
+    "humidityMinPct": 42.0,
+    "humidity13hPct": 53.0,
+    "precipitationMm": 2.6
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 27.2,
+    "temperatureMinC": 14.5,
+    "humidityMinPct": 42,
+    "humidity13hPct": 53,
+    "precipitationMm": 2.6
+   },
+   "differences": {}
+  },
+  {
+   "station": "B836",
+   "day": "2026-05-09",
+   "expected": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.2,
+    "temperatureMinC": 11.2,
+    "humidityMinPct": 36.0,
+    "humidity13hPct": 41.0,
+    "precipitationMm": 0.0
+   },
+   "api": {
+    "hoursObserved": 24,
+    "temperatureMaxC": 17.2,
+    "temperatureMinC": 11.2,
+    "humidityMinPct": 36,
+    "humidity13hPct": 41,
+    "precipitationMm": 0
+   },
+   "differences": {}
+  },
+  {
+   "station": "B836",
+   "day": "2026-01-07",
+   "expected": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 34.6,
+    "temperatureMinC": 20.0,
+    "humidityMinPct": 37.0,
+    "humidity13hPct": 47.0,
+    "precipitationMm": 3.6
+   },
+   "api": {
+    "hoursObserved": 23,
+    "temperatureMaxC": 34.6,
+    "temperatureMinC": 20,
+    "humidityMinPct": 37,
+    "humidity13hPct": 47,
+    "precipitationMm": 3.6
+   },
+   "differences": {}
+  }
+ ]
+}

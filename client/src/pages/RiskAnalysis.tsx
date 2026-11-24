@@ -14,6 +14,7 @@ import { HelpTooltip } from "@/components/HelpTooltip";
 import { AnalysisTutorial } from "@/components/AnalysisTutorial";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStatus, hasRole } from "@/hooks/use-auth";
+import { RecommendationEvaluation } from "@/components/evidence/RecommendationEvaluation";
 import { api, ApiError } from "@/lib/api";
 import { ORIGIN_LABEL, NATURE_OF, NATURE_LABEL, FIELD_LABEL } from "@/lib/data-nature";
 import { cn } from "@/lib/utils";
@@ -436,6 +437,7 @@ export default function RiskAnalysisPage() {
                     </li>
                   ))}
                 </ul>
+                {result.id && canAnalyze && <RecommendationEvaluation analysisId={result.id} current={(result as any).recommendationEvaluation} />}
               </section>
 
               <section className="bg-amber-50 text-amber-950 border border-amber-200 rounded-2xl p-5" aria-labelledby="sec-lim">

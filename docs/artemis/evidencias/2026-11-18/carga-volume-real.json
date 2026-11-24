@@ -1,0 +1,155 @@
+{
+  "base": "http://localhost:5057",
+  "data": "2026-11-18T17:06:33.708Z",
+  "areaId": 135,
+  "centro": {
+    "lat": -2.875,
+    "lng": -54.125
+  },
+  "resultados": {
+    "health": {
+      "title": "health",
+      "url": "/api/health",
+      "conexoes": 10,
+      "duracao_s": 15,
+      "req_por_s": 894.2,
+      "total": 13413,
+      "2xx": 13413,
+      "nao_2xx": 0,
+      "erros": 0,
+      "timeouts": 0,
+      "latencia_ms": {
+        "p50": 10,
+        "p97_5": 19,
+        "p99": 22,
+        "max": 69
+      }
+    },
+    "area-surroundings-7d": {
+      "title": "area-surroundings-7d",
+      "url": "/api/areas/135/surroundings?days=7",
+      "conexoes": 10,
+      "duracao_s": 15,
+      "req_por_s": 72.9,
+      "total": 1093,
+      "2xx": 1093,
+      "nao_2xx": 0,
+      "erros": 0,
+      "timeouts": 0,
+      "latencia_ms": {
+        "p50": 136,
+        "p97_5": 195,
+        "p99": 206,
+        "max": 257
+      }
+    },
+    "area-surroundings-30d": {
+      "title": "area-surroundings-30d",
+      "url": "/api/areas/135/surroundings?days=30",
+      "conexoes": 10,
+      "duracao_s": 15,
+      "req_por_s": 25.4,
+      "total": 381,
+      "2xx": 381,
+      "nao_2xx": 0,
+      "erros": 0,
+      "timeouts": 0,
+      "latencia_ms": {
+        "p50": 387,
+        "p97_5": 443,
+        "p99": 456,
+        "max": 464
+      }
+    },
+    "area-detail": {
+      "title": "area-detail",
+      "url": "/api/areas/135",
+      "conexoes": 10,
+      "duracao_s": 15,
+      "req_por_s": 888.9,
+      "total": 13334,
+      "2xx": 13334,
+      "nao_2xx": 0,
+      "erros": 0,
+      "timeouts": 0,
+      "latencia_ms": {
+        "p50": 10,
+        "p97_5": 19,
+        "p99": 22,
+        "max": 195
+      }
+    },
+    "areas-list": {
+      "title": "areas-list",
+      "url": "/api/areas",
+      "conexoes": 10,
+      "duracao_s": 15,
+      "req_por_s": 1040.7,
+      "total": 15611,
+      "2xx": 15611,
+      "nao_2xx": 0,
+      "erros": 0,
+      "timeouts": 0,
+      "latencia_ms": {
+        "p50": 9,
+        "p97_5": 15,
+        "p99": 17,
+        "max": 58
+      }
+    },
+    "hotspots-grid-7d": {
+      "title": "hotspots-grid-7d",
+      "url": "/api/public/hotspots/grid?days=7",
+      "conexoes": 10,
+      "duracao_s": 15,
+      "req_por_s": 173.7,
+      "total": 2605,
+      "2xx": 2605,
+      "nao_2xx": 0,
+      "erros": 0,
+      "timeouts": 0,
+      "latencia_ms": {
+        "p50": 56,
+        "p97_5": 85,
+        "p99": 93,
+        "max": 107
+      }
+    },
+    "sisfogo-summary": {
+      "title": "sisfogo-summary",
+      "url": "/api/public/sisfogo/summary",
+      "conexoes": 10,
+      "duracao_s": 15,
+      "req_por_s": 526.1,
+      "total": 7891,
+      "2xx": 7891,
+      "nao_2xx": 0,
+      "erros": 0,
+      "timeouts": 0,
+      "latencia_ms": {
+        "p50": 18,
+        "p97_5": 30,
+        "p99": 33,
+        "max": 46
+      }
+    },
+    "analysis": {
+      "title": "analysis",
+      "url": "/api/areas/135/analyses",
+      "conexoes": 5,
+      "duracao_s": 15,
+      "req_por_s": 130.3,
+      "total": 1954,
+      "2xx": 1954,
+      "nao_2xx": 0,
+      "erros": 0,
+      "timeouts": 0,
+      "latencia_ms": {
+        "p50": 37,
+        "p97_5": 55,
+        "p99": 58,
+        "max": 94
+      }
+    }
+  }
+}

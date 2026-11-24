@@ -607,6 +607,18 @@ test("INPE sync: failure is recorded without rows; success is idempotent; real c
   const changed = await syncInpeDay(day, async () => ({ ok: true, status: 200, text: inpeFixture(2, "999.9") }));
   assert.deepEqual([changed.inserted, changed.updated], [0, 1], "INPE correction updates the row");
 
+  // transient failure (HTTP 503) is retried inside the same run, then succeeds
+  let calls = 0;
+  const fastRetry = { timeoutMs: 1000, attempts: 3, baseDelayMs: 1, maxDelayMs: 5, sleep: async () => {} };
+  const retried = await syncInpeDay(day, async () => (++calls === 1 ? { ok: false, status: 503, text: "" } : { ok: true, status: 200, text: inpeFixture() }), fastRetry);
+  assert.equal(retried.status, "sucesso"); assert.equal(calls, 2);
+  // a run left "em_execucao" by a dead process is closed as a failure on the next sync
+  const pc = new pg.Client({ connectionString: TEST_DB }); await pc.connect();
+  const [{ id: stale }] = (await pc.query(`INSERT INTO source_sync_runs (source_id, status, started_at) SELECT id, 'em_execucao', now() - interval '2 hours' FROM data_sources WHERE key = 'inpe-queimadas' RETURNING id`)).rows;
+  await syncInpeDay(day, async () => ({ ok: true, status: 200, text: inpeFixture() }));
+  const [st] = (await pc.query(`SELECT status, error FROM source_sync_runs WHERE id = $1`, [stale])).rows; await pc.end();
+  assert.equal(st.status, "falha"); assert.match(st.error, /interrompida/);
+
   const conn = (await anon.get("/api/connectors")).body.find((c: any) => c.key === "inpe-queimadas");
   assert.ok(conn.lastSuccessAt, "registry shows last successful sync");
   assert.equal(conn.lastRun.status, "sucesso");

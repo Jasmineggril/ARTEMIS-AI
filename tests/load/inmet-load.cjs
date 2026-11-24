@@ -1,0 +1,6 @@
+/** INMET API load test (read-only, public routes). AUTOCANNON=… LOAD_BASE_URL=… node tests/load/inmet-load.cjs out.json */
+const ac = require(process.env.AUTOCANNON || 'autocannon'); const fs=require('fs');
+const B=process.env.LOAD_BASE_URL || 'http://localhost:5057'; const out={ambiente:'build de produção local, PostgreSQL 16 + PostGIS, 3,2 M observações INMET', data:new Date().toISOString(), rotas:{}};
+const paths={'lista-estacoes':'/api/weather-stations','status-fonte':'/api/connectors/inmet/status','serie-diaria-30d':'/api/weather-stations/A001/daily?from=2026-10-02&to=2026-10-31','serie-diaria-1ano':'/api/weather-stations/A001/daily?from=2026-01-01&to=2026-10-31','horaria-7d':'/api/weather-stations/A001/hourly?from=2026-10-25&to=2026-10-31','comparacao':'/api/weather-stations/A001/compare?aFrom=2026-09-02&aTo=2026-10-01&bFrom=2026-10-02&bTo=2026-10-31','fma-90d':'/api/weather-stations/A001/fma?from=2026-08-01&to=2026-10-31'};
+(async()=>{for(const [k,p] of Object.entries(paths)){const r=await ac({url:B+p,connections:10,duration:10});out.rotas[k]={url:p,req_por_s:Math.round(r.requests.average),p50:r.latency.p50,p99:r.latency.p99,max:r.latency.max,'2xx':r['2xx'],nao_2xx:r.non2xx,erros:r.errors};console.log(k,JSON.stringify(out.rotas[k]));}
+fs.writeFileSync(process.argv[2],JSON.stringify(out,null,2));})();

@@ -1,0 +1,252 @@
+{
+  "day": "2026-11-22",
+  "officialFile": "rf.nc",
+  "sampledPixels": 20000,
+  "missingPrecipDaysOnServer": [
+    "2026-10-28",
+    "2026-10-23",
+    "2026-07-25"
+  ],
+  "recentFirePixels3d": 18051,
+  "results": {
+    "UR % · janela até o dia · FU -0.004 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0107,
+      "within001Pct": 73.4,
+      "within005Pct": 95.3,
+      "sameClassPct": 95.5,
+      "semFocoRecente": {
+        "pixels": 19633,
+        "mae": 0.0107,
+        "within001Pct": 73.4,
+        "sameClassPct": 95.5
+      }
+    },
+    "UR % · janela até o dia · FU -0.005 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0122,
+      "within001Pct": 74.6,
+      "within005Pct": 93.8,
+      "sameClassPct": 94.5,
+      "semFocoRecente": {
+        "pixels": 19633,
+        "mae": 0.0123,
+        "within001Pct": 74.5,
+        "sameClassPct": 94.5
+      }
+    },
+    "UR % · janela até o dia · FU -0.0055 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0139,
+      "within001Pct": 73.9,
+      "within005Pct": 92.6,
+      "sameClassPct": 93.7,
+      "semFocoRecente": {
+        "pixels": 19633,
+        "mae": 0.014,
+        "within001Pct": 73.8,
+        "sameClassPct": 93.7
+      }
+    },
+    "UR % · janela até o dia · FU -0.006 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0163,
+      "within001Pct": 71.7,
+      "within005Pct": 91,
+      "sameClassPct": 92.7,
+      "semFocoRecente": {
+        "pixels": 19633,
+        "mae": 0.0164,
+        "within001Pct": 71.7,
+        "sameClassPct": 92.7
+      }
+    },
+    "UR % · janela até o dia · FU -0.0065 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0192,
+      "within001Pct": 68.4,
+      "within005Pct": 89.3,
+      "sameClassPct": 91.5,
+      "semFocoRecente": {
+        "pixels": 19633,
+        "mae": 0.0192,
+        "within001Pct": 68.3,
+        "sameClassPct": 91.5
+      }
+    },
+    "UR % · janela até o dia · FU -0.007 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.0225,
+      "within001Pct": 64.6,
+      "within005Pct": 87.5,
+      "sameClassPct": 90,
+      "semFocoRecente": {
+        "pixels": 19633,
+        "mae": 0.0226,
+        "within001Pct": 64.5,
+        "sameClassPct": 90
+      }
+    },
+    "UR % · janela até o dia · FU -0.008 · com fatores 2.2": {
+      "pixels": 20000,
+      "mae": 0.03,
+      "within001Pct": 58,
+      "within005Pct": 82.9,
+      "sameClassPct": 87.2,
+      "semFocoRecente": {
+        "pixels": 19633,
+        "mae": 0.03,
+        "within001Pct": 58.1,
+        "sameClassPct": 87.2
+      }
+    }
+  },
+  "bestVariant": "UR % · janela até o dia · FU -0.004 · com fatores 2.2",
+  "examples": [
+    {
+      "lat": -15.77500000358912,
+      "lon": -72.33980180610374,
+      "veg": 3,
+      "elev": 2913.0087890625,
+      "tC": 21,
+      "rh": 34.7,
+      "pse": 96.07,
+      "oficial": 0.97,
+      "artemis": 0.9759,
+      "focoRecente": false
+    },
+    {
+      "lat": -2.145000003589118,
+      "lon": -52.36980180610372,
+      "veg": 7,
+      "elev": 21.82378387451172,
+      "tC": 37.54,
+      "rh": 31.9,
+      "pse": 100.57,
+      "oficial": 1,
+      "artemis": 1,
+      "focoRecente": false
+    },
+    {
+      "lat": -13.795000003589124,
+      "lon": -45.86980180610372,
+      "veg": 3,
+      "elev": 762.2803344726562,
+      "tC": 28.39,
+      "rh": 53.4,
+      "pse": 0.71,
+      "oficial": 0,
+      "artemis": 0.0003,
+      "focoRecente": false
+    },
+    {
+      "lat": -10.38500000358912,
+      "lon": -58.08980180610373,
+      "veg": 1,
+      "elev": 198.60000610351562,
+      "tC": 32.7,
+      "rh": 46,
+      "pse": 18.74,
+      "oficial": 0.74,
+      "artemis": 0.7588,
+      "focoRecente": false
+    },
+    {
+      "lat": -10.665000003589121,
+      "lon": -54.19980180610372,
+      "veg": 7,
+      "elev": 299.136474609375,
+      "tC": 31.86,
+      "rh": 50.8,
+      "pse": 3.31,
+      "oficial": 0,
+      "artemis": 0.002,
+      "focoRecente": false
+    },
+    {
+      "lat": 4.424999996410882,
+      "lon": -59.12980180610373,
+      "veg": 7,
+      "elev": 533.82275390625,
+      "tC": 34.06,
+      "rh": 40.5,
+      "pse": 77.47,
+      "oficial": 0.83,
+      "artemis": 0.8218,
+      "focoRecente": false
+    },
+    {
+      "lat": -14.52500000358912,
+      "lon": -54.69980180610372,
+      "veg": 1,
+      "elev": 455.45220947265625,
+      "tC": 31.84,
+      "rh": 44.5,
+      "pse": 8.1,
+      "oficial": 0.19,
+      "artemis": 0.1875,
+      "focoRecente": false
+    },
+    {
+      "lat": -5.905000003589123,
+      "lon": -45.86980180610372,
+      "veg": 7,
+      "elev": 199.69683837890625,
+      "tC": 33.85,
+      "rh": 38.1,
+      "pse": 34.9,
+      "oficial": 0.22,
+      "artemis": 0.2216,
+      "focoRecente": false
+    },
+    {
+      "lat": 1.6649999964108773,
+      "lon": -71.07980180610372,
+      "veg": 7,
+      "elev": 215.42286682128906,
+      "tC": 33.16,
+      "rh": 48.9,
+      "pse": 8.14,
+      "oficial": 0.01,
+      "artemis": 0.0121,
+      "focoRecente": false
+    },
+    {
+      "lat": -5.965000003589118,
+      "lon": -67.76980180610373,
+      "veg": 7,
+      "elev": 83.35890197753906,
+      "tC": 35.4,
+      "rh": 39.7,
+      "pse": 17.93,
+      "oficial": 0.05,
+      "artemis": 0.0628,
+      "focoRecente": false
+    },
+    {
+      "lat": -9.335000003589123,
+      "lon": -40.83980180610372,
+      "veg": 4,
+      "elev": 456.41162109375,
+      "tC": 33.37,
+      "rh": 32.2,
+      "pse": 54.49,
+      "oficial": 0.93,
+      "artemis": 0.9692,
+      "focoRecente": false
+    },
+    {
+      "lat": -17.965000003589118,
+      "lon": -39.93980180610373,
+      "veg": 7,
+      "elev": 72.03467559814453,
+      "tC": 32.59,
+      "rh": 54.8,
+      "pse": 4.32,
+      "oficial": 0,
+      "artemis": 0.0035,
+      "focoRecente": false
+    }
+  ],
+  "durationS": 19
+}
