@@ -72,3 +72,16 @@ Validação do motor com dados reais: `23`. Prova de Valor: `22`. Maturidade con
 Observações oficiais das estações automáticas: coleta, validação, PostGIS, vínculo com propriedades,
 integração rastreável ao motor e painel. Detalhes e evidências: `24_INMET.md` e `evidencias/2026-11-18-inmet/`.
 Pendência: token do INMET para dados horários recentes (hoje o arquivo público chega ~1×/mês).
+
+## Atualização 2026-11-24 — risco de fogo INPE, Haines e UI reconstruída
+
+| Entregável | Situação | Evidência / observação |
+|---|---|---|
+| Ingestão do Risco de Fogo oficial (observado e previsto) | Implementado e testado no ambiente do Claude | migrações `0019`/`0020`, `server/connectors/inpe-fire-risk.ts`, `tests/integration/fire-risk.test.ts`, evidências `2026-11-23-inpe-rf/` |
+| Índice de Haines a partir de níveis de pressão | Implementado e testado no ambiente do Claude | `shared/haines.ts`, `server/services/haines.ts`, `tests/unit/haines.test.ts`, evidência `2026-11-24-haines/` |
+| Camada de risco no Mapa Ambiental (grade, legenda, clique, CSV) | Implementado e validado por `tsc`/build | `client/src/components/map/FireRiskLayer.tsx`, integrado em `EnvironmentalMap.tsx`; sem inspeção visual no navegador |
+| Série na página da área + cartão Haines | Implementado e validado por `tsc`/build | `client/src/components/area/AreaFireRisk.tsx`, integrado em `AreaDetail.tsx`; sem inspeção visual no navegador |
+| Documentação do produto | Implementado | `26_INPE_RISCO_FOGO.md` |
+| Validação automatizada da UI reconstruída | Parcial | Node 26 portátil em `Temp`: `npm run check` OK, `npm run build` OK; `npm test` 44/44; `npm run test:unit` 66/67 (a única falha é o teste de paridade Python, por `python` ser o atalho da Microsoft Store). Inspeção no navegador e testes de integração com PostgreSQL não executados |
+
+Os componentes perdidos quando o limite semanal do Claude foi atingido foram reescritos a partir das APIs reais da branch `feature/ciencia-risco-inpe`. O risco oficial ainda não é variável do motor nem foi calibrado com dados das áreas-piloto; as metas de 30 % de tempo e 80 % de aprovação continuam como objetivos da Prova de Valor.

@@ -8,6 +8,7 @@ import type L from "leaflet";
 import { Layout } from "@/components/Layout";
 import { RiskBadge, riskLevelColor } from "@/components/RiskBadge";
 import { ClusteredPoints } from "@/components/map/ClusteredPoints";
+import { DEFAULT_FIRE_RISK, FireRiskLayer, FireRiskLegend, type FireRiskSelection } from "@/components/map/FireRiskLayer";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useAuthStatus, hasRole } from "@/hooks/use-auth";
@@ -152,7 +153,8 @@ export default function EnvironmentalMap() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuthStatus();
   const [level, setLevel] = useState<"all" | RiskLevel | "none">("all");
-  const [show, setShow] = useState({ areas: true, risk: true, occ: true, sisfogo: true, hot: true, biomes: false });
+  const [show, setShow] = useState({ areas: true, risk: true, occ: true, sisfogo: true, hot: true, biomes: false, fireRisk: true });
+  const [fireRisk, setFireRisk] = useState<FireRiskSelection>(DEFAULT_FIRE_RISK);
   const [form, setForm] = useState<Filters>(EMPTY);
   const [f, setF] = useState<Filters>(EMPTY);
 
@@ -247,6 +249,7 @@ export default function EnvironmentalMap() {
             {toggle("occ", "Ocorrências importadas pela organização", dot(OCC_COLOR, "rotate-45"))}
             {toggle("sisfogo", "Registros oficiais — Sisfogo", dot(SIS_COLOR))}
             {toggle("hot", "Focos de calor — INPE", dot(HOT_COLOR))}
+            {toggle("fireRisk", "Risco de fogo — INPE (índice 0–1)", <span aria-hidden className="inline-block h-2.5 w-2.5 bg-emerald-700" />)}
             {toggle("biomes", "Biomas (contorno ilustrativo)", <span aria-hidden className="inline-block w-2.5 h-2.5 border border-dashed border-emerald-700" />)}
           </fieldset>
 
@@ -299,7 +302,8 @@ export default function EnvironmentalMap() {
               {" "}{sis?.lastCompleteSyncAt ? `Sincronizado em ${when(sis.lastCompleteSyncAt)}.` : "Aguardando primeira sincronização completa."} Cobre só órgãos aderentes.</span></p>}
             {show.hot && <p className="flex items-start gap-2">{dot(HOT_COLOR, "rounded-full mt-1")}<span><b>Focos INPE</b> — {hotPoints.length} detecção(ões){hotSum ? ` de ${when(`${hotSum.period.from}T12:00:00`, false)} a ${when(`${hotSum.period.to}T12:00:00`, false)}` : ""}.
               {" "}{f.from && !hotPeriodOk ? "Período maior que 31 dias: mostrando os 2 últimos dias. " : ""}Sincronizado em {when(hotSum?.lastSyncAt)}. Foco de calor não é incêndio confirmado.</span></p>}
-            <p className="text-muted-foreground">Números em círculos agrupam pontos próximos; clique para aproximar.</p>
+            {show.fireRisk && <div className="border-t pt-2"><FireRiskLegend selection={fireRisk} onChange={setFireRisk} visible={show.fireRisk} /></div>}
+            <p className="text-muted-foreground">Números em círculos agrupam pontos próximos; clique para aproximar. Com a camada de risco ligada, o clique também consulta o valor da célula.</p>
           </section>
         </aside>
 
@@ -308,6 +312,7 @@ export default function EnvironmentalMap() {
           {/* Attribution is shown below the map, so no control covers clickable points. */}
           <MapContainer center={[-14.5, -49]} zoom={5} className="h-full w-full" scrollWheelZoom attributionControl={false}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            {show.fireRisk && <FireRiskLayer selection={fireRisk} visible={show.fireRisk} />}
             <FitTo points={fit.points} maxZoom={fit.maxZoom} signal={fitSignal} />
             {show.biomes && <GeoJSON data={BIOME_GEOJSON} style={biomeStyle as any}
               onEachFeature={(feat, layer) => (layer as L.Path).bindTooltip(`${feat.properties?.biome} (contorno aproximado)`, { sticky: true })} />}
