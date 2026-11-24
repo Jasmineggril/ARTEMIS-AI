@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 
 interface Prefs { emailEnabled: boolean; minSeverity: string; kinds: string[]; saved: boolean; smtpConfigured: boolean }
 const SEVERITIES = [["baixo", "Baixo ou maior"], ["moderado", "Moderado ou maior"], ["alto", "Alto ou maior"], ["crítico", "Somente crítico"]];
-const KINDS = [["foco_proximo", "Foco de calor do INPE dentro ou perto da propriedade"], ["risco", "Risco alto ou crítico calculado numa análise"]];
+const KINDS = [["foco_proximo", "Foco de calor do INPE dentro ou perto da propriedade"], ["risco_oficial", "Risco de fogo oficial do INPE alto/crítico por vários dias (ou previsão crítica)"], ["risco", "Risco alto ou crítico calculado numa análise"]];
 
 /** Own e-mail notification preferences. States plainly when the server cannot send e-mail. */
 export function NotificationSettings() {

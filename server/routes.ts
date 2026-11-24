@@ -16,6 +16,7 @@ import { registerAdminRoutes } from "./admin-routes";
 import { registerEvidenceRoutes } from "./evidence-routes";
 import { registerNotificationRoutes } from "./notification-routes";
 import { registerInmetRoutes } from "./inmet-routes";
+import { registerFireRiskRoutes } from "./fire-risk-routes";
 import { audit } from "./services/audit";
 import { fetchWeatherData } from "./weather-service";
 import { normalizeOccurrenceDate } from "@shared/dates";
@@ -111,6 +112,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   registerEvidenceRoutes(app);
   registerNotificationRoutes(app);
   registerInmetRoutes(app);
+  registerFireRiskRoutes(app);
 
   // ── Profile ────────────────────────────────────────────────────────────────
   app.get(api.user.profile.get.path, requireAuth, async (req, res) => {

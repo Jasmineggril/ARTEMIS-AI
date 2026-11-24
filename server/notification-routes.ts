@@ -19,7 +19,7 @@ import { mailConfigured } from "./services/account-links";
 const prefsSchema = z.object({
   emailEnabled: z.boolean(),
   minSeverity: z.enum(NOTIFICATION_SEVERITIES),
-  kinds: z.array(z.enum(["risco", "foco_proximo"])).max(2),
+  kinds: z.array(z.enum(["risco", "foco_proximo", "risco_oficial"])).max(3),
 }).strict();
 
 export function registerNotificationRoutes(app: Express) {

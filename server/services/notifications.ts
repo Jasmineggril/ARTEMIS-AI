@@ -21,7 +21,7 @@ import { mailer } from "./account-links";
 
 export const MAX_ATTEMPTS = 5;
 const RANK: Record<string, number> = { baixo: 0, moderado: 1, alto: 2, "crítico": 3, critico: 3 };
-export const DEFAULT_PREFS = { emailEnabled: true, minSeverity: "alto" as (typeof NOTIFICATION_SEVERITIES)[number], kinds: ["risco", "foco_proximo"] };
+export const DEFAULT_PREFS = { emailEnabled: true, minSeverity: "alto" as (typeof NOTIFICATION_SEVERITIES)[number], kinds: ["risco", "foco_proximo", "risco_oficial"] };
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 

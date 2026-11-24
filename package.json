@@ -27,6 +27,7 @@
     "sync:inpe": "tsx scripts/sync-inpe.ts",
     "sync:sisfogo": "tsx scripts/sync-sisfogo.ts",
     "sync:inmet": "tsx scripts/sync-inmet.ts",
+    "sync:inpe-risk": "tsx scripts/sync-inpe-risk.ts",
     "admin:create": "tsx scripts/ops/create-admin.ts",
     "db:load-municipalities": "tsx scripts/load-ibge-municipalities.ts",
     "db:load-boundaries": "tsx scripts/load-ibge-boundaries.ts",
