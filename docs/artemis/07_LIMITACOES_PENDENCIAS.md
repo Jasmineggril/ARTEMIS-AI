@@ -44,3 +44,14 @@
 ## O que **não** foi feito por exigir autorização
 
 Nenhuma compra, publicação, configuração de DNS, criação de VPS, envio de e-mail, abertura de pull request ou alteração de infraestrutura existente.
+
+
+## Índices oficiais do INPE, Haines e IA (28/11/2026)
+
+Detalhes em `26_EVOLUCAO_TECNICA_CIENTIFICA.md` §12 e `27_IA_AVALIACAO_RISCO_OFICIAL.md` §7.
+
+- A sincronização do risco oficial não foi executada na VPS; migrações 0019 e 0020 não aplicadas em produção.
+- Haines depende da cota gratuita do Open-Meteo; sem ela, aparece "indisponível".
+- Regras de alerta de risco persistente (R1/R2) não calibradas; revisar com especialistas.
+- A avaliação da IA usa foco de calor como desfecho (não incêndio confirmado) e uma única estação seca.
+- O modelo combinado não está ativo; nenhum percentual de probabilidade é exibido.

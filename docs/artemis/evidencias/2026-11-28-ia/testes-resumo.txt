@@ -1,0 +1,8 @@
+Execução: 2026-11-28T16:33:24Z — branch feature/ciencia-risco-inpe @ 4214243 + documentação
+tsc: sem erros
+build frontend: ok
+npm test: Resultado: 34 passaram · 0 falharam
+npm test: Resultado: 10 passou, 0 falhou
+unitários: # pass 70 # fail 0 
+integração (PostgreSQL real, sem PostGIS no banco de teste): # pass 97 # fail 0 # skipped 4 
+python: 109 passed in 7.70s
