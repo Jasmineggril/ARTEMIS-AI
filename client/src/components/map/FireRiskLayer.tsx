@@ -7,7 +7,8 @@
  * Clicking the map while a layer is on queries the cell under the point.
  * Wording: a meteorological index — not a hotspot, not a confirmed fire, not a probability.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type L from "leaflet";
 import { useQuery } from "@tanstack/react-query";
 import { ImageOverlay, Popup, useMapEvents } from "react-leaflet";
 import { api } from "@/lib/api";
@@ -74,21 +75,26 @@ function gridImage(g: Grid, stat: "mean" | "max", dry: boolean) {
 export function FireRiskOverlay({ sel, grid }: { sel: RfSel; grid: Grid | undefined }) {
   const img = useMemo(() => (grid && sel.kind !== "off" ? gridImage(grid, sel.stat, sel.kind === "dry") : null), [grid, sel.kind, sel.stat]);
   const [at, setAt] = useState<[number, number] | null>(null);
+  const popup = useRef<L.Popup | null>(null);
   useEffect(() => setAt(null), [sel.kind]);
   useMapEvents({ click: (e) => { if (sel.kind !== "off") setAt([e.latlng.lat, e.latlng.lng]); } });
   if (!img) return null;
   return (
     <>
       <ImageOverlay url={img.url} bounds={img.bounds} opacity={0.6} className="artemis-pixelated" interactive={false} />
-      {at && <Popup position={at} eventHandlers={{ remove: () => setAt(null) }}><PointValues lat={at[0]} lng={at[1]} /></Popup>}
+      {at && <Popup ref={popup} position={at} eventHandlers={{ remove: () => setAt(null) }}>
+        {/* content arrives after the query: re-layout and re-pan so the whole card stays in view */}
+        <PointValues lat={at[0]} lng={at[1]} onLoaded={() => requestAnimationFrame(() => popup.current?.update())} />
+      </Popup>}
     </>
   );
 }
 
-function PointValues({ lat, lng }: { lat: number; lng: number }) {
+function PointValues({ lat, lng, onLoaded }: { lat: number; lng: number; onLoaded?: () => void }) {
   const { data, isLoading, error } = useQuery<{ values: { index: string; product: string; lead: number; validDay: string; mean: number | null; max: number | null }[]; note: string }>({
     queryKey: ["/api/fire-risk/point", lat.toFixed(3), lng.toFixed(3)], queryFn: () => api("GET", `/api/fire-risk/point?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`), retry: false,
   });
+  useEffect(() => { if (!isLoading) onLoaded?.(); }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
   if (isLoading) return <span>Consultando…</span>;
   if (error || !data) return <span>Ponto fora da área coberta (Brasil) ou consulta indisponível.</span>;
   const rf = data.values.filter((v) => v.index === "inpe_rf_oficial"), dry = data.values.find((v) => v.index === "inpe_dias_sem_chuva");

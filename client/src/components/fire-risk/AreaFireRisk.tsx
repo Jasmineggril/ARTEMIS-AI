@@ -38,6 +38,12 @@ export function AreaFireRisk({ areaId }: { areaId: number }) {
       {!series.length && !fc.length ? (
         <p className="text-sm text-muted-foreground">Ainda não há valores do índice oficial para esta área. Eles aparecem após a próxima sincronização com o INPE (a cada 6 horas).</p>
       ) : (<>
+        {lastObs && (() => {
+          // INPE publishes day D in the early hours of D+1: more than 2 days old means the sync is behind
+          const ageDays = Math.floor((Date.now() - Date.parse(lastObs.day + "T12:00:00Z")) / 86_400_000);
+          return ageDays > 2 ? <p role="status" className="text-xs rounded-lg border border-amber-300 bg-amber-50 p-2 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+            Dado desatualizado: o último dia disponível é de {ageDays} dias atrás. A sincronização com o INPE pode estar parada; o valor abaixo não descreve a condição de hoje.</p> : null;
+        })()}
         {lastObs && <p className="text-sm">Último dia observado, {fmt(lastObs.day)}: <b>{rfLabel(lastObs.mean)}</b> (média {n2(lastObs.mean)}, pior pixel {n2(lastObs.max)} na escala 0–1)
           {fc.length > 0 && <> · previsão: {fc.map((f) => `${fmt(f.day)} ${rfLabel(f.mean)}`).join(", ")}</>}.</p>}
         <div className="h-56" role="img" aria-label={`Série diária do risco de fogo oficial na área, ${series.length} dias observados e ${fc.length} previstos`}>
@@ -57,7 +63,7 @@ export function AreaFireRisk({ areaId }: { areaId: number }) {
         </div>
         <p className="text-xs text-muted-foreground flex flex-wrap gap-x-4">
           <span><span aria-hidden className="inline-block w-5 border-t-2 border-primary align-middle mr-1" />Observado</span>
-          <span><span aria-hidden className="inline-block w-5 border-t-2 border-dashed border-primary align-middle mr-1" />Previsão do INPE</span>
+          {fc.length > 0 && <span><span aria-hidden className="inline-block w-5 border-t-2 border-dashed border-primary align-middle mr-1" />Previsão do INPE</span>}
           <span>Linhas pontilhadas: limites oficiais das classes.</span>
         </p>
         <button type="button" className="text-xs underline" onClick={() => setTable(!table)} aria-expanded={table}>{table ? "Ocultar tabela" : "Ver valores em tabela"}</button>
