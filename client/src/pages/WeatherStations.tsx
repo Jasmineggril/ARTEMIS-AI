@@ -20,7 +20,8 @@ export default function WeatherStations() {
   const { data: list } = useQuery<{ stations: Station[] }>({ queryKey: ["/api/weather-stations"] });
   const { data: status } = useQuery<Status>({ queryKey: ["/api/connectors/inmet/status"] });
   const stations = list?.stations ?? [];
-  const [code, setCode] = useState<string>("");
+  // ?code=A001 (link from the map) preselects a station
+  const [code, setCode] = useState<string>(() => { try { return new URLSearchParams(window.location.search).get("code")?.toUpperCase().replace(/[^A-Z0-9]/g, "") ?? ""; } catch { return ""; } });
   const [uf, setUf] = useState("");
   const st = stations.find((s) => s.code === code) ?? null;
   const [to, setTo] = useState(""); const [from, setFrom] = useState("");

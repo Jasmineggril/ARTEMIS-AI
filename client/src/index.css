@@ -150,3 +150,6 @@
   html, body { background: #ffffff !important; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* official index grids drawn as an image overlay: keep cells crisp */
+.artemis-pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }

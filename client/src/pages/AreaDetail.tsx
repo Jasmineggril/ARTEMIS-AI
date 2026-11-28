@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AreaWeather } from "@/components/inmet/AreaWeather";
+import { AreaFireRisk } from "@/components/fire-risk/AreaFireRisk";
 import { Link, useLocation, useRoute } from "wouter";
 import { format } from "date-fns";
 import { MapContainer, TileLayer, Polygon, Circle, CircleMarker, Popup, useMap } from "react-leaflet";
@@ -204,6 +205,7 @@ export default function AreaDetail() {
         </section>
       </div>
 
+      <div className="mt-4"><AreaFireRisk areaId={a.id} /></div>
       <div className="mt-4"><AreaWeather areaId={a.id} /></div>
 
       {data.analyses.length > 0 && (
