@@ -184,6 +184,12 @@ export function AreaFireRisk({ areaId }: { areaId: number }) {
         <button type="button" className="text-xs underline" onClick={() => setTable(!table)}>{table ? "Ver gráfico" : "Ver dados em tabela"}</button>
       </div>
       <p className="text-xs text-muted-foreground">{data.method.what} Período: {fmtDay(data.from)} a {fmtDay(data.to)}. {data.method.source}. {data.method.notThis}</p>
+      {latest && (() => {
+        // INPE publishes day D in the early hours of D+1: more than 2 days old means the sync is behind
+        const ageDays = Math.floor((Date.now() - Date.parse(latest.day + "T12:00:00Z")) / 86_400_000);
+        return ageDays > 2 ? <p role="status" data-testid="area-fire-risk-stale" className="text-xs rounded-lg border border-amber-300 bg-amber-50 p-2 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+          Dado desatualizado: o último dia disponível é de {ageDays} dias atrás. A sincronização com o INPE pode estar parada; o valor abaixo não descreve a condição de hoje.</p> : null;
+      })()}
       {latest && (
         <p className="text-sm">Último observado ({fmtDay(latest.day)}): <strong className="tabular-nums">{num(latest.mean)}</strong> — <strong>{classLabel(latest.class)}</strong>
           {" · "}máx. {num(latest.max)} · {latest.pixelsValid.toLocaleString("pt-BR")}/{latest.pixelsTotal.toLocaleString("pt-BR")} pixels válidos</p>

@@ -2,7 +2,7 @@
 
 Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado dedicado) · **Parcial** · **Pendente** · **Bloqueado**
 
-Última atualização: 15/11/2026.
+Última atualização: 28/11/2026 (itens 23–27: branch `feature/ciencia-risco-inpe`, não em produção).
 
 | # | Entregável | Status | Evidência / observação |
 |---|---|---|---|
@@ -28,6 +28,11 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | 20 | Plano de validação da Prova de Valor | Implementado (plano) | `08_PLANO_PROVA_DE_VALOR.md`. Nenhum resultado da PoV existe ainda. |
 | 21 | Integração Sisfogo (Ibama/Prevfogo) | Implementado e testado (dev) | Contrato verificado com a API real; sincronização completa real em dev (1.698 ROIs); histórico de retificações, indisponibilidade, retomada, trava; motor de risco com proveniência; painel e sincronização manual de administrador. Pendente: execução na VPS — `11`, `13`, `14` |
 | 22 | Consolidação das branches | Implementado | `12_CONSOLIDACAO_BRANCHES.md`; branch `integration/artemis-sisfogo-inpe` |
+| 23 | Risco de Fogo oficial do INPE (observado, previsto, dias sem chuva) | Implementado e testado (dev) | Dados reais em dev; teste de integração; conferência independente. Pendente: execução na VPS — `28`|
+| 24 | Método INPE 2.2 (Setzer) reproduzido | Implementado e testado | Erro médio 0,016, 93 % na mesma classe contra a grade oficial — `28` §4 |
+| 25 | Índice de Haines | Implementado e testado | Só com níveis de pressão; "indisponível" com o motivo caso contrário; depende da cota do Open-Meteo — `28` §4.2 |
+| 26 | IA: avaliação com RF oficial, calibração, separação temporal e geográfica | Implementado (avaliação) | Modelo combinado **não ativado** (ganho marginal, calibração instável) — `27` |
+| 27 | Mapa (camadas oficiais, consulta por ponto, exportação) e alertas de risco persistente | Implementado e testado (dev) | Capturas com dados reais; regras R1/R2 não calibradas — `28` §6 |
 
 ## Critérios de aceitação da primeira versão (seção 16 do prompt mestre)
 

@@ -106,6 +106,8 @@ const NO_ANALYSIS_COLOR = "#64748b";
 const OCC_COLOR = "#7c2d12";
 const SIS_COLOR = "#b45309";
 const HOT_COLOR = "#7e22ce";
+const STATION_COLOR = "#0369a1";
+interface StationRow { code: string; name: string; state: string; latitude: number; longitude: number; altitudeM: number | null; lastDay: string | null; availability30dPct: number | null }
 /** Radius used by the risk engine for historical occurrences; also the "near this area" filter. */
 const NEAR_KM = 10;
 
@@ -153,8 +155,9 @@ export default function EnvironmentalMap() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuthStatus();
   const [level, setLevel] = useState<"all" | RiskLevel | "none">("all");
-  const [show, setShow] = useState({ areas: true, risk: true, occ: true, sisfogo: true, hot: true, biomes: false, fireRisk: true });
+  const [show, setShow] = useState({ areas: true, risk: true, occ: true, sisfogo: true, hot: true, biomes: false, fireRisk: true, stations: false });
   const [fireRisk, setFireRisk] = useState<FireRiskSelection>(DEFAULT_FIRE_RISK);
+  const { data: st } = useQuery<{ stations: StationRow[] }>({ queryKey: ["/api/weather-stations"], queryFn: () => api("GET", "/api/weather-stations"), enabled: show.stations, staleTime: 30 * 60_000 });
   const [form, setForm] = useState<Filters>(EMPTY);
   const [f, setF] = useState<Filters>(EMPTY);
 
@@ -250,6 +253,7 @@ export default function EnvironmentalMap() {
             {toggle("sisfogo", "Registros oficiais — Sisfogo", dot(SIS_COLOR))}
             {toggle("hot", "Focos de calor — INPE", dot(HOT_COLOR))}
             {toggle("fireRisk", "Risco de fogo — INPE (índice 0–1)", <span aria-hidden className="inline-block h-2.5 w-2.5 bg-emerald-700" />)}
+            {toggle("stations", "Estações meteorológicas — INMET", dot(STATION_COLOR, ""))}
             {toggle("biomes", "Biomas (contorno ilustrativo)", <span aria-hidden className="inline-block w-2.5 h-2.5 border border-dashed border-emerald-700" />)}
           </fieldset>
 
@@ -303,6 +307,7 @@ export default function EnvironmentalMap() {
             {show.hot && <p className="flex items-start gap-2">{dot(HOT_COLOR, "rounded-full mt-1")}<span><b>Focos INPE</b> — {hotPoints.length} detecção(ões){hotSum ? ` de ${when(`${hotSum.period.from}T12:00:00`, false)} a ${when(`${hotSum.period.to}T12:00:00`, false)}` : ""}.
               {" "}{f.from && !hotPeriodOk ? "Período maior que 31 dias: mostrando os 2 últimos dias. " : ""}Sincronizado em {when(hotSum?.lastSyncAt)}. Foco de calor não é incêndio confirmado.</span></p>}
             {show.fireRisk && <div className="border-t pt-2"><FireRiskLegend selection={fireRisk} onChange={setFireRisk} visible={show.fireRisk} /></div>}
+            {show.stations && <p className="flex items-start gap-2">{dot(STATION_COLOR, "mt-1")}<span><b>Estações INMET</b> — {st?.stations.length ?? "…"} estação(ões). Medição local; representa bem apenas o entorno da estação.</span></p>}
             <p className="text-muted-foreground">Números em círculos agrupam pontos próximos; clique para aproximar. Com a camada de risco ligada, o clique também consulta o valor da célula.</p>
           </section>
         </aside>
@@ -314,6 +319,14 @@ export default function EnvironmentalMap() {
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             {show.fireRisk && <FireRiskLayer selection={fireRisk} visible={show.fireRisk} />}
             <FitTo points={fit.points} maxZoom={fit.maxZoom} signal={fitSignal} />
+            {show.stations && <ClusteredPoints label="estações INMET" color={STATION_COLOR} radius={5} shape="diamond"
+              points={(st?.stations ?? []).filter((x) => x.latitude != null && x.longitude != null).map((x) => ({ ...x, key: `st${x.code}`, lat: x.latitude, lng: x.longitude }))}
+              renderPopup={(x) => <>
+                <strong>Estação INMET {x.code}</strong><br />{x.name}/{x.state}{x.altitudeM != null ? ` · ${Math.round(x.altitudeM)} m` : ""}<br />
+                Último dia com dados: {x.lastDay ? x.lastDay.split("-").reverse().join("/") : "sem dados importados"}<br />
+                {x.availability30dPct != null && <>Disponibilidade (30 dias): {x.availability30dPct.toLocaleString("pt-BR")}%<br /></>}
+                <button className="underline mt-1" onClick={() => setLocation(`/estacoes?code=${x.code}`)}>Ver série da estação</button>
+              </>} />}
             {show.biomes && <GeoJSON data={BIOME_GEOJSON} style={biomeStyle as any}
               onEachFeature={(feat, layer) => (layer as L.Path).bindTooltip(`${feat.properties?.biome} (contorno aproximado)`, { sticky: true })} />}
             {area && <Circle center={[area.latitude!, area.longitude!]} radius={NEAR_KM * 1000} pathOptions={{ color: AREA_COLOR, weight: 1, dashArray: "6", fillOpacity: 0.03 }} />}
