@@ -2,7 +2,7 @@
 
 Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado dedicado) · **Parcial** · **Pendente** · **Bloqueado**
 
-Última atualização: 28/11/2026 (itens 23–27 na branch `feature/ciencia-risco-inpe`, ainda não na `main` nem em produção).
+Última atualização: 28/11/2026 (itens 23–27: branch `feature/ciencia-risco-inpe`, não em produção).
 
 | # | Entregável | Status | Evidência / observação |
 |---|---|---|---|
@@ -28,11 +28,11 @@ Legenda: **Implementado e testado** · **Implementado** (sem teste automatizado 
 | 20 | Plano de validação da Prova de Valor | Implementado (plano) | `08_PLANO_PROVA_DE_VALOR.md`. Nenhum resultado da PoV existe ainda. |
 | 21 | Integração Sisfogo (Ibama/Prevfogo) | Implementado e testado (dev) | Contrato verificado com a API real; sincronização completa real em dev (1.698 ROIs); histórico de retificações, indisponibilidade, retomada, trava; motor de risco com proveniência; painel e sincronização manual de administrador. Pendente: execução na VPS — `11`, `13`, `14` |
 | 22 | Consolidação das branches | Implementado | `12_CONSOLIDACAO_BRANCHES.md`; branch `integration/artemis-sisfogo-inpe` |
-| 23 | Risco de Fogo oficial do INPE (observado, previsto, dias sem chuva) | Implementado e testado (dev) | Dados reais em dev; teste de integração; conferência independente. Pendente: execução na VPS — `26` |
-| 24 | Método INPE 2.2 (Setzer) reproduzido | Implementado e testado | Erro médio 0,016, 93 % na mesma classe contra a grade oficial — `26` §4 |
-| 25 | Índice de Haines | Implementado e testado | Só com níveis de pressão; "indisponível" com o motivo caso contrário; depende da cota do Open-Meteo — `26` §4.2 |
+| 23 | Risco de Fogo oficial do INPE (observado, previsto, dias sem chuva) | Implementado e testado (dev) | Dados reais em dev; teste de integração; conferência independente. Pendente: execução na VPS — `28`|
+| 24 | Método INPE 2.2 (Setzer) reproduzido | Implementado e testado | Erro médio 0,016, 93 % na mesma classe contra a grade oficial — `28` §4 |
+| 25 | Índice de Haines | Implementado e testado | Só com níveis de pressão; "indisponível" com o motivo caso contrário; depende da cota do Open-Meteo — `28` §4.2 |
 | 26 | IA: avaliação com RF oficial, calibração, separação temporal e geográfica | Implementado (avaliação) | Modelo combinado **não ativado** (ganho marginal, calibração instável) — `27` |
-| 27 | Mapa (camadas oficiais, consulta por ponto, exportação) e alertas de risco persistente | Implementado e testado (dev) | Capturas com dados reais; regras R1/R2 não calibradas — `26` §6 |
+| 27 | Mapa (camadas oficiais, consulta por ponto, exportação) e alertas de risco persistente | Implementado e testado (dev) | Capturas com dados reais; regras R1/R2 não calibradas — `28` §6 |
 
 ## Critérios de aceitação da primeira versão (seção 16 do prompt mestre)
 
@@ -77,3 +77,16 @@ Validação do motor com dados reais: `23`. Prova de Valor: `22`. Maturidade con
 Observações oficiais das estações automáticas: coleta, validação, PostGIS, vínculo com propriedades,
 integração rastreável ao motor e painel. Detalhes e evidências: `24_INMET.md` e `evidencias/2026-11-18-inmet/`.
 Pendência: token do INMET para dados horários recentes (hoje o arquivo público chega ~1×/mês).
+
+## Atualização 2026-11-24 — risco de fogo INPE, Haines e UI reconstruída
+
+| Entregável | Situação | Evidência / observação |
+|---|---|---|
+| Ingestão do Risco de Fogo oficial (observado e previsto) | Implementado e testado no ambiente do Claude | migrações `0019`/`0020`, `server/connectors/inpe-fire-risk.ts`, `tests/integration/fire-risk.test.ts`, evidências `2026-11-23-inpe-rf/` |
+| Índice de Haines a partir de níveis de pressão | Implementado e testado no ambiente do Claude | `shared/haines.ts`, `server/services/haines.ts`, `tests/unit/haines.test.ts`, evidência `2026-11-24-haines/` |
+| Camada de risco no Mapa Ambiental (grade, legenda, clique, CSV) | Implementado e validado por `tsc`/build | `client/src/components/map/FireRiskLayer.tsx`, integrado em `EnvironmentalMap.tsx`; sem inspeção visual no navegador |
+| Série na página da área + cartão Haines | Implementado e validado por `tsc`/build | `client/src/components/area/AreaFireRisk.tsx`, integrado em `AreaDetail.tsx`; sem inspeção visual no navegador |
+| Documentação do produto | Implementado | `26_INPE_RISCO_FOGO.md` |
+| Validação automatizada da UI reconstruída | Parcial | Node 26 portátil em `Temp`: `npm run check` OK, `npm run build` OK; `npm test` 44/44; `npm run test:unit` 66/67 (a única falha é o teste de paridade Python, por `python` ser o atalho da Microsoft Store). Inspeção no navegador e testes de integração com PostgreSQL não executados |
+
+Os componentes perdidos quando o limite semanal do Claude foi atingido foram reescritos a partir das APIs reais da branch `feature/ciencia-risco-inpe`. O risco oficial ainda não é variável do motor nem foi calibrado com dados das áreas-piloto; as metas de 30 % de tempo e 80 % de aprovação continuam como objetivos da Prova de Valor.

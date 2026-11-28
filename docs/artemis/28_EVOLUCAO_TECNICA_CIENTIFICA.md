@@ -1,7 +1,7 @@
-# 26 — Evolução técnica e científica: índices oficiais do INPE, Haines, IA, mapa e alertas
+# 28 — Evolução técnica e científica: índices oficiais do INPE, Haines, IA, mapa e alertas
 
 Branch: `feature/ciencia-risco-inpe` (não mesclada na `main`; nada publicado em produção).
-Período: 23 a 28/11/2026. Este documento reúne os 14 entregáveis pedidos. A avaliação da IA
+Período: 23 a 28/11/2026. Este documento reúne os 14 entregáveis pedidos. A descrição do produto de risco de fogo está em `26_INPE_RISCO_FOGO.md`. A avaliação da IA
 está detalhada em `27_IA_AVALIACAO_RISCO_OFICIAL.md`.
 
 Regra seguida em todo o trabalho: **nada é dado como concluído sem evidência verificável**. Cada
@@ -109,18 +109,21 @@ Resumo do doc 27 (4 800 casos reais, mesmo desenho do backtest de 18/11):
 
 ## 6. Mapa e alertas
 
-**Mapa** (`client/src/components/map/FireRiskLayer.tsx`, capturas em `capturas/2026-11-28-risco-oficial/`):
-- Camadas: RF observado por dia, previsão T0–T3, dias sem chuva, estações INMET (com link para a série).
-- Legenda com as classes oficiais, fonte, arquivo e horário do processamento.
-- Escolha entre a média e o máximo da célula de 0,2°.
-- **Consulta por coordenada** com um clique.
-- **Exportação** da grade em CSV com a fonte no cabeçalho.
-- O desenho é feito em Mercator para as células não se deslocarem.
+**Mapa** (`client/src/components/map/FireRiskLayer.tsx`, versão da `main` mantida na mesclagem; capturas em `capturas/2026-11-28-risco-oficial/`):
+- Camadas: RF observado por dia, previsão T0–T3, dias sem chuva e estações INMET (com link para a série da estação).
+- Legenda com as classes oficiais, fonte e data.
+- **Consulta por coordenada** com um clique: um painel mostra observado, previsão e dias sem chuva
+  da célula de 0,2°, com média e máximo, e avisa que o valor é da célula, não da propriedade.
+- **Exportação** da grade em CSV.
+- Desenho em Mercator, para as células não se deslocarem.
 
-**Página da área** (`client/src/components/fire-risk/AreaFireRisk.tsx`):
-- Série diária do RF sobre o polígono, mais a previsão, com os limites oficiais e uma tabela.
-- Método e limites do índice, e o cartão do Haines.
-- Aviso quando o dado tem mais de 2 dias.
+**Página da área** (`client/src/components/area/AreaFireRisk.tsx`):
+- Série diária do RF sobre o polígono, mais a previsão, com os limites oficiais, tabela, método e limites.
+- Cartão do Haines, ou "indisponível" com o motivo.
+- **Aviso quando o último dia tem mais de 2 dias** (sincronização parada).
+
+**Balões do mapa:** o fundo transparente de todos os balões (focos, Sisfogo, áreas, consulta
+pública) foi corrigido em `client/src/index.css`.
 
 **Alertas de risco oficial** (`server/services/fire-risk-alerts.ts`, tipo `risco_oficial`):
 

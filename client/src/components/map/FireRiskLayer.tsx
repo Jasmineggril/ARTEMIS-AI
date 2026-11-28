@@ -1,174 +1,358 @@
 /**
- * Map layers of INPE's official fire-risk products (served by /api/fire-risk/*):
- *   - Risco de Fogo observado (by day) and previsto (T0..T3), 0.2° cells (mean or max of the 1 km pixels);
- *   - Dias sem chuva (INPE, consecutive days ≤ 1 mm in the last 120 days).
- * The grid is drawn on ONE canvas, row by row in Web-Mercator, so cells stay where they are
- * (a lat-regular image stretched over Mercator bounds would drift north/south).
- * Clicking the map while a layer is on queries the cell under the point.
- * Wording: a meteorological index — not a hotspot, not a confirmed fire, not a probability.
+ * Camada de risco de fogo oficial do INPE no mapa.
+ *
+ * A grade 0,2° vem de /api/fire-risk/grid (média/máximo dos pixels de 1 km por
+ * célula). Cada célula é desenhada numa única canvas, reprojetada para Web
+ * Mercator pelo próprio Leaflet; a consulta por clique usa
+ * /api/fire-risk/point e deixa claro que o valor é da célula, não da propriedade.
+ *
+ * Este índice é susceptibilidade meteorológica da vegetação para queimar.
+ * Não é detecção de fogo, incêndio confirmado nem probabilidade calibrada.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useMap, useMapEvents } from "react-leaflet";
 import type L from "leaflet";
 import { useQuery } from "@tanstack/react-query";
-import { ImageOverlay, Popup, useMapEvents } from "react-leaflet";
-import { api } from "@/lib/api";
+import { format } from "date-fns";
+import { Download, Info, X } from "lucide-react";
+import { apiGet } from "@/lib/api";
+import { RF_CLASS_LABEL, RF_CLASS_LIMITS, rfClass, type RfClass } from "@shared/inpe-fire-risk";
 
-export type RfSel = { kind: "off" | "rf" | "dry"; product: "observado" | "previsto"; day: string; lead: number; stat: "mean" | "max" };
-export const RF_SEL_OFF: RfSel = { kind: "off", product: "observado", day: "", lead: 0, stat: "mean" };
+export type FireRiskIndex = "inpe_rf_oficial" | "inpe_dias_sem_chuva";
+export type FireRiskProduct = "observado" | "previsto";
 
-interface Available { layers: { index: string; product: string; lead: number; days: string[] }[]; method: { name: string; notThis: string; source: string; limits: string[]; reference: string } }
-interface Grid { index: string; product: string; validDay: string; lead: number; cellDeg: number; lat0: number; lon0: number; nlat: number; nlon: number; mean: (number | null)[]; max: (number | null)[]; sourceFile: string; computedAt: string; unit: string }
+export interface FireRiskSelection {
+  index: FireRiskIndex;
+  product: FireRiskProduct;
+  day: string;
+  lead: number;
+}
 
-export const RF_CLASSES = [
-  { key: "minimo", label: "Mínimo", upTo: 0.15, color: "#1a9850" },
-  { key: "baixo", label: "Baixo", upTo: 0.4, color: "#a6d96a" },
-  { key: "medio", label: "Médio", upTo: 0.7, color: "#fee08b" },
-  { key: "alto", label: "Alto", upTo: 0.95, color: "#f46d43" },
-  { key: "critico", label: "Crítico", upTo: Infinity, color: "#a50026" },
-];
-export const DRY_BINS = [
-  { label: "0–9", upTo: 9, color: "#f7fbff" }, { label: "10–29", upTo: 29, color: "#fdd0a2" }, { label: "30–59", upTo: 59, color: "#fd8d3c" },
-  { label: "60–89", upTo: 89, color: "#d94801" }, { label: "90–120", upTo: Infinity, color: "#7f2704" },
-];
-const rfColor = (v: number) => RF_CLASSES.find((c) => v <= c.upTo)!.color;
-const dryColor = (v: number) => DRY_BINS.find((c) => v <= c.upTo)!.color;
-export const rfLabel = (v: number | null | undefined) => (v == null ? "sem valor" : RF_CLASSES.find((c) => v <= c.upTo)!.label);
-const fmtDay = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
-const num = (v: number | null | undefined, d = 2) => (v == null ? "—" : v.toLocaleString("pt-BR", { maximumFractionDigits: d, minimumFractionDigits: d }));
+export const DEFAULT_FIRE_RISK: FireRiskSelection = {
+  index: "inpe_rf_oficial",
+  product: "observado",
+  day: "",
+  lead: 0,
+};
+
+interface GridResponse {
+  index: FireRiskIndex;
+  product: FireRiskProduct;
+  validDay: string;
+  lead: number;
+  cellDeg: number;
+  lat0: number;
+  lon0: number;
+  nlat: number;
+  nlon: number;
+  mean: Array<number | null>;
+  max: Array<number | null>;
+  sourceFile: string | null;
+  computedAt: string;
+  unit: string;
+  method?: { source?: string; reference?: string; notThis?: string; what?: string };
+}
+
+interface AvailableLayer { index: FireRiskIndex; product: FireRiskProduct; lead: number; days: string[] }
+interface AvailableResponse { layers: AvailableLayer[]; method?: unknown }
+
+interface PointValue {
+  index: FireRiskIndex;
+  product: FireRiskProduct;
+  lead: number;
+  validDay: string;
+  mean: number | null;
+  max: number | null;
+  cellDeg: number;
+}
+interface PointResponse { lat: number; lng: number; note: string; values: PointValue[] }
 
 export function useFireRiskAvailable() {
-  return useQuery<Available>({ queryKey: ["/api/fire-risk/available"], queryFn: () => api("GET", "/api/fire-risk/available"), staleTime: 15 * 60_000 });
-}
-export function useFireRiskGrid(sel: RfSel) {
-  const index = sel.kind === "dry" ? "inpe_dias_sem_chuva" : "inpe_rf_oficial";
-  const product = sel.kind === "dry" ? "observado" : sel.product;
-  const qs = new URLSearchParams({ index, product, lead: String(product === "previsto" ? sel.lead : 0), ...(product === "observado" && sel.day ? { day: sel.day } : {}) });
-  return useQuery<Grid>({ queryKey: ["/api/fire-risk/grid", qs.toString()], queryFn: () => api("GET", `/api/fire-risk/grid?${qs}`), enabled: sel.kind !== "off", staleTime: 15 * 60_000, retry: false });
+  return useQuery<AvailableResponse>({
+    queryKey: ["/api/fire-risk/available"],
+    queryFn: () => apiGet<AvailableResponse>("/api/fire-risk/available"),
+    staleTime: 10 * 60_000,
+    retry: 1,
+  });
 }
 
-const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
-const latOfMercY = (y: number) => (360 / Math.PI) * Math.atan(Math.exp(y)) - 90;
+export function useFireRiskGrid(selection: FireRiskSelection) {
+  const query = useMemo(() => {
+    const p = new URLSearchParams({ index: selection.index, product: selection.product, lead: String(selection.lead) });
+    if (selection.day) p.set("day", selection.day);
+    return p.toString();
+  }, [selection.index, selection.product, selection.day, selection.lead]);
+  return useQuery<GridResponse>({
+    queryKey: ["/api/fire-risk/grid", query],
+    queryFn: () => apiGet<GridResponse>(`/api/fire-risk/grid?${query}`),
+    staleTime: 15 * 60_000,
+    retry: 1,
+  });
+}
 
-function gridImage(g: Grid, stat: "mean" | "max", dry: boolean) {
-  const vals = stat === "max" ? g.max : g.mean;
-  const latMax = g.lat0 + g.nlat * g.cellDeg, yTop = mercY(latMax), yBot = mercY(g.lat0);
-  const W = g.nlon, H = g.nlat * 2;
-  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-  const ctx = cv.getContext("2d")!; const img = ctx.createImageData(W, H);
-  const rgb = (hex: string) => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
-  const cache = new Map<string, number[]>();
-  for (let py = 0; py < H; py++) {
-    const lat = latOfMercY(yTop - ((py + 0.5) / H) * (yTop - yBot));
-    const iy = Math.floor((lat - g.lat0) / g.cellDeg); if (iy < 0 || iy >= g.nlat) continue;
-    for (let x = 0; x < W; x++) {
-      const v = vals[iy * g.nlon + x]; if (v == null) continue;
-      const hex = dry ? dryColor(v) : rfColor(v);
-      let c = cache.get(hex); if (!c) { c = rgb(hex); cache.set(hex, c); }
-      const o = (py * W + x) * 4; img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 255;
+/** Cores com significado explícito na legenda — a cor nunca é o único indicador. */
+const RF_COLORS: Record<RfClass, string> = {
+  minimo: "#1b7f5a",
+  baixo: "#7fb539",
+  medio: "#e8b329",
+  alto: "#e2711d",
+  critico: "#b3261e",
+};
+const RF_KEYS: RfClass[] = ["minimo", "baixo", "medio", "alto", "critico"];
+
+/** Faixas apenas para leitura visual do produto de dias sem chuva; não são classes oficiais do INPE. */
+const DRY_BINS = [
+  { max: 15, label: "0–15 dias", color: "#dbeafe" },
+  { max: 30, label: "16–30 dias", color: "#93c5fd" },
+  { max: 60, label: "31–60 dias", color: "#fcd34d" },
+  { max: 90, label: "61–90 dias", color: "#fb923c" },
+  { max: Infinity, label: "> 90 dias", color: "#b3261e" },
+];
+
+function colorFor(index: FireRiskIndex, value: number | null): string | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  if (index === "inpe_rf_oficial") return RF_COLORS[rfClass(value)];
+  return DRY_BINS.find((b) => value <= b.max)?.color ?? null;
+}
+
+function labelFor(index: FireRiskIndex, value: number | null): string {
+  if (value == null || !Number.isFinite(value)) return "sem dado";
+  if (index === "inpe_rf_oficial") return `${value.toFixed(2)} — ${RF_CLASS_LABEL[rfClass(value)]}`;
+  return `${value.toFixed(0)} dias`;
+}
+
+const fmtDay = (d: string) => (/^\d{4}-\d{2}-\d{2}$/.test(d) ? format(new Date(`${d}T12:00:00Z`), "dd/MM/yyyy") : d);
+const fmtWhen = (iso: string | null | undefined) => (iso ? format(new Date(iso), "dd/MM/yyyy HH:mm") : "—");
+
+/** Um único canvas, actualizado em move/zoom/resize; só desenha células visíveis. */
+function drawGrid(canvas: HTMLCanvasElement, map: L.Map, grid: GridResponse, index: FireRiskIndex) {
+  const size = map.getSize();
+  if (!size || size.x === 0 || size.y === 0) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.round(size.x * dpr), h = Math.round(size.y * dpr);
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+  }
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size.x, size.y);
+
+  const bounds = map.getBounds();
+  const { lat0, lon0, cellDeg, nlat, nlon, mean } = grid;
+  const iy0 = Math.max(0, Math.floor((bounds.getSouth() - lat0) / cellDeg));
+  const iy1 = Math.min(nlat - 1, Math.ceil((bounds.getNorth() - lat0) / cellDeg));
+  const ix0 = Math.max(0, Math.floor((bounds.getWest() - lon0) / cellDeg));
+  const ix1 = Math.min(nlon - 1, Math.ceil((bounds.getEast() - lon0) / cellDeg));
+  ctx.globalAlpha = 0.58;
+  for (let iy = iy0; iy <= iy1; iy++) {
+    for (let ix = ix0; ix <= ix1; ix++) {
+      const v = mean[iy * nlon + ix];
+      const color = colorFor(index, v);
+      if (!color) continue;
+      const p1 = map.latLngToContainerPoint([lat0 + (iy + 1) * cellDeg, lon0 + ix * cellDeg]);
+      const p2 = map.latLngToContainerPoint([lat0 + iy * cellDeg, lon0 + (ix + 1) * cellDeg]);
+      if (p2.x < 0 || p1.x > size.x || p2.y < 0 || p1.y > size.y) continue;
+      ctx.fillStyle = color;
+      ctx.fillRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
     }
   }
-  ctx.putImageData(img, 0, 0);
-  return { url: cv.toDataURL("image/png"), bounds: [[g.lat0, g.lon0], [latMax, g.lon0 + g.nlon * g.cellDeg]] as [[number, number], [number, number]] };
+  ctx.globalAlpha = 1;
 }
 
-/** Inside <MapContainer>: the overlay + click-to-query popup. */
-export function FireRiskOverlay({ sel, grid }: { sel: RfSel; grid: Grid | undefined }) {
-  const img = useMemo(() => (grid && sel.kind !== "off" ? gridImage(grid, sel.stat, sel.kind === "dry") : null), [grid, sel.kind, sel.stat]);
-  const [at, setAt] = useState<[number, number] | null>(null);
-  const popup = useRef<L.Popup | null>(null);
-  useEffect(() => setAt(null), [sel.kind]);
-  useMapEvents({ click: (e) => { if (sel.kind !== "off") setAt([e.latlng.lat, e.latlng.lng]); } });
-  if (!img) return null;
+function ClickProbe({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+  useMapEvents({ click: (e) => onPick(e.latlng.lat, e.latlng.lng) });
+  return null;
+}
+
+/** Malha desenhada no mapa + consulta por clique. A legenda/exportação está em FireRiskLegend. */
+export function FireRiskLayer({ selection, visible }: { selection: FireRiskSelection; visible: boolean }) {
+  const map = useMap();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { data: grid } = useFireRiskGrid(selection);
+  const [probe, setProbe] = useState<{ lat: number; lng: number; data?: PointResponse; error?: string } | null>(null);
+
+  useEffect(() => {
+    if (!visible || !grid || !canvasRef.current) return;
+    let frame = 0;
+    const render = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (canvasRef.current) drawGrid(canvasRef.current, map, grid, selection.index);
+      });
+    };
+    render();
+    map.on("move zoom resize", render);
+    return () => {
+      cancelAnimationFrame(frame);
+      map.off("move zoom resize", render);
+    };
+  }, [map, grid, selection.index, visible]);
+
+  useEffect(() => setProbe(null), [selection.index, selection.product, selection.day, selection.lead]);
+
+  if (!visible) return null;
+
+  async function pick(lat: number, lng: number) {
+    setProbe({ lat, lng });
+    try {
+      const url = `/api/fire-risk/point?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`;
+      setProbe({ lat, lng, data: await apiGet<PointResponse>(url) });
+    } catch (e) {
+      setProbe({ lat, lng, error: e instanceof Error ? e.message : "Não foi possível consultar o ponto." });
+    }
+  }
+
   return (
     <>
-      <ImageOverlay url={img.url} bounds={img.bounds} opacity={0.6} className="artemis-pixelated" interactive={false} />
-      {at && <Popup ref={popup} position={at} eventHandlers={{ remove: () => setAt(null) }}>
-        {/* content arrives after the query: re-layout and re-pan so the whole card stays in view */}
-        <PointValues lat={at[0]} lng={at[1]} onLoaded={() => requestAnimationFrame(() => popup.current?.update())} />
-      </Popup>}
+      <canvas ref={canvasRef} aria-hidden="true" data-testid="fire-risk-canvas"
+        className="pointer-events-none absolute inset-0 z-[350] h-full w-full" />
+      <ClickProbe onPick={pick} />
+      {probe && (
+        <div role="status" data-testid="fire-risk-point"
+          className="absolute bottom-3 left-3 z-[900] w-[min(20rem,calc(100%-1.5rem))] rounded-xl border bg-background/95 p-3 text-xs shadow-lg">
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-semibold">Risco de fogo no ponto clicado</p>
+            <button type="button" aria-label="Fechar consulta" className="rounded p-0.5 hover:bg-muted" onClick={() => setProbe(null)}><X className="h-3.5 w-3.5" aria-hidden /></button>
+          </div>
+          <p className="mt-0.5 text-muted-foreground">{probe.lat.toFixed(3)}°, {probe.lng.toFixed(3)}°</p>
+          {probe.error ? <p className="mt-2 text-amber-800 dark:text-amber-200">{probe.error}</p> : probe.data && (
+            <>
+              <ul className="mt-2 space-y-1">
+                {probe.data.values.filter((v) => v.mean != null).map((v) => (
+                  <li key={`${v.index}-${v.product}-${v.lead}-${v.validDay}`} className="border-t pt-1">
+                    <span className="font-medium">{labelFor(v.index, v.mean)}</span>
+                    {" · "}máx. {labelFor(v.index, v.max)}
+                    <br /><span className="text-muted-foreground">{v.product === "observado" ? "Observado" : `Previsto +${v.lead} d`} · {fmtDay(v.validDay)} · célula {v.cellDeg}°</span>
+                  </li>
+                ))}
+                {probe.data.values.every((v) => v.mean == null) && <li className="text-muted-foreground">Sem valor válido na célula para este ponto.</li>}
+              </ul>
+              <p className="mt-2 text-muted-foreground">{probe.data.note}</p>
+            </>
+          )}
+        </div>
+      )}
     </>
   );
 }
 
-function PointValues({ lat, lng, onLoaded }: { lat: number; lng: number; onLoaded?: () => void }) {
-  const { data, isLoading, error } = useQuery<{ values: { index: string; product: string; lead: number; validDay: string; mean: number | null; max: number | null }[]; note: string }>({
-    queryKey: ["/api/fire-risk/point", lat.toFixed(3), lng.toFixed(3)], queryFn: () => api("GET", `/api/fire-risk/point?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`), retry: false,
-  });
-  useEffect(() => { if (!isLoading) onLoaded?.(); }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (isLoading) return <span>Consultando…</span>;
-  if (error || !data) return <span>Ponto fora da área coberta (Brasil) ou consulta indisponível.</span>;
-  const rf = data.values.filter((v) => v.index === "inpe_rf_oficial"), dry = data.values.find((v) => v.index === "inpe_dias_sem_chuva");
+function csvCell(v: unknown): string {
+  let x = v == null ? "" : String(v);
+  // CSV injection guard, sem transformar coordenadas negativas em texto.
+  if (/^[=+@-]/.test(x) && !Number.isFinite(Number(x))) x = `'${x}`;
+  return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x;
+}
+
+function gridToCsv(grid: GridResponse): string {
+  const head = ["data_validade", "produto", "lead_dias", "indice", "lat_centro", "lon_centro", "media", "maximo", "unidade", "arquivo_fonte", "gerado_em"];
+  const rows: string[] = [head.join(",")];
+  for (let iy = 0; iy < grid.nlat; iy++) {
+    for (let ix = 0; ix < grid.nlon; ix++) {
+      const mean = grid.mean[iy * grid.nlon + ix];
+      const max = grid.max[iy * grid.nlon + ix];
+      if (mean == null && max == null) continue;
+      rows.push([
+        grid.validDay, grid.product, grid.lead, grid.index,
+        (grid.lat0 + (iy + 0.5) * grid.cellDeg).toFixed(4),
+        (grid.lon0 + (ix + 0.5) * grid.cellDeg).toFixed(4),
+        mean, max, grid.unit, grid.sourceFile, grid.computedAt,
+      ].map(csvCell).join(","));
+    }
+  }
+  return rows.join("\n");
+}
+
+function downloadCsv(grid: GridResponse) {
+  const blob = new Blob(["\ufeff" + gridToCsv(grid)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `artemis-risco-fogo-${grid.index}-${grid.validDay}-${grid.product}${grid.lead ? `-lead${grid.lead}` : ""}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Controles, legenda e exportação da camada — renderizada na barra lateral do mapa. */
+export function FireRiskLegend({ selection, onChange, visible }: {
+  selection: FireRiskSelection;
+  onChange: (s: FireRiskSelection) => void;
+  visible: boolean;
+}) {
+  const { data: available } = useFireRiskAvailable();
+  const { data: grid, isFetching, error } = useFireRiskGrid(selection);
+  if (!visible) return null;
+  const days = available?.layers.find((l) => l.index === selection.index && l.product === selection.product && l.lead === selection.lead)?.days ?? [];
+  const input = "rounded-lg border border-input bg-background px-2 py-1 text-xs w-full";
+
   return (
-    <div className="text-xs space-y-1 max-w-[240px]" data-testid="rf-point">
-      <strong>Risco de fogo oficial (INPE) — {lat.toFixed(3)}, {lng.toFixed(3)}</strong>
-      {rf.length === 0 && <p>Sem dados do índice para este ponto.</p>}
-      <ul>{rf.map((v) => (
-        <li key={`${v.product}${v.lead}`}>{v.product === "observado" ? "Observado" : `Previsto (+${v.lead} d)`} {fmtDay(v.validDay)}: <b>{rfLabel(v.mean)}</b> · média {num(v.mean)} · máx. {num(v.max)}</li>
-      ))}</ul>
-      {dry && <p>Dias sem chuva (INPE, {fmtDay(dry.validDay)}): <b>{num(dry.mean, 0)}</b> (média) · máx. {num(dry.max, 0)}</p>}
-      <p className="text-muted-foreground">{data.note} Índice meteorológico: não é foco de calor nem incêndio confirmado.</p>
+    <div className="space-y-2" data-testid="fire-risk-legend">
+      <p className="font-medium">Risco de fogo oficial — INPE <span className="font-normal text-muted-foreground">(índice 0–1, não probabilidade)</span></p>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="col-span-2 text-xs text-muted-foreground">Índice
+          <select className={input} value={selection.index}
+            onChange={(e) => {
+              const index = e.target.value as FireRiskIndex;
+              onChange({ ...selection, index, product: index === "inpe_dias_sem_chuva" ? "observado" : selection.product, lead: 0, day: "" });
+            }}>
+            <option value="inpe_rf_oficial">Risco de fogo (0–1)</option>
+            <option value="inpe_dias_sem_chuva">Dias sem chuva (120 dias)</option>
+          </select></label>
+        <label className="text-xs text-muted-foreground">Produto
+          <select className={input} value={selection.product}
+            onChange={(e) => onChange({ ...selection, product: e.target.value as FireRiskProduct, day: "" })}>
+            <option value="observado">Observado</option><option value="previsto">Previsto</option>
+          </select></label>
+        <label className="text-xs text-muted-foreground">Antecedência
+          <select className={input} value={selection.lead} onChange={(e) => onChange({ ...selection, lead: Number(e.target.value), day: "" })}>
+            {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n === 0 ? "dia atual" : `+${n} dia(s)`}</option>)}
+          </select></label>
+      </div>
+      <label className="text-xs text-muted-foreground">Data da grade
+        <select className={input} value={selection.day} onChange={(e) => onChange({ ...selection, day: e.target.value })}>
+          <option value="">Mais recente disponível</option>
+          {days.map((d) => <option key={d} value={d}>{fmtDay(d)}</option>)}
+        </select></label>
+      {selection.index === "inpe_rf_oficial" ? (
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {RF_KEYS.map((k) => (
+            <span key={k} className="flex items-center gap-1 text-[11px]">
+              <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: RF_COLORS[k] }} />
+              {RF_CLASS_LABEL[k]} {k === "minimo" ? `≤ ${RF_CLASS_LIMITS.minimo}` : k === "critico" ? `> ${RF_CLASS_LIMITS.alto}` : `até ${RF_CLASS_LIMITS[k]}`}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {DRY_BINS.map((b) => <span key={b.label} className="flex items-center gap-1 text-[11px]">
+            <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: b.color }} />{b.label}</span>)}
+          <span className="text-[11px] text-muted-foreground">Faixas de leitura da ARTEMIS, não classes oficiais.</span>
+        </div>
+      )}
+      <p className="text-[11px] text-muted-foreground">
+        {isFetching ? "Carregando grade..." : grid
+          ? <>Válido em {fmtDay(grid.validDay)} · {grid.unit} · células de {grid.cellDeg}° · gerado em {fmtWhen(grid.computedAt)}.</>
+          : "Sem grade para estes parâmetros."}
+        {error && !isFetching && " Verifique se a sincronização do INPE já rodou."}
+      </p>
+      {grid && (
+        <>
+          <p className="text-[11px] text-muted-foreground">{grid.method?.source ?? "Fonte: Programa Queimadas/INPE (dados abertos)"}. Clique no mapa para consultar a célula; para uma propriedade cadastrada, use o valor calculado sobre o polígono.</p>
+          <ButtonCsv grid={grid} />
+        </>
+      )}
+      <p className="flex items-start gap-1 text-[11px] text-muted-foreground"><Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+        Susceptibilidade da vegetação para queimar. Não é foco detectado, incêndio confirmado nem probabilidade calibrada.</p>
     </div>
   );
 }
 
-/** Sidebar: layer selector, legend, provenance and export. */
-export function FireRiskPanel({ sel, onChange, grid, gridError }: { sel: RfSel; onChange: (s: RfSel) => void; grid: Grid | undefined; gridError: boolean }) {
-  const { data: av } = useFireRiskAvailable();
-  const obsDays = av?.layers.find((l) => l.index === "inpe_rf_oficial" && l.product === "observado")?.days ?? [];
-  const leads = (av?.layers.filter((l) => l.index === "inpe_rf_oficial" && l.product === "previsto") ?? []).map((l) => ({ lead: l.lead, day: l.days[0] }));
-  const hasDry = av?.layers.some((l) => l.index === "inpe_dias_sem_chuva");
-  const input = "rounded-lg border border-input bg-background px-2 py-1.5 text-sm w-full";
-  function exportCsv() {
-    if (!grid) return;
-    const rows = ["latitude_centro;longitude_centro;media;maximo"];
-    for (let iy = 0; iy < grid.nlat; iy++) for (let ix = 0; ix < grid.nlon; ix++) {
-      const i = iy * grid.nlon + ix; if (grid.mean[i] == null) continue;
-      rows.push([(grid.lat0 + (iy + 0.5) * grid.cellDeg).toFixed(2), (grid.lon0 + (ix + 0.5) * grid.cellDeg).toFixed(2), grid.mean[i], grid.max[i]].join(";"));
-    }
-    const name = `inpe-${grid.index === "inpe_dias_sem_chuva" ? "dias-sem-chuva" : "risco-fogo"}-${grid.product}-${grid.validDay}${grid.product === "previsto" ? `-T${grid.lead}` : ""}.csv`;
-    const header = `# Fonte: Programa Queimadas/INPE (${grid.sourceFile}); grade ARTEMIS de ${grid.cellDeg}° (média e máximo dos pixels de 1 km); ${grid.unit}\n`;
-    const url = URL.createObjectURL(new Blob(["﻿" + header + rows.join("\n")], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a"); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
-  }
+function ButtonCsv({ grid }: { grid: GridResponse }) {
   return (
-    <fieldset className="bg-card border rounded-2xl p-4 space-y-2" data-testid="rf-panel">
-      <legend className="font-semibold text-sm px-1">Índices oficiais do INPE</legend>
-      <div><label htmlFor="rf-kind" className="text-xs text-muted-foreground">Camada</label>
-        <select id="rf-kind" className={input} value={sel.kind === "off" ? "off" : sel.kind === "dry" ? "dry" : sel.product}
-          onChange={(e) => { const v = e.target.value; onChange(v === "off" ? { ...sel, kind: "off" } : v === "dry" ? { ...sel, kind: "dry" } : { ...sel, kind: "rf", product: v as RfSel["product"] }); }}>
-          <option value="off">Nenhuma</option>
-          <option value="observado" disabled={!obsDays.length}>Risco de fogo — observado</option>
-          <option value="previsto" disabled={!leads.length}>Risco de fogo — previsão (até 3 dias)</option>
-          <option value="dry" disabled={!hasDry}>Dias sem chuva</option>
-        </select></div>
-      {sel.kind === "rf" && sel.product === "observado" && (
-        <div><label htmlFor="rf-day" className="text-xs text-muted-foreground">Dia</label>
-          <select id="rf-day" className={input} value={sel.day || obsDays[0] || ""} onChange={(e) => onChange({ ...sel, day: e.target.value })}>
-            {obsDays.map((d) => <option key={d} value={d}>{fmtDay(d)}</option>)}
-          </select></div>)}
-      {sel.kind === "rf" && sel.product === "previsto" && (
-        <div><label htmlFor="rf-lead" className="text-xs text-muted-foreground">Dia previsto</label>
-          <select id="rf-lead" className={input} value={sel.lead} onChange={(e) => onChange({ ...sel, lead: Number(e.target.value) })}>
-            {leads.map((l) => <option key={l.lead} value={l.lead}>{fmtDay(l.day)} (T{l.lead})</option>)}
-          </select></div>)}
-      {sel.kind !== "off" && (
-        <div><label htmlFor="rf-stat" className="text-xs text-muted-foreground">Valor da célula de {grid?.cellDeg ?? 0.2}° (≈ 22 km)</label>
-          <select id="rf-stat" className={input} value={sel.stat} onChange={(e) => onChange({ ...sel, stat: e.target.value as RfSel["stat"] })}>
-            <option value="mean">Média dos pixels de 1 km</option><option value="max">Máximo (pior pixel)</option>
-          </select></div>)}
-      {sel.kind !== "off" && gridError && <p role="status" className="text-xs text-amber-800">Grade indisponível para esta seleção (ainda não sincronizada).</p>}
-      {sel.kind !== "off" && grid && (
-        <div className="text-xs space-y-1" aria-label="Legenda do índice">
-          <div className="flex flex-wrap gap-x-2 gap-y-1">
-            {(sel.kind === "dry" ? DRY_BINS : RF_CLASSES).map((c) => (
-              <span key={c.label} className="flex items-center gap-1"><span aria-hidden className="inline-block w-3 h-3 border" style={{ background: c.color }} />{c.label}</span>))}
-          </div>
-          {sel.kind === "rf"
-            ? <p className="text-muted-foreground">Classes oficiais do INPE (Mínimo ≤ 0,15 · Baixo ≤ 0,40 · Médio ≤ 0,70 · Alto ≤ 0,95 · Crítico &gt; 0,95). Índice meteorológico de suscetibilidade da vegetação: <b>não é foco de calor, não é incêndio confirmado e não é probabilidade</b>.</p>
-            : <p className="text-muted-foreground">Dias consecutivos com chuva ≤ 1 mm nos últimos 120 dias (INPE, estimativa por satélite).</p>}
-          <p className="text-muted-foreground">Fonte: Programa Queimadas/INPE · {grid.product === "previsto" ? `previsão para ${fmtDay(grid.validDay)}` : `dia ${fmtDay(grid.validDay)}`} · arquivo {grid.sourceFile} · processado em {new Date(grid.computedAt).toLocaleString("pt-BR")}. Clique no mapa para consultar um ponto.</p>
-          <button type="button" className="underline" onClick={exportCsv}>Exportar grade (CSV)</button>
-        </div>)}
-    </fieldset>
+    <button type="button" onClick={() => downloadCsv(grid)}
+      className="inline-flex items-center gap-1 text-xs underline" data-testid="fire-risk-export">
+      <Download className="h-3.5 w-3.5" aria-hidden />Exportar grade (CSV)
+    </button>
   );
 }

@@ -118,7 +118,7 @@ Casos e taxa de foco nos 7 dias seguintes, por classe do RF oficial (linhas) × 
 2. **O modelo combinado não foi ativado.** O ganho sobre o motor ARTEMIS é marginal (AUC +0,003
    a +0,008; Brier −0,001 a −0,003) e a calibração não se manteve entre períodos.
 3. **Nenhum percentual é exibido como probabilidade**, porque a calibração variou entre os períodos.
-4. As regras de alerta de risco oficial (doc 26, R1/R2) seguem marcadas como **não calibradas**, e
+4. As regras de alerta de risco oficial (doc 28 §6, R1/R2) seguem marcadas como **não calibradas**, e
    devem ser revistas com os especialistas do piloto usando a tabela da seção 5.
 
 ## 7. Limitações

@@ -98,6 +98,8 @@ services:
       PYTHON_SERVICE_URL: http://risk-engine:8000
       RISK_ENGINE: ${RISK_ENGINE:-python}
       PUBLIC_BASE_URL: https://${APP_DOMAIN:?defina APP_DOMAIN}
+      # Links absolutos em e-mails; se vazio, o gerador usa links relativos.
+      APP_URL: ${APP_URL:-}
       TRUST_PROXY_HOPS: "1"
       ALERT_MIN_LEVEL: ${ALERT_MIN_LEVEL:-alto}
       INPE_MAX_AGE_HOURS: ${INPE_MAX_AGE_HOURS:-6}
@@ -107,6 +109,9 @@ services:
       SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
       INPE_SYNC_MINUTES: ${INPE_SYNC_MINUTES:-60}
       SISFOGO_SYNC_HOURS: ${SISFOGO_SYNC_HOURS:-24}
+      # Risco de fogo oficial INPE (observed + forecast + dias sem chuva) e alertas de risco persistente
+      INPE_RISK_SYNC_ENABLED: ${INPE_RISK_SYNC_ENABLED:-true}
+      INPE_RISK_SYNC_HOURS: ${INPE_RISK_SYNC_HOURS:-6}
       # INMET: station registry + current-year archive daily (downloaded only when INMET updates it)
       INMET_SYNC_HOURS: ${INMET_SYNC_HOURS:-24}
       INMET_SYNC_ENABLED: ${INMET_SYNC_ENABLED:-true}
@@ -124,7 +129,7 @@ services:
     logging: *logging
 
   # One-shot job, scheduled by the host cron (see docs/artemis/04_IMPLANTACAO_HOSTINGER.md):
-  #   docker compose run --rm inpe-sync
+  #   docker compose --profile jobs run --rm inpe-sync
   inpe-sync:
     <<: *api-build
     profiles: ["jobs"]
@@ -136,6 +141,25 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://artemis_app:${ARTEMIS_APP_PASSWORD}@db:5432/artemis_ai
     deploy: { resources: { limits: { memory: 512m, cpus: "0.5" } } }
+    networks: [internal, edge]
+    logging: *logging
+
+  # INPE official fire risk (model 2.2): last 3 observed days + forecast T0–T3 + dias sem chuva.
+  # The API already runs this every INPE_RISK_SYNC_HOURS; use this job for a manual
+  # catch-up/backfill or host cron. Examples:
+  #   docker compose --profile jobs run --rm inpe-risk-sync
+  #   docker compose --profile jobs run --rm inpe-risk-sync node dist/sync-inpe-risk.cjs --from 2026-08-01 --to 2026-11-22
+  inpe-risk-sync:
+    <<: *api-build
+    profiles: ["jobs"]
+    command: ["node", "dist/sync-inpe-risk.cjs"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://artemis_app:${ARTEMIS_APP_PASSWORD}@db:5432/artemis_ai
+    deploy: { resources: { limits: { memory: 768m, cpus: "0.5" } } }
     networks: [internal, edge]
     logging: *logging
 

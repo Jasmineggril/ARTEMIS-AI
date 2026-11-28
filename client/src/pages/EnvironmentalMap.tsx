@@ -8,7 +8,7 @@ import type L from "leaflet";
 import { Layout } from "@/components/Layout";
 import { RiskBadge, riskLevelColor } from "@/components/RiskBadge";
 import { ClusteredPoints } from "@/components/map/ClusteredPoints";
-import { FireRiskOverlay, FireRiskPanel, RF_SEL_OFF, useFireRiskGrid, type RfSel } from "@/components/map/FireRiskLayer";
+import { DEFAULT_FIRE_RISK, FireRiskLayer, FireRiskLegend, type FireRiskSelection } from "@/components/map/FireRiskLayer";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useAuthStatus, hasRole } from "@/hooks/use-auth";
@@ -107,7 +107,7 @@ const OCC_COLOR = "#7c2d12";
 const SIS_COLOR = "#b45309";
 const HOT_COLOR = "#7e22ce";
 const STATION_COLOR = "#0369a1";
-interface StationRow { code: string; name: string; state: string; latitude: number; longitude: number; altitudeM: number | null; status: string | null; lastDay: string | null; availability30dPct: number | null }
+interface StationRow { code: string; name: string; state: string; latitude: number; longitude: number; altitudeM: number | null; lastDay: string | null; availability30dPct: number | null }
 /** Radius used by the risk engine for historical occurrences; also the "near this area" filter. */
 const NEAR_KM = 10;
 
@@ -155,9 +155,8 @@ export default function EnvironmentalMap() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuthStatus();
   const [level, setLevel] = useState<"all" | RiskLevel | "none">("all");
-  const [show, setShow] = useState({ areas: true, risk: true, occ: true, sisfogo: true, hot: true, biomes: false, stations: false });
-  const [rfSel, setRfSel] = useState<RfSel>(RF_SEL_OFF);
-  const { data: rfGrid, isError: rfGridError } = useFireRiskGrid(rfSel);
+  const [show, setShow] = useState({ areas: true, risk: true, occ: true, sisfogo: true, hot: true, biomes: false, fireRisk: true, stations: false });
+  const [fireRisk, setFireRisk] = useState<FireRiskSelection>(DEFAULT_FIRE_RISK);
   const { data: st } = useQuery<{ stations: StationRow[] }>({ queryKey: ["/api/weather-stations"], queryFn: () => api("GET", "/api/weather-stations"), enabled: show.stations, staleTime: 30 * 60_000 });
   const [form, setForm] = useState<Filters>(EMPTY);
   const [f, setF] = useState<Filters>(EMPTY);
@@ -253,11 +252,10 @@ export default function EnvironmentalMap() {
             {toggle("occ", "Ocorrências importadas pela organização", dot(OCC_COLOR, "rotate-45"))}
             {toggle("sisfogo", "Registros oficiais — Sisfogo", dot(SIS_COLOR))}
             {toggle("hot", "Focos de calor — INPE", dot(HOT_COLOR))}
+            {toggle("fireRisk", "Risco de fogo — INPE (índice 0–1)", <span aria-hidden className="inline-block h-2.5 w-2.5 bg-emerald-700" />)}
             {toggle("stations", "Estações meteorológicas — INMET", dot(STATION_COLOR, ""))}
             {toggle("biomes", "Biomas (contorno ilustrativo)", <span aria-hidden className="inline-block w-2.5 h-2.5 border border-dashed border-emerald-700" />)}
           </fieldset>
-
-          <FireRiskPanel sel={rfSel} onChange={setRfSel} grid={rfGrid} gridError={rfGridError} />
 
           <form className="bg-card border rounded-2xl p-4 space-y-2" onSubmit={(e) => { e.preventDefault(); setF(form); }} aria-label="Filtros do mapa">
             <p className="font-semibold text-sm flex items-center gap-1"><Filter className="w-4 h-4" aria-hidden />Filtros</p>
@@ -308,8 +306,9 @@ export default function EnvironmentalMap() {
               {" "}{sis?.lastCompleteSyncAt ? `Sincronizado em ${when(sis.lastCompleteSyncAt)}.` : "Aguardando primeira sincronização completa."} Cobre só órgãos aderentes.</span></p>}
             {show.hot && <p className="flex items-start gap-2">{dot(HOT_COLOR, "rounded-full mt-1")}<span><b>Focos INPE</b> — {hotPoints.length} detecção(ões){hotSum ? ` de ${when(`${hotSum.period.from}T12:00:00`, false)} a ${when(`${hotSum.period.to}T12:00:00`, false)}` : ""}.
               {" "}{f.from && !hotPeriodOk ? "Período maior que 31 dias: mostrando os 2 últimos dias. " : ""}Sincronizado em {when(hotSum?.lastSyncAt)}. Foco de calor não é incêndio confirmado.</span></p>}
+            {show.fireRisk && <div className="border-t pt-2"><FireRiskLegend selection={fireRisk} onChange={setFireRisk} visible={show.fireRisk} /></div>}
             {show.stations && <p className="flex items-start gap-2">{dot(STATION_COLOR, "mt-1")}<span><b>Estações INMET</b> — {st?.stations.length ?? "…"} estação(ões). Medição local; representa bem apenas o entorno da estação.</span></p>}
-            <p className="text-muted-foreground">Números em círculos agrupam pontos próximos; clique para aproximar.</p>
+            <p className="text-muted-foreground">Números em círculos agrupam pontos próximos; clique para aproximar. Com a camada de risco ligada, o clique também consulta o valor da célula.</p>
           </section>
         </aside>
 
@@ -318,10 +317,10 @@ export default function EnvironmentalMap() {
           {/* Attribution is shown below the map, so no control covers clickable points. */}
           <MapContainer center={[-14.5, -49]} zoom={5} className="h-full w-full" scrollWheelZoom attributionControl={false}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            {show.fireRisk && <FireRiskLayer selection={fireRisk} visible={show.fireRisk} />}
             <FitTo points={fit.points} maxZoom={fit.maxZoom} signal={fitSignal} />
-            <FireRiskOverlay sel={rfSel} grid={rfGrid} />
-            {show.stations && <ClusteredPoints label="estações INMET" color={STATION_COLOR} radius={5} shape="diamond" offset={[0, 0]}
-              points={(st?.stations ?? []).filter((x) => x.latitude != null).map((x) => ({ ...x, key: `st${x.code}`, lat: x.latitude, lng: x.longitude }))}
+            {show.stations && <ClusteredPoints label="estações INMET" color={STATION_COLOR} radius={5} shape="diamond"
+              points={(st?.stations ?? []).filter((x) => x.latitude != null && x.longitude != null).map((x) => ({ ...x, key: `st${x.code}`, lat: x.latitude, lng: x.longitude }))}
               renderPopup={(x) => <>
                 <strong>Estação INMET {x.code}</strong><br />{x.name}/{x.state}{x.altitudeM != null ? ` · ${Math.round(x.altitudeM)} m` : ""}<br />
                 Último dia com dados: {x.lastDay ? x.lastDay.split("-").reverse().join("/") : "sem dados importados"}<br />
