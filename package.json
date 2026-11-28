@@ -28,6 +28,7 @@
     "sync:sisfogo": "tsx scripts/sync-sisfogo.ts",
     "sync:inmet": "tsx scripts/sync-inmet.ts",
     "sync:inpe-risk": "tsx scripts/sync-inpe-risk.ts",
+    "eval:rf-oficial": "tsx scripts/evaluate-official-rf.ts --out docs/artemis/evidencias/avaliacao-rf-oficial-artemis.json",
     "admin:create": "tsx scripts/ops/create-admin.ts",
     "db:load-municipalities": "tsx scripts/load-ibge-municipalities.ts",
     "db:load-boundaries": "tsx scripts/load-ibge-boundaries.ts",
